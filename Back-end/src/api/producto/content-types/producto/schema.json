@@ -1,0 +1,67 @@
+{
+  "kind": "collectionType",
+  "collectionName": "productos",
+  "info": {
+    "singularName": "producto",
+    "pluralName": "productos",
+    "displayName": "Producto"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nombre": {
+      "type": "string",
+      "required": true
+    },
+    "descripcion": {
+      "type": "text",
+      "required": true
+    },
+    "material": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "Jean",
+        "Algodón",
+        "Lino"
+      ]
+    },
+    "precio": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "marca": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::marca.marca",
+      "inversedBy": "productos"
+    },
+    "variacions": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::variacion.variacion",
+      "mappedBy": "producto"
+    },
+    "promo_productos": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::promo-producto.promo-producto",
+      "mappedBy": "producto"
+    },
+    "wishlists": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::wishlist.wishlist",
+      "mappedBy": "producto"
+    },
+    "resenas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::resena.resena",
+      "mappedBy": "producto"
+    }
+  }
+}

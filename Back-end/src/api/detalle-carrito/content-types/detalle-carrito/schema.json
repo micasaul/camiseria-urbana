@@ -1,0 +1,38 @@
+{
+  "kind": "collectionType",
+  "collectionName": "detalles_carritos",
+  "info": {
+    "singularName": "detalle-carrito",
+    "pluralName": "detalles-carritos",
+    "displayName": "DetalleCarrito"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "cantidad": {
+      "type": "integer",
+      "required": true,
+      "default": 1,
+      "min": 1
+    },
+    "precioUnitario": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "carrito": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::carrito.carrito",
+      "inversedBy": "detalle_carritos"
+    },
+    "variacion": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::variacion.variacion",
+      "inversedBy": "detalle_carritos"
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "kind": "collectionType",
+  "collectionName": "promos",
+  "info": {
+    "singularName": "promo",
+    "pluralName": "promos",
+    "displayName": "Promo"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nombre": {
+      "type": "string",
+      "required": true
+    },
+    "descuento": {
+      "type": "integer",
+      "required": true,
+      "default": 0,
+      "min": 0,
+      "max": 100
+    },
+    "fechaInicio": {
+      "type": "datetime",
+      "required": true
+    },
+    "fechaFin": {
+      "type": "datetime",
+      "required": true
+    },
+    "promo_productos": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::promo-producto.promo-producto",
+      "mappedBy": "promo"
+    }
+  }
+}

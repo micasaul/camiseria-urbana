@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "carritos",
+  "info": {
+    "singularName": "carrito",
+    "pluralName": "carritos",
+    "displayName": "Carrito"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "fecha": {
+      "type": "datetime",
+      "required": true
+    },
+    "users_permissions_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "carritos"
+    },
+    "detalle_carritos": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::detalle-carrito.detalle-carrito",
+      "mappedBy": "carrito"
+    }
+  }
+}

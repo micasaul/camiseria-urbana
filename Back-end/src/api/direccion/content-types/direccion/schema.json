@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "direcciones",
+  "info": {
+    "singularName": "direccion",
+    "pluralName": "direcciones",
+    "displayName": "Direccion"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "calle": {
+      "type": "text",
+      "required": true
+    },
+    "numero": {
+      "type": "string",
+      "required": true
+    },
+    "cp": {
+      "type": "string",
+      "required": true
+    },
+    "direccion_usuarios": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::direccion-usuario.direccion-usuario",
+      "mappedBy": "direccion"
+    },
+    "ventas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::venta.venta",
+      "mappedBy": "direccion"
+    }
+  }
+}

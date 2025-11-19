@@ -1,0 +1,50 @@
+{
+  "kind": "collectionType",
+  "collectionName": "detalles_ventas",
+  "info": {
+    "singularName": "detalle-venta",
+    "pluralName": "detalles-ventas",
+    "displayName": "DetalleVenta"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "cantidad": {
+      "type": "integer",
+      "required": true,
+      "default": 1,
+      "min": 1
+    },
+    "precioUnitario": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "descuento": {
+      "type": "integer",
+      "required": true,
+      "default": 0,
+      "min": 0,
+      "max": 100
+    },
+    "subtotal": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "venta": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::venta.venta",
+      "inversedBy": "detalle_ventas"
+    },
+    "variacion": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::variacion.variacion",
+      "inversedBy": "detalle_ventas"
+    }
+  }
+}

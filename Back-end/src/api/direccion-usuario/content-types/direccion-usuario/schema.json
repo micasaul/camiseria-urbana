@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "direcciones_usuarios",
+  "info": {
+    "singularName": "direccion-usuario",
+    "pluralName": "direcciones-usuarios",
+    "displayName": "DireccionUsuario"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "direccion": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::direccion.direccion",
+      "inversedBy": "direccion_usuarios"
+    },
+    "users_permissions_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "direccion_usuarios"
+    }
+  }
+}

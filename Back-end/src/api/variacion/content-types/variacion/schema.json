@@ -1,0 +1,77 @@
+{
+  "kind": "collectionType",
+  "collectionName": "variaciones",
+  "info": {
+    "singularName": "variacion",
+    "pluralName": "variaciones",
+    "displayName": "Variacion"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "talle": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "XS",
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL",
+        "XXXL"
+      ]
+    },
+    "color": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "Blanco",
+        "Negro",
+        "Gris",
+        "Beige",
+        "Marrón",
+        "Violeta",
+        "Azul",
+        "Celeste",
+        "Verde",
+        "Amarillo",
+        "Naranja",
+        "Rosa",
+        "Rojo"
+      ]
+    },
+    "stock": {
+      "type": "integer",
+      "required": true,
+      "default": 1,
+      "min": 0
+    },
+    "producto": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::producto.producto",
+      "inversedBy": "variacions"
+    },
+    "compra_proveedor": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::compra-proveedor.compra-proveedor",
+      "inversedBy": "variacions"
+    },
+    "detalle_carritos": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::detalle-carrito.detalle-carrito",
+      "mappedBy": "variacion"
+    },
+    "detalle_ventas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::detalle-venta.detalle-venta",
+      "mappedBy": "variacion"
+    }
+  }
+}

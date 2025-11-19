@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "promos_productos",
+  "info": {
+    "singularName": "promo-producto",
+    "pluralName": "promos-productos",
+    "displayName": "PromoProducto"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "activo": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    },
+    "promo": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::promo.promo",
+      "inversedBy": "promo_productos"
+    },
+    "producto": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::producto.producto",
+      "inversedBy": "promo_productos"
+    }
+  }
+}

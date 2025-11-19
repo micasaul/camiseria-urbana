@@ -1,0 +1,56 @@
+{
+  "kind": "collectionType",
+  "collectionName": "ventas",
+  "info": {
+    "singularName": "venta",
+    "pluralName": "ventas",
+    "displayName": "Venta"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "fecha": {
+      "type": "datetime",
+      "required": true
+    },
+    "estado": {
+      "type": "enumeration",
+      "required": true,
+      "default": "En proceso",
+      "enum": [
+        "En proceso",
+        "Enviado",
+        "Entregado"
+      ]
+    },
+    "total": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "nroSeguimiento": {
+      "type": "text",
+      "required": true
+    },
+    "users_permissions_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "ventas"
+    },
+    "direccion": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::direccion.direccion",
+      "inversedBy": "ventas"
+    },
+    "detalle_ventas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::detalle-venta.detalle-venta",
+      "mappedBy": "venta"
+    }
+  }
+}
