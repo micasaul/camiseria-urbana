@@ -72,6 +72,12 @@
       "relation": "oneToMany",
       "target": "api::detalle-venta.detalle-venta",
       "mappedBy": "variacion"
+    },
+    "notificacion_stocks": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::notificacion-stock.notificacion-stock",
+      "mappedBy": "variacion"
     }
   }
 }

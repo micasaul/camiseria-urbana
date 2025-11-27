@@ -722,6 +722,81 @@ export interface ApiMarcaMarca extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiNewsletterNewsletter extends Struct.CollectionTypeSchema {
+  collectionName: 'newsletters';
+  info: {
+    displayName: 'Newsletter';
+    pluralName: 'newsletters';
+    singularName: 'newsletter';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    activo: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    fechaSuscripcion: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::newsletter.newsletter'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    users_permissions_user: Schema.Attribute.Relation<
+      'oneToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
+export interface ApiNotificacionStockNotificacionStock
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'notificaciones_stock';
+  info: {
+    displayName: 'NotificacionStock';
+    pluralName: 'notificaciones-stock';
+    singularName: 'notificacion-stock';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    enviado: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    fechaSuscripcion: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::notificacion-stock.notificacion-stock'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    users_permissions_user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+    variacion: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::variacion.variacion'
+    >;
+  };
+}
+
 export interface ApiProductoProducto extends Struct.CollectionTypeSchema {
   collectionName: 'productos';
   info: {
@@ -939,6 +1014,10 @@ export interface ApiVariacionVariacion extends Struct.CollectionTypeSchema {
       'api::variacion.variacion'
     > &
       Schema.Attribute.Private;
+    notificacion_stocks: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::notificacion-stock.notificacion-stock'
+    >;
     producto: Schema.Attribute.Relation<'manyToOne', 'api::producto.producto'>;
     publishedAt: Schema.Attribute.DateTime;
     stock: Schema.Attribute.Integer &
@@ -1523,6 +1602,14 @@ export interface PluginUsersPermissionsUser
       'plugin::users-permissions.user'
     > &
       Schema.Attribute.Private;
+    newsletter: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::newsletter.newsletter'
+    >;
+    notificacion_stocks: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::notificacion-stock.notificacion-stock'
+    >;
     password: Schema.Attribute.Password &
       Schema.Attribute.Private &
       Schema.Attribute.SetMinMaxLength<{
@@ -1532,6 +1619,8 @@ export interface PluginUsersPermissionsUser
     publishedAt: Schema.Attribute.DateTime;
     resenas: Schema.Attribute.Relation<'oneToMany', 'api::resena.resena'>;
     resetPasswordToken: Schema.Attribute.String & Schema.Attribute.Private;
+    rol: Schema.Attribute.Enumeration<['cliente', 'admin']> &
+      Schema.Attribute.DefaultTo<'cliente'>;
     role: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.role'
@@ -1568,6 +1657,8 @@ declare module '@strapi/strapi' {
       'api::direccion-usuario.direccion-usuario': ApiDireccionUsuarioDireccionUsuario;
       'api::direccion.direccion': ApiDireccionDireccion;
       'api::marca.marca': ApiMarcaMarca;
+      'api::newsletter.newsletter': ApiNewsletterNewsletter;
+      'api::notificacion-stock.notificacion-stock': ApiNotificacionStockNotificacionStock;
       'api::producto.producto': ApiProductoProducto;
       'api::promo-producto.promo-producto': ApiPromoProductoPromoProducto;
       'api::promo.promo': ApiPromoPromo;
