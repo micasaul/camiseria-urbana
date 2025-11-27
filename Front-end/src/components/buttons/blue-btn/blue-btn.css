@@ -1,0 +1,18 @@
+.blue-btn {
+  background-color: #233245;    /* azul */
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 4px;
+  font-family: "Alexandria", sans-serif;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  font-size: var(--btn-font-size, 1rem);
+  width: var(--btn-width, auto);
+  height: var(--btn-height, auto);
+}
+
+.blue-btn:hover {
+  background-color: #F4ACB7;  /* rosa */
+  color: white;
+}
