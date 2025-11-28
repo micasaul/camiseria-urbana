@@ -1,6 +1,6 @@
 import "./App.css"
 import Footer from "./layouts/Footer/Footer.jsx"
-import Header from "./layouts/Header/Header.jsx"
+import Header from "./layouts/Header/header.jsx"
 
 
 function App() {
