@@ -66,14 +66,6 @@
       "inversedBy": "users",
       "configurable": false
     },
-    "rol": {
-      "type": "enumeration",
-      "default": "cliente",
-      "enum": [
-        "cliente",
-        "admin"
-      ]
-    },
     "direccion_usuarios": {
       "type": "relation",
       "relation": "oneToMany",

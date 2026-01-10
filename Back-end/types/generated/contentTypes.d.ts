@@ -1619,8 +1619,6 @@ export interface PluginUsersPermissionsUser
     publishedAt: Schema.Attribute.DateTime;
     resenas: Schema.Attribute.Relation<'oneToMany', 'api::resena.resena'>;
     resetPasswordToken: Schema.Attribute.String & Schema.Attribute.Private;
-    rol: Schema.Attribute.Enumeration<['cliente', 'admin']> &
-      Schema.Attribute.DefaultTo<'cliente'>;
     role: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.role'

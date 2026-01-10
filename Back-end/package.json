@@ -17,14 +17,17 @@
   "dependencies": {
     "@strapi/plugin-cloud": "5.31.0",
     "@strapi/plugin-users-permissions": "5.31.0",
+    "@strapi/provider-email-nodemailer": "^5.31.2",
     "@strapi/strapi": "5.31.0",
+    "axios": "^1.13.2",
+    "google-auth-library": "^10.5.0",
+    "nodemailer": "^7.0.11",
     "pg": "8.8.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.0.0",
     "styled-components": "^6.0.0"
   },
-  "devDependencies": {},
   "engines": {
     "node": ">=20.0.0 <=24.x.x",
     "npm": ">=6.0.0"
