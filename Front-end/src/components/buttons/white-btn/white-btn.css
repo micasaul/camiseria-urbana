@@ -1,0 +1,25 @@
+/* BOTONES GENERALES */
+button.white-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #172A3A;
+  font-family: inherit;
+  font-size: var(--btn-font-size, 1em);
+  width: var(--btn-width, auto);
+  height: var(--btn-height, auto);
+  padding: 6px 10px;
+  border-radius: 10px;
+  transition: background-color 0.4s ease, opacity 0.4s ease;
+}
+
+button:hover {
+  background-color: #F4ACB7;
+  color: white;
+}
+
+
+button:focus,
+button:focus-visible {
+  outline: none;
+}

@@ -1,0 +1,74 @@
+.footer {
+  width: 100%;
+  background-color: #EDF4DE;
+  padding: 40px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* IZQUIERDA */
+.footer-left {
+  display: flex;
+  flex-direction: column;  
+  gap: 16px;
+}
+
+.footer-title {
+  font-family: "Alexandria", sans-serif;
+  font-size: 14px;
+}
+
+
+.footer-newsletter {
+  display: flex;
+  flex-direction: column;    
+  align-items: flex-start;    
+  gap: 10px;
+  
+}
+
+/* INPUT */
+.footer-newsletter input {
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  padding: 10px 12px;
+  border-radius: 4px;
+  width: 220px;
+  font-family: "Alexandria", sans-serif;
+  font-size: 14px;
+  color: #172A3A;
+
+}
+
+
+
+/* ICONOS */
+.footer-icons {
+  display: flex;
+  gap: 12px;
+  margin-top: 1px;
+}
+
+.footer-icons svg {
+  fill: #172A3A;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.footer-icons svg:hover {
+  stroke: #F4ACB7;
+  fill: #F4ACB7;
+}
+
+
+/* DERECHA */
+.footer-right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+
