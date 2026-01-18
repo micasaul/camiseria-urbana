@@ -1,0 +1,54 @@
+{
+  "kind": "collectionType",
+  "collectionName": "reservas",
+  "info": {
+    "singularName": "reserva",
+    "pluralName": "reservas",
+    "displayName": "Reserva"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "estado": {
+      "type": "enumeration",
+      "required": true,
+      "default": "ACTIVA",
+      "enum": [
+        "ACTIVA",
+        "CANCELADA",
+        "CONGELADA",
+        "CONFIRMADA"
+      ]
+    },
+    "venceEn": {
+      "type": "datetime",
+      "required": true
+    },
+    "total": {
+      "type": "decimal",
+      "required": true,
+      "default": 0,
+      "min": 0
+    },
+    "carrito": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::carrito.carrito",
+      "inversedBy": "reservas"
+    },
+    "detalle_reservas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::detalle-reserva.detalle-reserva",
+      "mappedBy": "reserva"
+    },
+    "ventas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::venta.venta",
+      "mappedBy": "reserva"
+    }
+  }
+}

@@ -1,10 +1,10 @@
 {
   "kind": "collectionType",
-  "collectionName": "detalles_carritos",
+  "collectionName": "detalles_reservas",
   "info": {
-    "singularName": "detalle-carrito",
-    "pluralName": "detalles-carritos",
-    "displayName": "DetalleCarrito"
+    "singularName": "detalle-reserva",
+    "pluralName": "detalles-reservas",
+    "displayName": "DetalleReserva"
   },
   "options": {
     "draftAndPublish": false
@@ -17,17 +17,22 @@
       "default": 1,
       "min": 1
     },
-    "carrito": {
+    "precioUnitario": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "reserva": {
       "type": "relation",
       "relation": "manyToOne",
-      "target": "api::carrito.carrito",
-      "inversedBy": "detalle_carritos"
+      "target": "api::reserva.reserva",
+      "inversedBy": "detalle_reservas"
     },
     "variacion": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::variacion.variacion",
-      "inversedBy": "detalle_carritos"
+      "inversedBy": "detalle_reservas"
     }
   }
 }

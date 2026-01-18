@@ -7,7 +7,7 @@
     "displayName": "DetalleVenta"
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {

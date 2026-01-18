@@ -26,6 +26,12 @@
       "relation": "oneToMany",
       "target": "api::detalle-carrito.detalle-carrito",
       "mappedBy": "carrito"
+    },
+    "reservas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::reserva.reserva",
+      "mappedBy": "carrito"
     }
   }
 }

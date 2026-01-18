@@ -12,6 +12,12 @@ export default {
         handler: "pago.webhook",
         config: { auth: false },
       },
+      {
+        method: "GET",
+        path: "/pagos/retorno",
+        handler: "pago.retorno",
+        config: { auth: false },
+      },
     ],
   };
   
