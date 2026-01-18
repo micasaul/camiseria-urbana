@@ -66,16 +66,16 @@ function AuthCallback() {
   if (jwt) {
     return (
       <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'monospace' }}>
-        <h1 style={{ color: 'white' }}>Autenticación Exitosa</h1>
+        <h1 style={{ color: 'black' }}>Autenticación Exitosa</h1>
         <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ color: 'white' }}>JWT Token:</h2>
+          <h2 style={{ color: 'black' }}>JWT Token:</h2>
           <pre style={{ background: '#f9f9f9', padding: '15px', borderRadius: '4px', overflowX: 'auto', wordBreak: 'break-all', color: 'black' }}>
             {jwt}
           </pre>
         </div>
         {user && (
           <div>
-            <h2 style={{ color: 'white' }}>Usuario:</h2>
+            <h2 style={{ color: 'black' }}>Usuario:</h2>
             <pre style={{ background: '#f9f9f9', padding: '15px', borderRadius: '4px', color: 'black' }}>
               {JSON.stringify(user, null, 2)}
             </pre>
@@ -87,8 +87,8 @@ function AuthCallback() {
 
   return (
     <div style={{ padding: '20px', textAlign: 'center' }}>
-      <h1 style={{ color: 'white' }}>Google OAuth Callback</h1>
-      <p style={{ color: 'white' }}>Esperando tokens de Google...</p>
+      <h1 style={{ color: 'black' }}>Google OAuth Callback</h1>
+      <p style={{ color: 'black' }}>Esperando tokens de Google...</p>
     </div>
   )
 }
