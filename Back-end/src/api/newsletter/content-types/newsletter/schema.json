@@ -11,6 +11,11 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "email": {
+      "type": "email",
+      "required": true,
+      "unique": true
+    },
     "users_permissions_user": {
       "type": "relation",
       "relation": "oneToOne",

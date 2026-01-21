@@ -16,5 +16,11 @@ module.exports = {
    * This gives you an opportunity to set up your data model,
    * run jobs, or perform some special logic.
    */
-  bootstrap(/*{ strapi }*/) {},
+  async bootstrap() {
+    const promoCron = require('./extensions/promos/promo-cron');
+    const newsletterCron = require('./extensions/newsletters/newsletter-cron');
+
+    await promoCron.actualizarPromosActivas();
+    await newsletterCron.enviarNewsletterPromos();
+  },
 };
