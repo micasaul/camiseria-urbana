@@ -18,6 +18,31 @@ button.white-btn:hover {
   color: white;
 }
 
+button.white-btn.admin-menu-item {
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
+  padding: 10px 12px;
+}
+
+button.white-btn.admin-menu-item.active {
+  background-color: #F4ACB7;
+  color: white;
+}
+
+button.white-btn.admin-menu-item-group {
+  cursor: default;
+}
+
+button.white-btn.admin-menu-item-group:hover {
+  background-color: transparent;
+  color: #172A3A;
+}
+
+.admin-sub-link.active {
+  color: #f4acb7;
+}
+
 
 button:focus,
 button:focus-visible {

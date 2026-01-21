@@ -39,6 +39,10 @@
   gap: 0px;
 }
 
+.admin-header .icons {
+  margin-left: auto;
+}
+
 .search-wrapper {
   display: flex;
   align-items: center;
@@ -176,6 +180,16 @@
   margin-left: 8px; /* separación entre íconos */
 }
 
+.admin-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-menu-group {
+  margin-bottom: 10px;
+}
+
 .side-panel {
   position: fixed;
   top: 75px;
@@ -187,6 +201,18 @@
   box-shadow: 8px 0 20px rgba(0, 0, 0, 0.08);
   padding: 16px;
   z-index: 110;
+}
+
+.admin-side-panel {
+  width: 260px;
+}
+
+.admin-side-panel .side-panel-header {
+  margin-bottom: 8px;
+}
+
+.admin-layout .admin-content {
+  padding-left: 260px;
 }
 
 .side-panel.right {
@@ -253,6 +279,10 @@
   flex-direction: column;
   gap: 8px;
   padding-left: 12px;
+}
+
+.admin-submenu {
+  padding-left: 28px;
 }
 
 .side-panel-link {
