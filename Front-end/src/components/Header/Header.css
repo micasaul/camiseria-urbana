@@ -82,6 +82,32 @@
   background: #f4f4f4;
 }
 
+.header-icon-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.header-icon-btn:hover {
+  background-color: #f4acb7;
+  color: white;
+}
+
+.header-icon-btn svg {
+  width: 24px;
+  height: 24px;
+  color: #1B2A41;
+}
+
+.header-icon-btn:hover svg {
+  color: white;
+}
+
 .white-btn {
   background-color: white;   /* fondo blanco */
   border: 1px solid transparent; /* sin borde */
@@ -112,7 +138,7 @@
   position: fixed;
   top: 75px;
   left: 0;
-  width: 280px;
+  width: 320px;
   height: calc(100vh - 75px);
   background: white;
   border-right: 1px solid #e2e2e2;
@@ -147,13 +173,28 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: none;
-  background: transparent;
   color: #1B2A41;
   font-weight: 500;
   font-size: 15px;
+  padding: 0;
+}
+
+.side-panel-button {
+  border: none;
+  background: transparent;
   cursor: pointer;
   padding: 0;
+  font: inherit;
+}
+
+.chevron-button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .chevron {
@@ -198,6 +239,14 @@
 
 .side-panel-body {
   color: #1B2A41;
+  height: calc(100% - 32px);
+  overflow-y: auto;
+}
+
+.side-panel-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .close-btn {

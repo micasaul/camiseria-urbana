@@ -13,7 +13,7 @@ button.white-btn {
   transition: background-color 0.4s ease, opacity 0.4s ease;
 }
 
-button:hover {
+button.white-btn:hover {
   background-color: #F4ACB7;
   color: white;
 }
