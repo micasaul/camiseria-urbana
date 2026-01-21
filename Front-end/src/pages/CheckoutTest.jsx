@@ -1,4 +1,4 @@
-import MercadoPagoButton from "../components/MercadoPagoButton.jsx";
+import MercadoPagoButton from "../components/buttons/mp-btn/MercadoPagoButton.jsx";
 
 const CheckoutTest = () => {
   return <MercadoPagoButton />;

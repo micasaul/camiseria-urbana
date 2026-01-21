@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import BlueButton from './Buttons/BlueButton';
-import { getProductos } from '../services/productos';
+import { getProductos } from '../../api/productos';
 
 export default function Destacados() {
   const [productos, setProductos] = useState([]);

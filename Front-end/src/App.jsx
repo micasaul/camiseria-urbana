@@ -1,5 +1,5 @@
-import Footer from "./layouts/Footer/Footer.jsx"
-import Header from "./layouts/Header/header.jsx"
+import Footer from "./components/Footer/Footer.jsx"
+import Header from "./components/Header/Header.jsx"
 import AppRoutes from "./routes/AppRoutes.jsx"
 import './App.css'
 

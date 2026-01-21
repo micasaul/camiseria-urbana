@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 import "./Footer.css"
-import LinkButton from "../../components/buttons/link-btn/LinkButton.jsx"
-import BlueButton from "../../components/buttons/blue-btn/BlueButton.jsx"
+import LinkButton from "../buttons/link-btn/LinkButton.jsx"
+import BlueButton from "../buttons/blue-btn/BlueButton.jsx"
 
 export default function Footer() {
   return (
@@ -24,7 +24,6 @@ export default function Footer() {
         </div>
 
         <div className="footer-icons">
-          {/* redes → después se linkean si querés */}
           <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
             <path fill="currentColor" fillRule="evenodd"
               d="M3 8a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v8a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8Z"/>
