@@ -121,6 +121,10 @@ export default function Header() {
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
           onClick={handleSearchClick}
+          onClose={() => {
+            setIsSearchOpen(false)
+            setSearchQuery('')
+          }}
         />
 
         {/* Login / Mi cuenta */}

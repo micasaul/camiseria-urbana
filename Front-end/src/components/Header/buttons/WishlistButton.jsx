@@ -1,7 +1,33 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import WishlistCard from '../../cards/wishlist-card/WishlistCard.jsx'
 import WhiteButton from '../../buttons/white-btn/WhiteButton.jsx'
+import BlueButton from '../../buttons/blue-btn/BlueButton.jsx'
+import { useAuth } from '../../../context/AuthContext.jsx'
 
-export default function WishlistButton({ isOpen, onClick, onClose, items }) {
+export default function WishlistButton({ isOpen, onClick, onClose, items = [] }) {
+  const navigate = useNavigate()
+  const { rol } = useAuth()
+  const [itemsWishlist, setItemsWishlist] = useState(items)
+
+  useEffect(() => {
+    setItemsWishlist(items)
+  }, [items])
+
+  const handleExplorar = () => {
+    if (onClose) {
+      onClose()
+    }
+    navigate('/catalogo')
+  }
+
+  const handleLogin = () => {
+    if (onClose) {
+      onClose()
+    }
+    navigate('/login')
+  }
+
   return (
     <>
       <WhiteButton className="header-icon-btn ghost-btn" onClick={onClick} aria-expanded={isOpen}>
@@ -23,17 +49,33 @@ export default function WishlistButton({ isOpen, onClick, onClose, items }) {
             <button className="close-btn" onClick={onClose} aria-label="Cerrar wishlist">×</button>
           </div>
           <div className="side-panel-body">
-            <div className="side-panel-cards">
-              {items.map((item) => (
-                <WishlistCard
-                  key={item.id}
-                  imageSrc={item.imageSrc}
-                  name={item.name}
-                  price={item.price}
-                  onRemove={() => {}}
-                />
-              ))}
-            </div>
+            {rol === 'guest' ? (
+              <div className="cart-empty">
+                <p className="cart-empty-text">Necesitas loguearte para acceder.</p>
+                <BlueButton width="220px" height="36px" fontSize="15px" onClick={handleLogin}>
+                  Login
+                </BlueButton>
+              </div>
+            ) : itemsWishlist.length === 0 ? (
+              <div className="cart-empty">
+                <p className="cart-empty-text">Explora nuestro catálogo.</p>
+                <BlueButton width="220px" height="36px" fontSize="15px" onClick={handleExplorar}>
+                  Explorar
+                </BlueButton>
+              </div>
+            ) : (
+              <div className="side-panel-cards">
+                {itemsWishlist.map((item) => (
+                  <WishlistCard
+                    key={item.id}
+                    imageSrc={item.imageSrc}
+                    name={item.name}
+                    price={item.price}
+                    onRemove={() => {}}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </aside>
       )}
