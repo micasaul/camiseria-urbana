@@ -1,7 +1,7 @@
 import "./blue-btn.css";
 
 
-export default function BlueButton({ children, width, height, fontSize, ...props }) {
+export default function BlueButton({ children, width, height, fontSize, className, ...props }) {
   const style = {
     "--btn-width": width || "auto",
     "--btn-height": height || "auto",
@@ -9,7 +9,7 @@ export default function BlueButton({ children, width, height, fontSize, ...props
   };
 
   return (
-    <button className="blue-btn" style={style} {...props}>
+    <button className={`blue-btn${className ? ` ${className}` : ''}`} style={style} {...props}>
       {children}
     </button>
   );

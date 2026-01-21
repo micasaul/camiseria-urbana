@@ -1,7 +1,27 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import WhiteButton from '../../buttons/white-btn/WhiteButton.jsx'
+import BlueButton from '../../buttons/blue-btn/BlueButton.jsx'
 
-export default function AccountButton({ isOpen, onClick, menuItems }) {
+export default function AccountButton({ isOpen, onClick, userRole = 'guest', onLogout, onClose }) {
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    if (onLogout) {
+      await onLogout()
+    }
+    if (onClose) {
+      onClose()
+    }
+    navigate('/')
+  }
+
+  const handleAdminClick = () => {
+    if (onClose) {
+      onClose()
+    }
+    navigate('/admin')
+  }
+
   return (
     <div className="account-wrapper">
       <WhiteButton className="header-icon-btn ghost-btn" onClick={onClick} aria-expanded={isOpen}>
@@ -15,11 +35,42 @@ export default function AccountButton({ isOpen, onClick, menuItems }) {
       </WhiteButton>
       {isOpen && (
         <div className="account-dropdown">
-          {menuItems.map((item) => (
-            <Link key={item.label} to={item.to} className="dropdown-link">
-              {item.label}
-            </Link>
-          ))}
+          {userRole === 'guest' ? (
+            <div className="account-submenu">
+              <Link to="/login" className="side-panel-link sub-link" onClick={onClose}>
+                Login
+              </Link>
+            </div>
+          ) : (
+            <div className="account-submenu">
+              <button
+                type="button"
+                className="side-panel-link sub-link"
+                onClick={() => {
+                  if (onClose) {
+                    onClose()
+                  }
+                  navigate('/mi-cuenta')
+                }}
+              >
+                Mi cuenta
+              </button>
+              <button type="button" className="side-panel-link sub-link" onClick={handleLogout}>
+                Cerrar sesión
+              </button>
+              {userRole === 'admin' && (
+                <BlueButton
+                  className="account-admin-button"
+                  width="220px"
+                  height="36px"
+                  fontSize="15px"
+                  onClick={handleAdminClick}
+                >
+                  Admin Panel
+                </BlueButton>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

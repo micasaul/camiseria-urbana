@@ -7,9 +7,11 @@ import SearchButton from './buttons/SearchButton.jsx'
 import AccountButton from './buttons/AccountButton.jsx'
 import WishlistButton from './buttons/WishlistButton.jsx'
 import CartButton from './buttons/CartButton.jsx'
+import { useAuth } from '../../context/AuthContext.jsx'
 
-export default function Header({ userRole = 'guest' }) {
+export default function Header() {
   const navigate = useNavigate()
+  const { rol, cerrarSesion } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -40,23 +42,6 @@ export default function Header({ userRole = 'guest' }) {
       imageSrc: LogoCamiseriaUrbana
     }
   ]), [])
-
-  const accountMenu = useMemo(() => ({
-    admin: [
-      { label: 'Panel admin', to: '/admin' },
-      { label: 'Mi cuenta', to: '/mi-cuenta' }
-    ],
-    client: [
-      { label: 'Mi cuenta', to: '/mi-cuenta' },
-      { label: 'Wishlist', to: '/wishlist' }
-    ],
-    guest: [
-      { label: 'Iniciar sesión', to: '/login' },
-      { label: 'Crear cuenta', to: '/signup' }
-    ]
-  }), [])
-
-  const activeAccountMenu = accountMenu[userRole] ?? accountMenu.guest
 
   const closePanels = () => {
     setIsMenuOpen(false)
@@ -142,7 +127,9 @@ export default function Header({ userRole = 'guest' }) {
         <AccountButton
           isOpen={isAccountOpen}
           onClick={handleAccountToggle}
-          menuItems={activeAccountMenu}
+          userRole={rol}
+          onLogout={cerrarSesion}
+          onClose={() => setIsAccountOpen(false)}
         />
 
         {/* Wishlist */}

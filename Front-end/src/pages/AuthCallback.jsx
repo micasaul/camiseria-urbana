@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.jsx'
+
+const STRAPI_URL = import.meta.env.BACKEND_URL ?? 'http://localhost:1337'
 
 function AuthCallback() {
+  const navigate = useNavigate()
+  const { establecerSesion } = useAuth()
   const [jwt, setJwt] = useState(null)
   const [user, setUser] = useState(null)
   const [error, setError] = useState(null)
@@ -14,7 +20,7 @@ function AuthCallback() {
     if (idToken || accessToken) {
       setLoading(true)
       
-      fetch('http://localhost:1337/api/auth/google-token', {
+      fetch(`${STRAPI_URL}/api/auth/google-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -25,14 +31,17 @@ function AuthCallback() {
         }),
       })
         .then((res) => res.json())
-        .then((data) => {
+        .then(async (data) => {
           if (data.jwt) {
+            console.info('Respuesta OAuth Strapi:', data)
             setJwt(data.jwt)
             setUser(data.user)
+            await establecerSesion({ token: data.jwt, usuario: data.user })
             // Limpiar URL
             window.history.replaceState({}, document.title, window.location.pathname)
+            navigate('/')
           } else {
-            setError(data.error?.message || data.message || 'Error desconocido')
+            setError(data.error?.message || data.message || 'Ocurrió un error desconocido')
           }
         })
         .catch((err) => {
