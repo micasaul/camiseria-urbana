@@ -10,6 +10,7 @@ const actualizarPromosActivas = async () => {
     const promoProductos = await strapi.entityService.findMany(
       'api::promo-producto.promo-producto',
       {
+        publicationState: 'preview',
         populate: { promo: true },
         pagination: { page, pageSize },
       }

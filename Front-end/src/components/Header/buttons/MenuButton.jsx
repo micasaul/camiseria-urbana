@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import WhiteButton from '../../buttons/white-btn/WhiteButton.jsx'
 
-export default function MenuButton({ isOpen, onClick, onClose, productLinks }) {
+export default function MenuButton({ isOpen, onClick, onClose, productLinks, ofertasActivas, onAbrirMenu }) {
   const navigate = useNavigate()
   const [isProductsOpen, setIsProductsOpen] = useState(false)
 
@@ -10,6 +10,8 @@ export default function MenuButton({ isOpen, onClick, onClose, productLinks }) {
     onClick()
     if (isOpen) {
       setIsProductsOpen(false)
+    } else if (onAbrirMenu) {
+      onAbrirMenu()
     }
   }
 
@@ -65,9 +67,15 @@ export default function MenuButton({ isOpen, onClick, onClose, productLinks }) {
                 ))}
               </div>
             )}
-            <button type="button" className="side-panel-link side-panel-link-disabled" disabled>
-              Ofertas
-            </button>
+            {ofertasActivas ? (
+              <Link to="/catalogo" className="side-panel-link" onClick={onClose}>
+                Ofertas
+              </Link>
+            ) : (
+              <button type="button" className="side-panel-link side-panel-link-disabled" disabled>
+                Ofertas
+              </button>
+            )}
           </nav>
         </aside>
       )}

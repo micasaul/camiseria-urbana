@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import "./Header.css"
 import LogoCamiseriaUrbana from "../../assets/LogoCamiseriaUrbana.png" 
 import MenuButton from './buttons/MenuButton.jsx'
@@ -8,6 +8,8 @@ import AccountButton from './buttons/AccountButton.jsx'
 import WishlistButton from './buttons/WishlistButton.jsx'
 import CartButton from './buttons/CartButton.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
+
+const BACKEND_URL = import.meta.env.BACKEND_URL ?? 'http://localhost:1337'
 
 export default function Header() {
   const navigate = useNavigate()
@@ -18,6 +20,56 @@ export default function Header() {
   const [isAccountOpen, setIsAccountOpen] = useState(false)
   const [isWishlistOpen, setIsWishlistOpen] = useState(false)
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const [ofertasActivas, setOfertasActivas] = useState(false)
+  const [productosOferta, setProductosOferta] = useState([])
+
+  useEffect(() => {
+    let activo = true
+    let intervaloId
+
+    const obtenerOfertasActivas = async () => {
+      try {
+        const respuesta = await fetch(`${BACKEND_URL}/api/promo-productos/activa`)
+        if (!respuesta.ok) {
+          return
+        }
+        const data = await respuesta.json()
+        if (activo) {
+          setOfertasActivas(Boolean(data?.activa))
+        }
+      } catch {
+        if (activo) {
+          setOfertasActivas(false)
+        }
+      }
+    }
+
+    obtenerOfertasActivas()
+    intervaloId = setInterval(obtenerOfertasActivas, 30000)
+
+    return () => {
+      activo = false
+      if (intervaloId) {
+        clearInterval(intervaloId)
+      }
+    }
+  }, [])
+
+  const cargarProductosOferta = async () => {
+    try {
+      const respuesta = await fetch(`${BACKEND_URL}/api/promo-productos/activas/productos`)
+      if (!respuesta.ok) {
+        return
+      }
+      const data = await respuesta.json()
+      const productos = data?.productos ?? []
+      setProductosOferta(productos)
+      setOfertasActivas(productos.length > 0)
+    } catch {
+      setProductosOferta([])
+      setOfertasActivas(false)
+    }
+  }
 
   const productLinks = useMemo(() => ([
     { label: 'Lino', to: '/catalogo' },
@@ -103,6 +155,8 @@ export default function Header() {
         onClick={handleMenuToggle}
         onClose={() => setIsMenuOpen(false)}
         productLinks={productLinks}
+        ofertasActivas={ofertasActivas}
+        onAbrirMenu={cargarProductosOferta}
       />
 
       {/* Logo → Home */}
