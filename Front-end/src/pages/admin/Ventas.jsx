@@ -1,4 +1,4 @@
-export default function AdminVentas() {
+export default function Ventas() {
   return (
     <div style={{ padding: '24px' }}>
       <h1>Ventas</h1>

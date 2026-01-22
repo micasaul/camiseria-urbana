@@ -6,7 +6,7 @@ export default function AdminLayout() {
   const { rol } = useAuth()
 
   if (rol !== 'admin') {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/error" replace />
   }
 
   return (

@@ -1,4 +1,4 @@
-import BlueButton from '../components/buttons/blue-btn/BlueButton.jsx'
+import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
 import './Login.css'
 
 const STRAPI_URL = import.meta.env.BACKEND_URL ?? 'http://localhost:1337'
@@ -19,4 +19,3 @@ function Login() {
 }
 
 export default Login
-  

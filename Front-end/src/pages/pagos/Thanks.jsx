@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import BlueButton from "../components/buttons/blue-btn/BlueButton.jsx";
+import BlueButton from "../../components/buttons/blue-btn/BlueButton.jsx";
 
 export default function GraciasCompra() {
   return (

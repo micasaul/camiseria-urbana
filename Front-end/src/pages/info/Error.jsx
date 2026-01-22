@@ -1,8 +1,6 @@
-// src/pages/Error.jsx
-import React from "react";
 import { Link } from "react-router-dom";
-import BlueButton from "../components/buttons/blue-btn/BlueButton.jsx";
-import ErrorImage from "../assets/cerdo-elegante.png"; // pon la imagen aquí
+import BlueButton from "../../components/buttons/blue-btn/BlueButton.jsx";
+import ErrorImage from "../../assets/cerdo-elegante.png"; // pon la imagen aquí
 
 export default function Error() {
   return (
