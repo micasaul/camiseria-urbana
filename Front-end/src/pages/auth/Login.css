@@ -10,3 +10,43 @@
   color: #1b2a41;
   margin: 0;
 }
+
+.login-google-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 16px 28px;
+  border-radius: 9999px;
+  border: 1.5px solid #817b7b;
+  background: white;
+  color: #1b2a41;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  justify-content: center;
+  margin-top: 29px;
+  gap: 16px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.login-google-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+.login-google-icon img {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.login-google-button:hover {
+  background-color: #f4acb7;
+  border-color: #f4acb7;
+  color: white;
+}
+

@@ -2,10 +2,13 @@
   min-height: 100vh;
   width: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 24px;
+  padding: 0;
   background: #f7f3f3;
+  background-image: url('../assets/login-bg.png');
+  background-size: cover;
+  background-position: center;
 }
 
 .auth-content {
@@ -13,4 +16,7 @@
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  flex: 1;
+  justify-content: center;
+  width: 100%;
 }
