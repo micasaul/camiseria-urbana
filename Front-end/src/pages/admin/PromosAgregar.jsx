@@ -12,10 +12,12 @@ import {
   getPromoPorId,
   getPromoProductos
 } from '../../api/promos.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 import './admin.css'
 
 export default function PromosAgregar() {
   const { id } = useParams()
+  const { cargando: cargandoAuth } = useAuth()
   const [nombre, setNombre] = useState('')
   const [porcentaje, setPorcentaje] = useState('')
   const [desde, setDesde] = useState('')
@@ -30,6 +32,12 @@ export default function PromosAgregar() {
   const [relacionesPrevias, setRelacionesPrevias] = useState([])
 
   useEffect(() => {
+    if (cargandoAuth) return
+    const token = window.localStorage.getItem('strapiToken')
+    if (!token) {
+      setError('Necesitás iniciar sesión para ver las promos.')
+      return
+    }
     let activo = true
     getProductos()
       .then((data) => {
@@ -48,6 +56,12 @@ export default function PromosAgregar() {
 
   useEffect(() => {
     if (!id) return
+    if (cargandoAuth) return
+    const token = window.localStorage.getItem('strapiToken')
+    if (!token) {
+      setError('Necesitás iniciar sesión para ver las promos.')
+      return
+    }
     let activo = true
     getPromoPorId(id)
       .then((data) => {

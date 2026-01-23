@@ -18,7 +18,7 @@ export default function AdminRoutes() {
       <Route path="promos/editar/:id" element={<AdminPromosAgregar />} />
       <Route path="promos/listar" element={<AdminPromosListar />} />
       <Route path="ventas" element={<AdminVentas />} />
-      <Route path="ventas/detalleventa" element={<AdminDetalleVenta />} />
+      <Route path="ventas/detalle/:id" element={<AdminDetalleVenta />} />
     </>
   )
 }

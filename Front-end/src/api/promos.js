@@ -69,8 +69,11 @@ export async function getPromoPorId(id) {
 }
 
 export async function getPromoProductos(promoId) {
+  const filtro = Number.isNaN(Number(promoId))
+    ? `filters[promo][documentId][$eq]=${promoId}`
+    : `filters[promo][id][$eq]=${promoId}`;
   const res = await fetch(
-    `${BACKEND_URL}${PROMO_PRODUCTO_ENDPOINT}?filters[promo][id][$eq]=${promoId}&populate=producto`,
+    `${BACKEND_URL}${PROMO_PRODUCTO_ENDPOINT}?${filtro}&populate=producto`,
     { headers: { ...getAuthHeaders() } }
   );
   if (!res.ok) {
