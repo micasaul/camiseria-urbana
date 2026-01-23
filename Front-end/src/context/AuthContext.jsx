@@ -128,6 +128,16 @@ export function AuthProvider({ children }) {
     window.localStorage.removeItem(USER_STORAGE_KEY)
   }
 
+  const refrescarUsuario = async () => {
+    const token = window.localStorage.getItem(TOKEN_STORAGE_KEY)
+    if (!token) {
+      return
+    }
+    setCargando(true)
+    await obtenerUsuarioActual(token)
+    setCargando(false)
+  }
+
   const value = useMemo(
     () => ({
       rol,
@@ -136,7 +146,8 @@ export function AuthProvider({ children }) {
       setRol,
       establecerSesion,
       iniciarSesion,
-      cerrarSesion
+      cerrarSesion,
+      refrescarUsuario
     }),
     [rol, usuario]
   )

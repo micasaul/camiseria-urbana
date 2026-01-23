@@ -1,0 +1,15 @@
+export const COLOR_HEX_MAP = {
+  Blanco: '#ffffff',
+  Negro: '#111111',
+  Gris: '#9ca3af',
+  Beige: '#f5f5dc',
+  Marrón: '#8b5a2b',
+  Violeta: '#7c3aed',
+  Azul: '#1b2a41',
+  Celeste: '#7dd3fc',
+  Verde: '#22c55e',
+  Amarillo: '#facc15',
+  Naranja: '#f97316',
+  Rosa: '#f4acb7',
+  Rojo: '#ef4444',
+};

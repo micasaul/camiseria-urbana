@@ -1,12 +1,27 @@
+import { useEffect, useState } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import AdminHeader from '../components/Header/AdminHeader.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 
 export default function AdminLayout() {
-  const { rol, cargando } = useAuth()
+  const { rol, cargando, refrescarUsuario } = useAuth()
   const esAdmin = typeof rol === 'string' && rol.toLowerCase().includes('admin')
+  const token = window.localStorage.getItem('strapiToken')
+  const esperandoRol = Boolean(token) && rol === 'guest'
+  const [reintento, setReintento] = useState(false)
 
-  if (cargando) {
+  useEffect(() => {
+    if (cargando) return
+    if (!token) return
+    if (esAdmin) return
+    if (reintento) return
+
+    refrescarUsuario()
+      .catch(() => {})
+      .finally(() => setReintento(true))
+  }, [cargando, token, esAdmin, reintento, refrescarUsuario])
+
+  if (cargando || esperandoRol || (token && !esAdmin && !reintento)) {
     return null
   }
 

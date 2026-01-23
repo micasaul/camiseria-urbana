@@ -379,6 +379,17 @@
   justify-content: flex-end;
 }
 
+.admin-form-message {
+  grid-column: 1 / -1;
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #1b2a41;
+}
+
+.admin-form-message.error {
+  color: #d23c3c;
+}
+
 .admin-white-action {
   background: #ffffff;
   border: 1px solid #e2e2e2;

@@ -12,6 +12,7 @@ export default function AdminRoutes() {
     <>
       <Route index element={<AdminPanel />} />
       <Route path="productos/agregar" element={<AdminProductosAgregar />} />
+      <Route path="productos/editar/:id" element={<AdminProductosAgregar />} />
       <Route path="productos/listar" element={<AdminProductosListar />} />
       <Route path="promos/agregar" element={<AdminPromosAgregar />} />
       <Route path="promos/listar" element={<AdminPromosListar />} />
