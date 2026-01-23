@@ -3,6 +3,7 @@ import { useState } from "react"
 import "./Footer.css"
 import LinkButton from "../buttons/link-btn/LinkButton.jsx"
 import BlueButton from "../buttons/blue-btn/BlueButton.jsx"
+import LogoGithub from "../../assets/logo-github.png"
 
 export default function Footer() {
   const [email, setEmail] = useState("")
@@ -77,15 +78,14 @@ export default function Footer() {
         ) : null}
 
         <div className="footer-icons">
-          <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
-            <path fill="currentColor" fillRule="evenodd"
-              d="M3 8a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v8a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8Z"/>
-          </svg>
-
-          <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-            <path fillRule="evenodd"
-              d="M12.006 2a9.847 9.847 0 0 0-6.484 2.44A10.32 10.32 0 0 0 2.129 10.61a10.48 10.48 0 0 0 1.317 6.955 10.045 10.045 0 0 0 5.4 4.418"/>
-          </svg>
+          <a
+            href="https://github.com/micasaul/camiseria-urbana"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="GitHub Camisería Urbana"
+          >
+            <img src={LogoGithub} alt="" className="footer-icon-img" />
+          </a>
         </div>
       </div>
 

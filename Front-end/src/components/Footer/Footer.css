@@ -64,6 +64,18 @@
   transition: all 0.2s ease;
 }
 
+.footer-icon-img {
+  width: 24px;
+  height: 24px;
+  display: block;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.footer-icons a:hover .footer-icon-img {
+  filter: brightness(0) saturate(100%) invert(83%) sepia(18%) saturate(617%) hue-rotate(302deg) brightness(98%) contrast(96%);
+}
+
 .footer-icons svg:hover {
   stroke: #F4ACB7;
   fill: #F4ACB7;
