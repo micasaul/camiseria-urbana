@@ -1,6 +1,40 @@
+import { useEffect, useMemo, useState } from 'react'
+import { getVentasDashboard } from '../../api/ventas.js'
+import { formatearPrecio } from '../../utils/adminHelpers.js'
+import { calcularTopClientes, calcularTopProductos } from '../../utils/ventasStats.js'
 import './admin.css'
 
 export default function AdminPanel() {
+  const [ventas, setVentas] = useState([])
+  const [cargando, setCargando] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let activo = true
+    setCargando(true)
+    setError('')
+    getVentasDashboard()
+      .then((data) => {
+        if (!activo) return
+        setVentas(data)
+      })
+      .catch(() => {
+        if (!activo) return
+        setError('No se pudieron cargar las métricas.')
+      })
+      .finally(() => {
+        if (!activo) return
+        setCargando(false)
+      })
+
+    return () => {
+      activo = false
+    }
+  }, [])
+
+  const topClientes = useMemo(() => calcularTopClientes(ventas), [ventas])
+  const topProductos = useMemo(() => calcularTopProductos(ventas), [ventas])
+
   return (
     <div className="admin-page">
       <h1 className="admin-title">Dashboard</h1>
@@ -12,18 +46,32 @@ export default function AdminPanel() {
               <span>Cliente</span>
               <span>Total comprado</span>
             </div>
-            <div className="admin-stats-row">
-              <span>cliente1@mail.com</span>
-              <span>$ 120.000</span>
-            </div>
-            <div className="admin-stats-row">
-              <span>cliente2@mail.com</span>
-              <span>$ 98.500</span>
-            </div>
-            <div className="admin-stats-row">
-              <span>cliente3@mail.com</span>
-              <span>$ 76.200</span>
-            </div>
+            {cargando && (
+              <div className="admin-stats-row">
+                <span>Cargando...</span>
+                <span>—</span>
+              </div>
+            )}
+            {!cargando && error && (
+              <div className="admin-stats-row">
+                <span>{error}</span>
+                <span>—</span>
+              </div>
+            )}
+            {!cargando && !error && topClientes.length === 0 && (
+              <div className="admin-stats-row">
+                <span>Sin datos</span>
+                <span>—</span>
+              </div>
+            )}
+            {!cargando &&
+              !error &&
+              topClientes.slice(0, 3).map((cliente, index) => (
+                <div key={`${cliente.cliente}-${index}`} className="admin-stats-row">
+                  <span>{cliente.cliente}</span>
+                  <span>{formatearPrecio(cliente.total)}</span>
+                </div>
+              ))}
           </div>
         </div>
         <div className="admin-card">
@@ -33,27 +81,44 @@ export default function AdminPanel() {
               <span>Artículo</span>
               <span>Cantidad</span>
             </div>
-            <div className="admin-stats-row">
-              <span className="admin-item-cell">
-                <span className="admin-item-thumb" />
-                Camisa Lino
-              </span>
-              <span>56</span>
-            </div>
-            <div className="admin-stats-row">
-              <span className="admin-item-cell">
-                <span className="admin-item-thumb" />
-                Camisa Jean
-              </span>
-              <span>42</span>
-            </div>
-            <div className="admin-stats-row">
-              <span className="admin-item-cell">
-                <span className="admin-item-thumb" />
-                Camisa Algodón
-              </span>
-              <span>31</span>
-            </div>
+            {cargando && (
+              <div className="admin-stats-row">
+                <span className="admin-item-cell">
+                  <span className="admin-item-thumb" />
+                  Cargando...
+                </span>
+                <span>—</span>
+              </div>
+            )}
+            {!cargando && error && (
+              <div className="admin-stats-row">
+                <span className="admin-item-cell">
+                  <span className="admin-item-thumb" />
+                  {error}
+                </span>
+                <span>—</span>
+              </div>
+            )}
+            {!cargando && !error && topProductos.length === 0 && (
+              <div className="admin-stats-row">
+                <span className="admin-item-cell">
+                  <span className="admin-item-thumb" />
+                  Sin datos
+                </span>
+                <span>—</span>
+              </div>
+            )}
+            {!cargando &&
+              !error &&
+              topProductos.slice(0, 3).map((producto, index) => (
+                <div key={`${producto.nombre}-${index}`} className="admin-stats-row">
+                  <span className="admin-item-cell">
+                    <span className="admin-item-thumb" />
+                    {producto.nombre}
+                  </span>
+                  <span>{producto.cantidad}</span>
+                </div>
+              ))}
           </div>
         </div>
       </div>

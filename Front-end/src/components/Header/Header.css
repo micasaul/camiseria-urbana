@@ -370,8 +370,8 @@
 }
 
 .cart-checkout-button {
-  width: calc(100% - 24px);
-  margin: 0 12px 4px;
+  width: 100%;
+  margin: 0 0 4px;
   display: flex;
   align-items: center;
   justify-content: center;

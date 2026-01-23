@@ -580,8 +580,12 @@ button.white-btn.admin-white-action:hover {
 
 .admin-table-row {
   border-top: 1px solid #eeeeee;
-  color: #6b7280;
+  color: #1b2a41;
   font-size: 13px;
+}
+
+.admin-row-muted {
+  color: #9aa3af;
 }
 
 .admin-pagination {
@@ -591,4 +595,20 @@ button.white-btn.admin-white-action:hover {
   margin-top: 12px;
   color: #6b7280;
   font-size: 13px;
+  align-items: center;
+}
+
+.admin-page-btn {
+  border: 1px solid #dcdcdc;
+  background: #ffffff;
+  color: #1b2a41;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.admin-page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

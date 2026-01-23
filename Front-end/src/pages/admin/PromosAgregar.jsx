@@ -12,6 +12,7 @@ import {
   getPromoPorId,
   getPromoProductos
 } from '../../api/promos.js'
+import { ordenarPorNombre, resetearFormularioPromo, toggleSeleccion, validarPorcentaje } from '../../utils/adminHelpers.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import './admin.css'
 
@@ -42,7 +43,7 @@ export default function PromosAgregar() {
     getProductos()
       .then((data) => {
         if (!activo) return
-        setProductos(data)
+        setProductos(data.items ?? [])
       })
       .catch(() => {
         if (!activo) return
@@ -98,30 +99,27 @@ export default function PromosAgregar() {
   }, [id])
 
   const productosOrdenados = useMemo(
-    () => [...productos].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '')),
+    () => ordenarPorNombre(productos, (item) => item.nombre || ''),
     [productos]
   )
 
   const toggleProducto = (productoId) => {
-    setProductosSeleccionados((prev) =>
-      prev.includes(productoId)
-        ? prev.filter((idItem) => idItem !== productoId)
-        : [...prev, productoId]
-    )
+    setProductosSeleccionados((prev) => toggleSeleccion(prev, productoId))
   }
 
   const resetearFormulario = () => {
-    setNombre('')
-    setPorcentaje('')
-    setDesde('')
-    setHasta('')
-    setProductosSeleccionados([])
-    setMensaje('')
-    setError('')
-    if (!id) {
-      setPromoId(null)
-      setPromoDocumentId(null)
-    }
+    resetearFormularioPromo({
+      setNombre,
+      setPorcentaje,
+      setDesde,
+      setHasta,
+      setProductosSeleccionados,
+      setMensaje,
+      setError,
+      setPromoId,
+      setPromoDocumentId,
+      id
+    })
   }
 
   const handleSubmit = async (event) => {
@@ -134,11 +132,12 @@ export default function PromosAgregar() {
       return
     }
 
-    const porcentajeNumero = Number(porcentaje)
-    if (!Number.isFinite(porcentajeNumero) || porcentajeNumero < 0 || porcentajeNumero > 100) {
-      setError('El porcentaje debe estar entre 0 y 100.')
+    const errorPorcentaje = validarPorcentaje(porcentaje)
+    if (errorPorcentaje) {
+      setError(errorPorcentaje)
       return
     }
+    const porcentajeNumero = Number(porcentaje)
 
     const fechaInicio = new Date(desde)
     const fechaFin = new Date(hasta)

@@ -94,7 +94,9 @@ export async function eliminarPromoProducto(id) {
   if (!res.ok) {
     throw new Error('No se pudo eliminar la relación promo-producto.');
   }
-
+  if (res.status === 204) {
+    return null;
+  }
   return res.json();
 }
 
@@ -115,13 +117,18 @@ export async function crearPromoProducto(payload) {
   return res.json();
 }
 
-export async function getPromos() {
-  const res = await fetch(`${BACKEND_URL}/api/promos?pagination[pageSize]=100`);
+export async function getPromos(page = 1, pageSize = 10) {
+  const res = await fetch(
+    `${BACKEND_URL}/api/promos?pagination[page]=${page}&pagination[pageSize]=${pageSize}`
+  );
   if (!res.ok) {
     throw new Error('No se pudieron obtener las promos.');
   }
   const data = await res.json();
-  return data?.data ?? [];
+  return {
+    items: data?.data ?? [],
+    pagination: data?.meta?.pagination ?? { page: 1, pageSize, pageCount: 1, total: 0 }
+  };
 }
 
 export async function eliminarPromo(id) {
@@ -135,6 +142,8 @@ export async function eliminarPromo(id) {
   if (!res.ok) {
     throw new Error('No se pudo eliminar la promo.');
   }
-
+  if (res.status === 204) {
+    return null;
+  }
   return res.json();
 }

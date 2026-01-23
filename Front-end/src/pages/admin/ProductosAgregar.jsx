@@ -13,6 +13,7 @@ import {
 import { getProductoEnums } from '../../api/enums.js'
 import { crearMarca, getMarcas } from '../../api/marcas.js'
 import { COLOR_HEX_MAP } from '../../utils/colorMap.js'
+import { resetearFormularioProducto, validarPrecio } from '../../utils/adminHelpers.js'
 import './admin.css'
 
 export default function ProductosAgregar() {
@@ -114,17 +115,19 @@ export default function ProductosAgregar() {
   }
 
   const resetearFormulario = () => {
-    setNombre('')
-    setDescripcion('')
-    setMarcaSeleccionada('')
-    setMarcaNueva('')
-    setMaterial('')
-    setPrecio('')
-    setVariaciones([{ id: 1, talle: '', color: '', cantidad: '', backendId: null, backendDocumentId: null }])
-    setMensaje('')
-    setError('')
-    setProductoId(null)
-    setProductoDocumentId(null)
+    resetearFormularioProducto({
+      setNombre,
+      setDescripcion,
+      setMarcaSeleccionada,
+      setMarcaNueva,
+      setMaterial,
+      setPrecio,
+      setVariaciones,
+      setMensaje,
+      setError,
+      setProductoId,
+      setProductoDocumentId
+    })
   }
   useEffect(() => {
     if (!id) return
@@ -203,11 +206,12 @@ export default function ProductosAgregar() {
       return
     }
 
-    const precioNumero = Number(precio)
-    if (!Number.isFinite(precioNumero) || precioNumero < 0) {
-      setError('El precio debe ser un número válido.')
+    const errorPrecio = validarPrecio(precio)
+    if (errorPrecio) {
+      setError(errorPrecio)
       return
     }
+    const precioNumero = Number(precio)
 
     let marcaRelacion = null
     const marcaSeleccion = marcaSeleccionada
@@ -298,6 +302,7 @@ export default function ProductosAgregar() {
         }
       }
 
+      setError('')
       setMensaje(id ? 'Actualización exitosa.' : 'Producto creado correctamente.')
       if (!id) {
         resetearFormulario()

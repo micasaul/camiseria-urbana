@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { eliminarPromo, getPromos } from '../../api/promos.js'
+import { esPromoFinalizada, formatearFecha, ordenarPromosFinalizadasAlFinal } from '../../utils/adminHelpers.js'
 import './admin.css'
 
 export default function PromosListar() {
@@ -8,15 +9,18 @@ export default function PromosListar() {
   const [promos, setPromos] = useState([])
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
+  const [pagina, setPagina] = useState(1)
+  const [paginacion, setPaginacion] = useState({ page: 1, pageCount: 1 })
 
   useEffect(() => {
     let activo = true
     setCargando(true)
     setError('')
-    getPromos()
+    getPromos(pagina, 10)
       .then((data) => {
         if (!activo) return
-        setPromos(data)
+        setPromos(data.items)
+        setPaginacion(data.pagination)
       })
       .catch(() => {
         if (!activo) return
@@ -30,7 +34,7 @@ export default function PromosListar() {
     return () => {
       activo = false
     }
-  }, [])
+  }, [pagina])
 
   const handleEditar = (promo) => {
     const destino = promo.documentId ?? promo.id
@@ -47,10 +51,7 @@ export default function PromosListar() {
     }
   }
 
-  const formatearFecha = (valor) => {
-    if (!valor) return '—'
-    return valor.split('T')[0]
-  }
+  const promosOrdenadas = useMemo(() => ordenarPromosFinalizadasAlFinal(promos), [promos])
 
   return (
     <div className="admin-page">
@@ -90,10 +91,14 @@ export default function PromosListar() {
         )}
         {!cargando &&
           !error &&
-          promos.map((promo) => {
+          promosOrdenadas.map((promo) => {
             const attrs = promo?.attributes ?? promo
+            const finalizada = esPromoFinalizada(promo)
             return (
-              <div key={promo.id ?? attrs?.id} className="admin-table-row admin-table-promos">
+              <div
+                key={promo.id ?? attrs?.id}
+                className={`admin-table-row admin-table-promos${finalizada ? ' admin-row-muted' : ''}`}
+              >
                 <span className="admin-date-stack">
                   <span>{formatearFecha(attrs?.fechaInicio)}</span>
                   <span>{formatearFecha(attrs?.fechaFin)}</span>
@@ -113,9 +118,23 @@ export default function PromosListar() {
           })}
       </div>
       <div className="admin-pagination">
-        <span>Anterior</span>
-        <span>1</span>
-        <span>Siguiente</span>
+        <button
+          type="button"
+          className="admin-page-btn"
+          onClick={() => setPagina((prev) => Math.max(1, prev - 1))}
+          disabled={pagina <= 1}
+        >
+          Anterior
+        </button>
+        <span>{paginacion.page}</span>
+        <button
+          type="button"
+          className="admin-page-btn"
+          onClick={() => setPagina((prev) => Math.min(paginacion.pageCount, prev + 1))}
+          disabled={pagina >= paginacion.pageCount}
+        >
+          Siguiente
+        </button>
       </div>
     </div>
   )

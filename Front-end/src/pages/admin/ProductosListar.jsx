@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getProductos, actualizarVariacion } from '../../api/productos.js'
 import { COLOR_HEX_MAP } from '../../utils/colorMap.js'
+import { calcularCantidadTotal, formatearPrecio, ordenarSinStockAlFinal } from '../../utils/adminHelpers.js'
 import './admin.css'
 
 export default function ProductosListar() {
@@ -9,15 +10,18 @@ export default function ProductosListar() {
   const [productos, setProductos] = useState([])
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
+  const [pagina, setPagina] = useState(1)
+  const [paginacion, setPaginacion] = useState({ page: 1, pageCount: 1 })
 
   useEffect(() => {
     let activo = true
     setCargando(true)
     setError('')
-    getProductos()
+    getProductos(pagina, 10)
       .then((data) => {
         if (!activo) return
-        setProductos(data)
+        setProductos(data.items)
+        setPaginacion(data.pagination)
       })
       .catch(() => {
         if (!activo) return
@@ -31,7 +35,7 @@ export default function ProductosListar() {
     return () => {
       activo = false
     }
-  }, [])
+  }, [pagina])
 
   const filas = useMemo(
     () =>
@@ -43,10 +47,7 @@ export default function ProductosListar() {
               .filter(Boolean)
           )
         )
-        const cantidadTotal = (producto.variaciones ?? []).reduce(
-          (acc, variacion) => acc + Number(variacion.stock || 0),
-          0
-        )
+        const cantidadTotal = calcularCantidadTotal(producto.variaciones)
         return {
           ...producto,
           coloresDisponibles,
@@ -56,13 +57,7 @@ export default function ProductosListar() {
     [productos]
   )
 
-  const formatearPrecio = (valor) => {
-    const numero = Number(valor)
-    if (!Number.isFinite(numero)) {
-      return '$ 0'
-    }
-    return `$ ${numero.toLocaleString('es-AR')}`
-  }
+  const filasOrdenadas = useMemo(() => ordenarSinStockAlFinal(filas), [filas])
 
   const handleEditar = (producto) => {
     const destino = producto.documentId ?? producto.id
@@ -150,8 +145,13 @@ export default function ProductosListar() {
         )}
         {!cargando &&
           !error &&
-          filas.map((producto) => (
-            <div key={producto.id} className="admin-table-row admin-table-products">
+          filasOrdenadas.map((producto) => {
+            const sinStock = producto.cantidadTotal <= 0
+            return (
+            <div
+              key={producto.id}
+              className={`admin-table-row admin-table-products${sinStock ? ' admin-row-muted' : ''}`}
+            >
               <span>
                 <span className="admin-product-thumb" />
               </span>
@@ -185,12 +185,26 @@ export default function ProductosListar() {
                 </button>
               </span>
             </div>
-          ))}
+          )})}
       </div>
       <div className="admin-pagination">
-        <span>Anterior</span>
-        <span>1</span>
-        <span>Siguiente</span>
+        <button
+          type="button"
+          className="admin-page-btn"
+          onClick={() => setPagina((prev) => Math.max(1, prev - 1))}
+          disabled={pagina <= 1}
+        >
+          Anterior
+        </button>
+        <span>{paginacion.page}</span>
+        <button
+          type="button"
+          className="admin-page-btn"
+          onClick={() => setPagina((prev) => Math.min(paginacion.pageCount, prev + 1))}
+          disabled={pagina >= paginacion.pageCount}
+        >
+          Siguiente
+        </button>
       </div>
     </div>
   )

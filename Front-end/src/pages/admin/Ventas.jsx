@@ -1,21 +1,25 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getVentas } from '../../api/ventas.js'
+import { formatearFecha, obtenerClienteVenta } from '../../utils/adminHelpers.js'
 import './admin.css'
 
 export default function Ventas() {
   const [ventas, setVentas] = useState([])
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
+  const [pagina, setPagina] = useState(1)
+  const [paginacion, setPaginacion] = useState({ page: 1, pageCount: 1 })
 
   useEffect(() => {
     let activo = true
     setCargando(true)
     setError('')
-    getVentas()
+    getVentas(pagina, 10)
       .then((data) => {
         if (!activo) return
-        setVentas(data)
+        setVentas(data.items)
+        setPaginacion(data.pagination)
       })
       .catch(() => {
         if (!activo) return
@@ -29,18 +33,7 @@ export default function Ventas() {
     return () => {
       activo = false
     }
-  }, [])
-
-  const formatearFecha = (valor) => {
-    if (!valor) return '—'
-    return valor.split('T')[0]
-  }
-
-  const obtenerCliente = (venta) => {
-    const attrs = venta?.attributes ?? venta
-    const usuario = attrs?.users_permissions_user?.data ?? attrs?.users_permissions_user ?? null
-    return usuario?.email ?? usuario?.username ?? '—'
-  }
+  }, [pagina])
 
   return (
     <div className="admin-page">
@@ -92,7 +85,7 @@ export default function Ventas() {
               <div key={venta.id ?? attrs?.id} className="admin-table-row admin-table-ventas">
                 <span>{formatearFecha(attrs?.fecha)}</span>
                 <span>{attrs?.nroSeguimiento ? `#${attrs.nroSeguimiento}` : '—'}</span>
-                <span>{obtenerCliente(venta)}</span>
+                <span>{obtenerClienteVenta(venta)}</span>
                 <span>{attrs?.total ? `$ ${Number(attrs.total).toLocaleString('es-AR')}` : '$ 0'}</span>
                 <span>{attrs?.estado ?? '—'}</span>
                 <Link
@@ -106,9 +99,23 @@ export default function Ventas() {
           })}
       </div>
       <div className="admin-pagination">
-        <span>Anterior</span>
-        <span>1</span>
-        <span>Siguiente</span>
+        <button
+          type="button"
+          className="admin-page-btn"
+          onClick={() => setPagina((prev) => Math.max(1, prev - 1))}
+          disabled={pagina <= 1}
+        >
+          Anterior
+        </button>
+        <span>{paginacion.page}</span>
+        <button
+          type="button"
+          className="admin-page-btn"
+          onClick={() => setPagina((prev) => Math.min(paginacion.pageCount, prev + 1))}
+          disabled={pagina >= paginacion.pageCount}
+        >
+          Siguiente
+        </button>
       </div>
     </div>
   )

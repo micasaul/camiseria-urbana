@@ -126,7 +126,7 @@ export default function CartButton({ isOpen, onClick, onClose, items = [] }) {
                     <span className="cart-summary-label">Subtotal:</span>
                     <span className="cart-summary-value">{subtotalFormateado}</span>
                   </div>
-                  <BlueButton className="cart-checkout-button" onClick={handleComprar}>
+                  <BlueButton className="cart-checkout-button" width="100%" onClick={handleComprar}>
                     Iniciar compra
                   </BlueButton>
                 </div>

@@ -5,9 +5,9 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-export async function getVentas() {
+export async function getVentas(page = 1, pageSize = 10) {
   const res = await fetch(
-    `${BACKEND_URL}/api/ventas?populate[0]=users_permissions_user&populate[1]=detalle_ventas`,
+    `${BACKEND_URL}/api/ventas?populate[0]=users_permissions_user&populate[1]=detalle_ventas&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
     { headers: { ...getAuthHeaders() } }
   );
   if (!res.ok) {
@@ -15,14 +15,29 @@ export async function getVentas() {
   }
   const data = await res.json();
   const items = data?.data ?? [];
-  return items.map((item) => {
-    const attrs = item?.attributes ?? item;
-    return {
-      ...attrs,
-      id: item?.id ?? attrs?.id,
-      documentId: item?.documentId ?? attrs?.documentId ?? null
-    };
-  });
+  return {
+    items: items.map((item) => {
+      const attrs = item?.attributes ?? item;
+      return {
+        ...attrs,
+        id: item?.id ?? attrs?.id,
+        documentId: item?.documentId ?? attrs?.documentId ?? null
+      };
+    }),
+    pagination: data?.meta?.pagination ?? { page: 1, pageSize, pageCount: 1, total: 0 }
+  };
+}
+
+export async function getVentasDashboard() {
+  const res = await fetch(
+    `${BACKEND_URL}/api/ventas?populate[0]=users_permissions_user&populate[1]=detalle_ventas&populate[2]=detalle_ventas.variacion&populate[3]=detalle_ventas.variacion.producto`,
+    { headers: { ...getAuthHeaders() } }
+  );
+  if (!res.ok) {
+    throw new Error('No se pudieron obtener las ventas.');
+  }
+  const data = await res.json();
+  return data?.data ?? [];
 }
 
 export async function getVentaPorId(id) {

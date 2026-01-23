@@ -6,13 +6,15 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-export async function getProductos() {
+export async function getProductos(page = 1, pageSize = 10) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/productos?populate=variacions`);
+    const res = await fetch(
+      `${BACKEND_URL}/api/productos?populate=variacions&pagination[page]=${page}&pagination[pageSize]=${pageSize}`
+    );
     if (!res.ok) throw new Error('Error al obtener productos');
 
     const data = await res.json();
-    return data.data.map(item => {
+    const items = data.data.map(item => {
       const attrs = item?.attributes ?? item;
       const variacionesRaw =
         attrs?.variacions?.data ??
@@ -40,9 +42,16 @@ export async function getProductos() {
         })
       };
     });
+    return {
+      items,
+      pagination: data?.meta?.pagination ?? { page: 1, pageSize, pageCount: 1, total: items.length }
+    };
   } catch (error) {
     console.error(error);
-    return [];
+    return {
+      items: [],
+      pagination: { page: 1, pageSize, pageCount: 1, total: 0 }
+    };
   }
 }
 
