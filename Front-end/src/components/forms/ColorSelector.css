@@ -1,0 +1,27 @@
+.color-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 3px 0 2px;
+}
+
+.color-selector-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1px solid #d0d0d0;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: none;
+  padding: 0;
+}
+
+.color-selector-dot:hover {
+  transform: scale(1.06);
+}
+
+.color-selector-dot.selected {
+  box-shadow: 0 0 0 2px rgba(27, 42, 65, 0.2);
+  border-color: #1b2a41;
+}

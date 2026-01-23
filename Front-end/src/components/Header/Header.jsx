@@ -72,9 +72,9 @@ export default function Header() {
   }
 
   const productLinks = useMemo(() => ([
-    { label: 'Lino', to: '/catalogo' },
-    { label: 'Algodón', to: '/catalogo' },
-    { label: 'Jean', to: '/catalogo' }
+    { label: 'Lino', to: '/catalogo?material=Lino' },
+    { label: 'Algodón', to: '/catalogo?material=Algodón' },
+    { label: 'Jean', to: '/catalogo?material=Jean' }
   ]), [])
 
   const wishlistItems = useMemo(() => ([

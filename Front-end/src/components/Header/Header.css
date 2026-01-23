@@ -255,6 +255,10 @@
   font: inherit;
 }
 
+.side-panel-link.side-panel-button {
+  font-size: 16px;
+}
+
 .chevron-button {
   border: none;
   background: transparent;
