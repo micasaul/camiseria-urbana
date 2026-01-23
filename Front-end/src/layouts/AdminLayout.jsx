@@ -3,9 +3,14 @@ import AdminHeader from '../components/Header/AdminHeader.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 
 export default function AdminLayout() {
-  const { rol } = useAuth()
+  const { rol, cargando } = useAuth()
+  const esAdmin = typeof rol === 'string' && rol.toLowerCase().includes('admin')
 
-  if (rol !== 'admin') {
+  if (cargando) {
+    return null
+  }
+
+  if (!esAdmin) {
     return <Navigate to="/error" replace />
   }
 

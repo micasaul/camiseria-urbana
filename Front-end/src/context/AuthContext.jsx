@@ -10,6 +10,7 @@ const ROLE_STORAGE_KEY = 'strapiRole'
 export function AuthProvider({ children }) {
   const [rol, setRol] = useState('guest')
   const [usuario, setUsuario] = useState(null)
+  const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
     const token = window.localStorage.getItem(TOKEN_STORAGE_KEY)
@@ -28,8 +29,13 @@ export function AuthProvider({ children }) {
       }
     }
     if (token) {
-      obtenerUsuarioActual(token)
+      obtenerUsuarioActual(token).finally(() => {
+        setCargando(false)
+      })
+      return
     }
+
+    setCargando(false)
   }, [])
 
   const normalizarRol = (rolStrapi) => {
@@ -73,6 +79,7 @@ export function AuthProvider({ children }) {
     }
 
     window.localStorage.setItem(TOKEN_STORAGE_KEY, token)
+    setCargando(true)
 
     if (usuarioEntrante) {
       const rolEntrante = usuarioEntrante?.role?.name ?? usuarioEntrante?.role?.type
@@ -88,6 +95,7 @@ export function AuthProvider({ children }) {
     }
 
     await obtenerUsuarioActual(token)
+    setCargando(false)
     return { token }
   }
 
@@ -114,6 +122,7 @@ export function AuthProvider({ children }) {
   const cerrarSesion = () => {
     setRol('guest')
     setUsuario(null)
+    setCargando(false)
     window.localStorage.removeItem(TOKEN_STORAGE_KEY)
     window.localStorage.removeItem(ROLE_STORAGE_KEY)
     window.localStorage.removeItem(USER_STORAGE_KEY)
@@ -123,6 +132,7 @@ export function AuthProvider({ children }) {
     () => ({
       rol,
       usuario,
+      cargando,
       setRol,
       establecerSesion,
       iniciarSesion,

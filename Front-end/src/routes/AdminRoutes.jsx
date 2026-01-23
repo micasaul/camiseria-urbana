@@ -5,6 +5,7 @@ import AdminProductosListar from '../pages/admin/ProductosListar'
 import AdminPromosAgregar from '../pages/admin/PromosAgregar'
 import AdminPromosListar from '../pages/admin/PromosListar'
 import AdminVentas from '../pages/admin/Ventas'
+import AdminDetalleVenta from '../pages/admin/DetalleVenta'
 
 export default function AdminRoutes() {
   return (
@@ -15,6 +16,7 @@ export default function AdminRoutes() {
       <Route path="promos/agregar" element={<AdminPromosAgregar />} />
       <Route path="promos/listar" element={<AdminPromosListar />} />
       <Route path="ventas" element={<AdminVentas />} />
+      <Route path="ventas/detalleventa" element={<AdminDetalleVenta />} />
     </>
   )
 }
