@@ -1,0 +1,89 @@
+.buscar-page {
+  width: 100%;
+  min-height: calc(100vh - 200px);
+  padding: 32px 16px;
+  background-color: #EDF4DE;
+}
+
+.buscar-container {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.buscar-products {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.buscar-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+  font-size: 16px;
+}
+
+.buscar-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 24px;
+}
+
+.buscar-error-message {
+  font-size: 16px;
+  color: #6b7280;
+  text-align: center;
+  margin: 0;
+}
+
+.buscar-title {
+  font: inherit;
+  font-size: 20px;
+  font-weight: 600;
+  color: #172A3A;
+  margin: 0 0 20px 0;
+  width: 100%;
+  max-width: 830px;
+  text-align: left;
+}
+
+.buscar-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 200px);
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 0;
+  justify-items: center;
+  width: 100%;
+  max-width: 830px;
+}
+
+.buscar-pagination {
+  margin-top: auto;
+  padding-top: 19px;
+  border-top: none;
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 1200px) {
+  .buscar-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .buscar-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .buscar-grid {
+    grid-template-columns: 1fr;
+  }
+}

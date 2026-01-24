@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getVentas } from '../../api/ventas.js'
 import { formatearFecha, obtenerClienteVenta } from '../../utils/adminHelpers.js'
-import Pagination from '../../components/pagination/pagination.jsx'
+import PageButton from '../../components/forms/page-button/page-button.jsx'
 import './admin.css'
 
 export default function Ventas() {
@@ -99,7 +99,7 @@ export default function Ventas() {
             )
           })}
       </div>
-      <Pagination
+      <PageButton
         pagina={paginacion.page}
         pageCount={paginacion.pageCount || 1}
         onPageChange={(nuevaPagina) => setPagina(nuevaPagina)}

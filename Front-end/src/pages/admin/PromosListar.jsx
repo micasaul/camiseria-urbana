@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { eliminarPromo, getPromos } from '../../api/promos.js'
 import { esPromoFinalizada, formatearFecha, ordenarPromosFinalizadasAlFinal } from '../../utils/adminHelpers.js'
-import Pagination from '../../components/pagination/pagination.jsx'
+import PageButton from '../../components/forms/page-button/page-button.jsx'
 import './admin.css'
 
 export default function PromosListar() {
@@ -118,7 +118,7 @@ export default function PromosListar() {
             )
           })}
       </div>
-      <Pagination
+      <PageButton
         pagina={paginacion.page}
         pageCount={paginacion.pageCount || 1}
         onPageChange={(nuevaPagina) => setPagina(nuevaPagina)}

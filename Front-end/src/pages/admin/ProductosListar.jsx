@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getProductos, actualizarVariacion } from '../../api/productos.js'
 import { COLOR_HEX_MAP } from '../../utils/colorMap.js'
 import { calcularCantidadTotal, formatearPrecio, ordenarSinStockAlFinal } from '../../utils/adminHelpers.js'
-import Pagination from '../../components/pagination/pagination.jsx'
+import PageButton from '../../components/forms/page-button/page-button.jsx'
 import './admin.css'
 
 export default function ProductosListar() {
@@ -188,7 +188,7 @@ export default function ProductosListar() {
             </div>
           )})}
       </div>
-      <Pagination
+      <PageButton
         pagina={paginacion.page}
         pageCount={paginacion.pageCount || 1}
         onPageChange={(nuevaPagina) => setPagina(nuevaPagina)}

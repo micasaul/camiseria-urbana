@@ -1,4 +1,4 @@
-import { COLOR_HEX_MAP } from '../../utils/colorMap.js'
+import { COLOR_HEX_MAP } from '../../../utils/colorMap.js'
 import './ColorSelector.css'
 
 export default function ColorSelector({ 

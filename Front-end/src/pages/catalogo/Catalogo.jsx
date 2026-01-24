@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { getProductosConFiltros } from '../../api/productos.js'
 import { getProductoEnums } from '../../api/enums.js'
-import ColorSelector from '../../components/forms/ColorSelector.jsx'
+import ColorSelector from '../../components/forms/color/ColorSelector.jsx'
 import ProductCard from '../../components/cards/product-card/ProductCard.jsx'
 import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
-import Pagination from '../../components/pagination/pagination.jsx'
+import PageButton from '../../components/forms/page-button/page-button.jsx'
 import './Catalogo.css'
 
 const BACKEND_URL = import.meta.env.BACKEND_URL ?? 'http://localhost:1337'
@@ -402,8 +402,7 @@ export default function Catalogo() {
                 ))}
               </div>
 
-              {/* Paginación */}
-              <Pagination
+              <PageButton
                 pagina={paginacion.page}
                 pageCount={paginacion.pageCount || 1}
                 onPageChange={cambiarPagina}

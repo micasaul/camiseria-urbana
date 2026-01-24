@@ -12,8 +12,8 @@ import {
 } from '../../api/productos.js'
 import { getProductoEnums } from '../../api/enums.js'
 import { crearMarca, getMarcas } from '../../api/marcas.js'
-import { COLOR_HEX_MAP } from '../../utils/colorMap.js'
 import { resetearFormularioProducto, validarPrecio } from '../../utils/adminHelpers.js'
+import ColorSelector from '../../components/forms/color/ColorSelector.jsx'
 import './admin.css'
 
 export default function ProductosAgregar() {
@@ -39,17 +39,6 @@ export default function ProductosAgregar() {
   const [productoDocumentId, setProductoDocumentId] = useState(null)
   const [cargandoProducto, setCargandoProducto] = useState(false)
   const { id } = useParams()
-
-  const coloresMeta = useMemo(
-    () =>
-      colores.map((colorValor, index) => ({
-        id: `color-${index}`,
-        nombre: colorValor,
-        valor: colorValor,
-        color: COLOR_HEX_MAP[colorValor] ?? '#e5e7eb'
-      })),
-    [colores]
-  )
 
   useEffect(() => {
     let activo = true
@@ -453,22 +442,12 @@ export default function ProductosAgregar() {
                 <label>
                   Color<span className="admin-required">*</span>
                 </label>
-                <div className="admin-color-options">
-                  {coloresMeta.map((color) => (
-                    <button
-                      key={color.id}
-                      type="button"
-                      className={`admin-color-dot${
-                        variacion.color === color.valor ? ' selected' : ''
-                      }`}
-                      style={{ backgroundColor: color.color }}
-                      title={color.nombre}
-                      aria-label={color.nombre}
-                      aria-pressed={variacion.color === color.valor}
-                      onClick={() => actualizarVariacion(index, { color: color.valor })}
-                    />
-                  ))}
-                </div>
+                <ColorSelector
+                  colores={colores}
+                  selectedColors={variacion.color ? [variacion.color] : []}
+                  onColorToggle={(newColors) => actualizarVariacion(index, { color: newColors[0] || '' })}
+                  multiple={false}
+                />
               </div>
               <div className="admin-field admin-variant-field">
                 <label>
