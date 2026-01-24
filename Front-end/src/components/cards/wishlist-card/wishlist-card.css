@@ -30,8 +30,25 @@
 }
 
 .wishlist-card-price {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
   font-weight: 500;
   font-size: 13px;
+}
+
+.wishlist-card-price-original {
+  font-size: 12px;
+  font-weight: 400;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.wishlist-card-price-final {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1B2A41;
 }
 
 .wishlist-card-remove {

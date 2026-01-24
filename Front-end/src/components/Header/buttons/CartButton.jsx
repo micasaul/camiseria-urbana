@@ -9,6 +9,7 @@ import {
   actualizarDetalleCarrito,
   eliminarDetalleCarrito
 } from '../../../api/carrito.js'
+import { obtenerDescuentosActivos } from '../../../api/promos.js'
 
 const formatearPrecio = (valor) => {
   if (typeof valor === 'number') {
@@ -44,17 +45,38 @@ export default function CartButton({ isOpen, onClick, onClose }) {
   useEffect(() => {
     if (isOpen && rol !== 'guest') {
       setCargando(true)
-      obtenerCarritoCompleto()
-        .then((items) => {
-          setItemsCarrito(items)
-        })
-        .catch((error) => {
+      const cargar = async () => {
+        try {
+          const [items, descuentosMap] = await Promise.all([
+            obtenerCarritoCompleto(),
+            obtenerDescuentosActivos()
+          ])
+          const itemsConDescuento = (items ?? []).map((item) => {
+            const baseValue =
+              typeof item.priceValue === 'number' ? item.priceValue : formatearPrecio(item.price)
+            const descuento = descuentosMap.get(String(item.productoId ?? '')) ?? 0
+            const finalValue =
+              descuento > 0 ? baseValue - (baseValue * descuento) / 100 : baseValue
+            return {
+              ...item,
+              descuento,
+              priceOriginalValue: baseValue,
+              priceValue: finalValue,
+              priceOriginal: `$${baseValue.toFixed(2)}`,
+              priceFinal: `$${finalValue.toFixed(2)}`,
+              hasDiscount: descuento > 0
+            }
+          })
+          setItemsCarrito(itemsConDescuento)
+        } catch (error) {
           console.error('Error al cargar carrito:', error)
           setItemsCarrito([])
-        })
-        .finally(() => {
+        } finally {
           setCargando(false)
-        })
+        }
+      }
+
+      cargar()
     } else if (rol === 'guest') {
       setItemsCarrito([])
     }
@@ -185,6 +207,9 @@ export default function CartButton({ isOpen, onClick, onClose }) {
                       imageSrc={item.imageSrc}
                       name={item.name}
                       price={item.price}
+                      priceOriginal={item.priceOriginal}
+                      priceFinal={item.priceFinal}
+                      hasDiscount={item.hasDiscount}
                       size={item.size}
                       color={item.color}
                       quantity={item.quantity}

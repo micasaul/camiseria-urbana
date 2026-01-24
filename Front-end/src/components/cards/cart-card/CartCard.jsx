@@ -7,6 +7,9 @@ export default function CartCard({
   size,
   color,
   price,
+  priceOriginal,
+  priceFinal,
+  hasDiscount = false,
   quantity = 1,
   stock = Infinity,
   onQuantityChange,
@@ -49,7 +52,16 @@ export default function CartCard({
           <span>Color: {color ?? '-'}</span>
         </div>
         <div className="cart-card-footer">
-          <span className="cart-card-price">{price}</span>
+          <span className="cart-card-price">
+            {hasDiscount ? (
+              <>
+                <span className="cart-card-price-original">{priceOriginal}</span>
+                <span className="cart-card-price-final">{priceFinal}</span>
+              </>
+            ) : (
+              <span className="cart-card-price-final">{priceFinal ?? price}</span>
+            )}
+          </span>
           <div className="cart-card-actions">
             <div className="cart-card-counter">
               <button type="button" onClick={handleDecrease} aria-label="Restar">

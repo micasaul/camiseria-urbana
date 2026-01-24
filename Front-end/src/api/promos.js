@@ -155,11 +155,8 @@ export async function eliminarPromo(id) {
  */
 export async function obtenerDescuentosActivos() {
   try {
-    // Obtener solo los promo_productos activos con sus promos y productos
-    // El cron ya actualiza el campo 'activo' según las fechas de la promo
-    const res = await fetch(
-      `${BACKEND_URL}${PROMO_PRODUCTO_ENDPOINT}?filters[activo][$eq]=true&populate[0]=promo&populate[1]=producto`
-    )
+    // Dispara el cron y obtiene promo_productos activos en preview
+    const res = await fetch(`${BACKEND_URL}/api/promo-productos/activas/productos`)
     
     if (!res.ok) {
       console.error('Error al obtener promo_productos activos:', res.status)
@@ -167,7 +164,7 @@ export async function obtenerDescuentosActivos() {
     }
     
     const data = await res.json()
-    const promoProductos = data?.data ?? []
+    const promoProductos = data?.promoProductos ?? data?.data ?? []
     const descuentosMap = new Map()
     
     console.log(`Promo_productos activos encontrados: ${promoProductos.length}`)

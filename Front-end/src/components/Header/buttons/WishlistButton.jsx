@@ -5,6 +5,7 @@ import WhiteButton from '../../buttons/white-btn/WhiteButton.jsx'
 import BlueButton from '../../buttons/blue-btn/BlueButton.jsx'
 import { useAuth } from '../../../context/AuthContext.jsx'
 import { obtenerWishlistCompleta, eliminarDeWishlist } from '../../../api/wishlist.js'
+import { obtenerDescuentosActivos } from '../../../api/promos.js'
 
 export default function WishlistButton({ isOpen, onClick, onClose }) {
   const navigate = useNavigate()
@@ -15,17 +16,36 @@ export default function WishlistButton({ isOpen, onClick, onClose }) {
   useEffect(() => {
     if (isOpen && rol !== 'guest') {
       setCargando(true)
-      obtenerWishlistCompleta()
-        .then((items) => {
-          setItemsWishlist(items)
-        })
-        .catch((error) => {
+      const cargar = async () => {
+        try {
+          const [items, descuentosMap] = await Promise.all([
+            obtenerWishlistCompleta(),
+            obtenerDescuentosActivos()
+          ])
+          const itemsConDescuento = (items ?? []).map((item) => {
+            const baseValue =
+              typeof item.priceValue === 'number' ? item.priceValue : Number(item.priceValue ?? 0)
+            const descuento = descuentosMap.get(String(item.productoId ?? '')) ?? 0
+            const finalValue =
+              descuento > 0 ? baseValue - (baseValue * descuento) / 100 : baseValue
+            return {
+              ...item,
+              descuento,
+              priceOriginal: `$${baseValue.toFixed(2)}`,
+              priceFinal: `$${finalValue.toFixed(2)}`,
+              hasDiscount: descuento > 0
+            }
+          })
+          setItemsWishlist(itemsConDescuento)
+        } catch (error) {
           console.error('Error al cargar wishlist:', error)
           setItemsWishlist([])
-        })
-        .finally(() => {
+        } finally {
           setCargando(false)
-        })
+        }
+      }
+
+      cargar()
     } else if (rol === 'guest') {
       setItemsWishlist([])
     }
@@ -104,6 +124,9 @@ export default function WishlistButton({ isOpen, onClick, onClose }) {
                     imageSrc={item.imageSrc}
                     name={item.name}
                     price={item.price}
+                    priceOriginal={item.priceOriginal}
+                    priceFinal={item.priceFinal}
+                    hasDiscount={item.hasDiscount}
                     onRemove={() => handleRemove(item.documentId ?? item.id)}
                   />
                 ))}

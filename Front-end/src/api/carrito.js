@@ -172,10 +172,12 @@ export async function obtenerCarritoCompleto() {
       }
 
       const precioBase = Number(productoAttrs?.precio ?? 0)
+      const productoId = producto?.documentId ?? productoAttrs?.documentId ?? producto?.id ?? productoAttrs?.id
       
       return {
         id: detalle.id ?? detalleAttrs?.id,
         documentId: detalle.documentId ?? detalleAttrs?.documentId ?? detalle.id ?? detalleAttrs?.id,
+        productoId: productoId ?? null,
         imageSrc: imagenUrl,
         name: productoAttrs?.nombre ?? '',
         size: variacionAttrs?.talle ?? '',

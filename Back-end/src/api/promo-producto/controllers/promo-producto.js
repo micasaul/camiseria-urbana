@@ -26,10 +26,11 @@ module.exports = createCoreController('api::promo-producto.promo-producto', ({ s
     const promoProductos = await strapi.entityService.findMany('api::promo-producto.promo-producto', {
       publicationState: 'preview',
       filters: { activo: true },
-      populate: { producto: true }
+      populate: { producto: true, promo: true }
     });
 
     ctx.body = {
+      promoProductos,
       productos: promoProductos
         .map((item) => /** @type {any} */ (item)?.producto)
         .filter(Boolean)

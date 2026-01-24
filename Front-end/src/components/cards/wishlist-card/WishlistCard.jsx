@@ -1,12 +1,29 @@
 import './wishlist-card.css'
 
-export default function WishlistCard({ imageSrc, name, price, onRemove }) {
+export default function WishlistCard({
+  imageSrc,
+  name,
+  price,
+  priceOriginal,
+  priceFinal,
+  hasDiscount = false,
+  onRemove
+}) {
   return (
     <div className="wishlist-card">
       <img className="wishlist-card-image" src={imageSrc} alt={name} />
       <div className="wishlist-card-details">
         <span className="wishlist-card-name">{name}</span>
-        <span className="wishlist-card-price">{price}</span>
+        <span className="wishlist-card-price">
+          {hasDiscount ? (
+            <>
+              <span className="wishlist-card-price-original">{priceOriginal}</span>
+              <span className="wishlist-card-price-final">{priceFinal}</span>
+            </>
+          ) : (
+            <span className="wishlist-card-price-final">{priceFinal ?? price}</span>
+          )}
+        </span>
       </div>
       <button
         type="button"

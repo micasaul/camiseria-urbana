@@ -124,13 +124,18 @@ export async function obtenerWishlistCompleta() {
         imagenUrl = `${BACKEND_URL}${imagenUrl}`
       }
       
+      const precioBase = Number(productoAttrs?.precio ?? 0)
+      const productoId = producto?.documentId ?? productoAttrs?.documentId ?? producto?.id ?? productoAttrs?.id
+
       return {
         id: wishlist.id ?? wishlistAttrs?.id,
         documentId: wishlist.documentId ?? wishlistAttrs?.documentId ?? wishlist.id ?? wishlistAttrs?.id,
-        productoDocumentId: producto?.documentId ?? productoAttrs?.documentId ?? producto?.id ?? productoAttrs?.id,
+        productoDocumentId: productoId ?? null,
+        productoId: productoId ?? null,
         imageSrc: imagenUrl,
         name: productoAttrs?.nombre ?? '',
-        price: `$${Number(productoAttrs?.precio ?? 0).toFixed(2)}`
+        priceValue: precioBase,
+        price: `$${precioBase.toFixed(2)}`
       };
     });
   } catch (error) {

@@ -42,8 +42,25 @@
 }
 
 .cart-card-price {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
   font-weight: 600;
   font-size: 14px;
+}
+
+.cart-card-price-original {
+  font-size: 12px;
+  font-weight: 400;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.cart-card-price-final {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1B2A41;
 }
 
 .cart-card-actions {
