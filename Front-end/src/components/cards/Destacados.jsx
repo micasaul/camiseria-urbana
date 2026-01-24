@@ -1,47 +1,43 @@
+import { useEffect, useState } from "react"
+import ProductCard from "../cards/product-card/ProductCard.jsx"
+import "./Destacados.css"
 
-
-// porfa no modificar, no termine jasjja
-
-import { useState, useEffect } from 'react';
-import BlueButton from './Buttons/BlueButton';
-import { getProductos } from '../../api/productos';
+const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:1337"
 
 export default function Destacados() {
-  const [productos, setProductos] = useState([]);
+  const [productos, setProductos] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function fetchProductos() {
-      const data = await getProductos();
-      setProductos(data);
-    }
-    fetchProductos();
-  }, []);
+    let activo = true
+    fetch(`${BACKEND_URL}/api/productos?pagination[pageSize]=4&sort=createdAt:desc`)
+      .then(res => res.json())
+      .then(json => {
+        if (!activo) return
+        setProductos(json.data || [])
+      })
+      .catch(error => {
+        console.error("Error cargando productos:", error)
+        if (!activo) setProductos([])
+      })
+      .finally(() => {
+        if (!activo) return
+        setLoading(false)
+      })
+
+    return () => { activo = false }
+  }, [])
+
+  if (loading) return <div className="destacados-loading">Cargando destacados...</div>
+  if (productos.length === 0) return <div className="destacados-empty">No hay productos destacados</div>
 
   return (
-    <section className="bg-[#EFF5E6] py-16">
-      <h2 className="text-[#1B2A41] font-bold text-3xl text-center uppercase mb-12">
-        PRODUCTOS DESTACADOS
-      </h2>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 max-w-6xl mx-auto px-4">
+    <div className="destacados-container">
+      <div className="destacados-grid">
         {productos.map(prod => (
-          <div key={prod.id} className="bg-white rounded-3xl overflow-hidden shadow">
-            <img
-              src={`http://localhost:1337${prod.imagen}`}
-              alt={prod.nombre}
-              className="w-full h-64 object-cover"
-            />
-            <div className="p-4">
-              <h3 className="font-bold text-lg">{prod.nombre}</h3>
-              <p className="text-gray-600 mt-1">${prod.precio}</p>
-            </div>
-          </div>
+          <ProductCard key={prod.id} producto={prod} />
         ))}
       </div>
-
-      <div className="text-center mt-12">
-        <BlueButton texto="Ver más productos" ruta="/catalogo" />
-      </div>
-    </section>
-  );
+    </div>
+  )
 }
