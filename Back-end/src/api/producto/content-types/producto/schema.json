@@ -51,16 +51,16 @@
       "target": "api::promo-producto.promo-producto",
       "mappedBy": "producto"
     },
-    "resenas": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::resena.resena",
-      "mappedBy": "producto"
-    },
     "wishlists": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::wishlist.wishlist",
+      "mappedBy": "producto"
+    },
+    "resenas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::resena.resena",
       "mappedBy": "producto"
     }
   }

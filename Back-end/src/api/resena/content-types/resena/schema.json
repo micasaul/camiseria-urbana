@@ -4,26 +4,13 @@
   "info": {
     "singularName": "resena",
     "pluralName": "resenas",
-    "displayName": "Reseña"
+    "displayName": "Resena"
   },
   "options": {
     "draftAndPublish": true
   },
   "pluginOptions": {},
   "attributes": {
-    "valoracion": {
-      "type": "integer",
-      "required": true,
-      "min": 1,
-      "max": 5
-    },
-    "comentario": {
-      "type": "text"
-    },
-    "fecha": {
-      "type": "datetime",
-      "required": true
-    },
     "users_permissions_user": {
       "type": "relation",
       "relation": "manyToOne",
@@ -35,6 +22,16 @@
       "relation": "manyToOne",
       "target": "api::producto.producto",
       "inversedBy": "resenas"
+    },
+    "valoracion": {
+      "type": "decimal",
+      "required": true
+    },
+    "comentario": {
+      "type": "text"
+    },
+    "fecha": {
+      "type": "date"
     }
   }
 }

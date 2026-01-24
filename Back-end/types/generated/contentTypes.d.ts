@@ -970,7 +970,7 @@ export interface ApiPromoPromo extends Struct.CollectionTypeSchema {
 export interface ApiResenaResena extends Struct.CollectionTypeSchema {
   collectionName: 'resenas';
   info: {
-    displayName: 'Rese\u00F1a';
+    displayName: 'Resena';
     pluralName: 'resenas';
     singularName: 'resena';
   };
@@ -982,7 +982,7 @@ export interface ApiResenaResena extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    fecha: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    fecha: Schema.Attribute.Date;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -998,15 +998,7 @@ export interface ApiResenaResena extends Struct.CollectionTypeSchema {
       'manyToOne',
       'plugin::users-permissions.user'
     >;
-    valoracion: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          max: 5;
-          min: 1;
-        },
-        number
-      >;
+    valoracion: Schema.Attribute.Decimal & Schema.Attribute.Required;
   };
 }
 

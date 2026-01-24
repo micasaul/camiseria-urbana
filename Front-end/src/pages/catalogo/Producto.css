@@ -315,6 +315,9 @@
   margin-top: 60px;
   padding-top: 40px;
   border-top: 1px solid #e5e7eb;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .producto-resenas-titulo {
@@ -326,8 +329,8 @@
 
 .producto-resenas-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
 }
 
 @media (max-width: 968px) {
@@ -351,5 +354,6 @@
 
   .producto-resenas-grid {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
 }

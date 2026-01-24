@@ -1,5 +1,6 @@
 .review-card {
   background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 16px;
   display: flex;

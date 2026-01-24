@@ -5,7 +5,7 @@ import { obtenerDescuentosActivos } from '../../api/promos.js'
 import { obtenerCarritoUsuario, agregarAlCarrito } from '../../api/carrito.js'
 import { agregarAWishlist, eliminarDeWishlist, estaEnWishlist } from '../../api/wishlist.js'
 import { 
-  calcularPromedioResenas, 
+  calcularPromedioValoraciones,
   obtenerColoresEnStock, 
   obtenerTallesEnStock, 
   talleDisponible, 
@@ -82,14 +82,9 @@ export default function Producto() {
             talle: v.attributes?.talle ?? v.talle ?? '',
             stock: Number(v.attributes?.stock ?? v.stock ?? 0)
           })),
-          resenas: (attrs?.resenas?.data ?? attrs?.resenas ?? []).map(r => ({
-            id: r.id ?? r.attributes?.id,
-            documentId: r.documentId ?? r.attributes?.documentId ?? null,
-            valoracion: r.attributes?.valoracion ?? r.valoracion ?? 0,
-            comentario: r.attributes?.comentario ?? r.comentario ?? '',
-            users_permissions_user: r.attributes?.users_permissions_user ?? r.users_permissions_user
-          })),
-          wishlists: attrs?.wishlists?.data ?? attrs?.wishlists ?? []
+          wishlists: attrs?.wishlists?.data ?? attrs?.wishlists ?? [],
+          resenas: item?.resenas ?? [],
+          valoraciones: item?.valoraciones ?? []
         })
         setDescuento(descuentoProducto)
       } catch (error) {
@@ -108,8 +103,8 @@ export default function Producto() {
     }
   }, [documentId])
 
-  const promedioResenas = useMemo(() => {
-    return calcularPromedioResenas(producto?.resenas)
+  const promedioValoraciones = useMemo(() => {
+    return calcularPromedioValoraciones(producto?.valoraciones)
   }, [producto])
 
   const coloresEnStock = useMemo(() => {
@@ -277,13 +272,13 @@ export default function Producto() {
           <div className="producto-resenas">
             <div className="producto-resenas-estrellas">
               {Array.from({ length: 5 }, (_, i) => (
-                <span key={i} className={i < Math.round(promedioResenas) ? 'estrella llena' : 'estrella vacia'}>
+                <span key={i} className={i < Math.round(promedioValoraciones) ? 'estrella llena' : 'estrella vacia'}>
                   ★
                 </span>
               ))}
             </div>
             <span className="producto-resenas-texto">
-              ({producto.resenas.length} {producto.resenas.length === 1 ? 'reseña' : 'reseñas'})
+              ({(producto.resenas?.length ?? 0)} {(producto.resenas?.length ?? 0) === 1 ? 'reseña' : 'reseñas'})
             </span>
           </div>
 

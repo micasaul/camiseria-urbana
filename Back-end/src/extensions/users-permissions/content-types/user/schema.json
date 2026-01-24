@@ -84,12 +84,6 @@
       "target": "api::venta.venta",
       "mappedBy": "users_permissions_user"
     },
-    "resenas": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::resena.resena",
-      "mappedBy": "users_permissions_user"
-    },
     "notificacion_stocks": {
       "type": "relation",
       "relation": "oneToMany",
@@ -106,6 +100,12 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::wishlist.wishlist",
+      "mappedBy": "users_permissions_user"
+    },
+    "resenas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::resena.resena",
       "mappedBy": "users_permissions_user"
     }
   }

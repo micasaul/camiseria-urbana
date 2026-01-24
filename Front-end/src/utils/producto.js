@@ -1,11 +1,11 @@
 /**
- * @param {Array}
+ * @param {Array<number>} valoraciones 
  * @returns {number} 
  */
-export function calcularPromedioResenas(resenas) {
-  if (!resenas || resenas.length === 0) return 0
-  const suma = resenas.reduce((acc, r) => acc + (r.valoracion ?? 0), 0)
-  return suma / resenas.length
+export function calcularPromedioValoraciones(valoraciones) {
+  if (!valoraciones || valoraciones.length === 0) return 0;
+  const suma = valoraciones.reduce((acc, v) => acc + (Number(v) || 0), 0);
+  return suma / valoraciones.length;
 }
 
 /**

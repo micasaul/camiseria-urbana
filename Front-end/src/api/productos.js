@@ -31,6 +31,101 @@ const normalizarVariaciones = (variacionesRaw) => {
   return lista.map(normalizarVariacion);
 };
 
+const normalizarResena = (resena) => {
+  const resenaAttrs = resena?.attributes ?? resena;
+  const userRaw = resenaAttrs?.users_permissions_user?.data ?? resenaAttrs?.users_permissions_user;
+  const userAttrs = userRaw?.attributes ?? userRaw;
+  return {
+    id: resena?.id ?? resenaAttrs?.id,
+    documentId: resena?.documentId ?? resenaAttrs?.documentId ?? null,
+    valoracion: Number(resenaAttrs?.valoracion ?? resena?.valoracion ?? 0),
+    comentario: resenaAttrs?.comentario ?? resena?.comentario ?? '',
+    users_permissions_user: {
+      id: userRaw?.id ?? userAttrs?.id,
+      documentId: userRaw?.documentId ?? userAttrs?.documentId ?? null,
+      username: userAttrs?.username ?? userRaw?.username ?? '',
+      email: userAttrs?.email ?? userRaw?.email ?? ''
+    }
+  };
+};
+
+const normalizarResenas = (resenasRaw) => {
+  const lista = Array.isArray(resenasRaw)
+    ? resenasRaw
+    : resenasRaw?.data ?? [];
+  return lista.map(normalizarResena);
+};
+
+const adjuntarResenas = async (items = []) => {
+  const productosIds = items
+    .map((producto) => producto?.documentId ?? producto?.id)
+    .filter(Boolean);
+
+  if (!productosIds.length) {
+    return items;
+  }
+
+  const params = new URLSearchParams();
+  productosIds.forEach((id, index) => {
+    params.append(`filters[producto][documentId][$in][${index}]`, id);
+  });
+  params.append('populate[producto]', 'true');
+  params.append('populate[users_permissions_user]', 'true');
+  params.append('pagination[pageSize]', '1000');
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/resenas?${params.toString()}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      }
+    });
+    if (!res.ok) {
+      console.error('Error al obtener reseñas:', res.status, res.statusText);
+      return items;
+    }
+    const data = await res.json();
+    const resenasRaw = data?.data ?? [];
+    const resenasPorProducto = new Map();
+    const valoracionesPorProducto = new Map();
+
+    resenasRaw.forEach((resena) => {
+      const resenaAttrs = resena?.attributes ?? resena;
+      const producto = resenaAttrs?.producto?.data ?? resenaAttrs?.producto;
+      const productoAttrs = producto?.attributes ?? producto;
+      const productoId =
+        producto?.documentId ??
+        productoAttrs?.documentId ??
+        producto?.id ??
+        productoAttrs?.id;
+      if (!productoId) return;
+      
+      const resenaNormalizada = normalizarResena(resena);
+      const lista = resenasPorProducto.get(productoId) ?? [];
+      lista.push(resenaNormalizada);
+      resenasPorProducto.set(productoId, lista);
+      
+      const valoraciones = valoracionesPorProducto.get(productoId) ?? [];
+      valoraciones.push(resenaNormalizada.valoracion);
+      valoracionesPorProducto.set(productoId, valoraciones);
+    });
+
+    return items.map((producto) => {
+      const key = String(producto?.documentId ?? producto?.id ?? '');
+      const resenas = resenasPorProducto.get(key) ?? [];
+      const valoraciones = valoracionesPorProducto.get(key) ?? [];
+      return {
+        ...producto,
+        resenas: resenas,
+        valoraciones: valoraciones
+      };
+    });
+  } catch (error) {
+    console.error('Error al obtener reseñas:', error);
+    return items;
+  }
+};
+
 const adjuntarVariaciones = async (items = []) => {
   const productosIds = items
     .map((producto) => producto?.documentId ?? producto?.id)
@@ -192,14 +287,24 @@ export async function crearVariacion(payload) {
 export async function getProductoPorId(id) {
   // Usar la misma sintaxis que funciona en otras funciones
   const res = await fetch(
-    `${BACKEND_URL}/api/productos/${id}?populate[0]=variacions&populate[1]=marca&populate[2]=resenas&populate[3]=resenas.users_permissions_user&populate[4]=promo_productos&populate[5]=promo_productos.promo&populate[6]=wishlists`
+    `${BACKEND_URL}/api/productos/${id}?populate[0]=variacions&populate[1]=marca&populate[2]=promo_productos&populate[3]=promo_productos.promo&populate[4]=wishlists`
   );
   if (!res.ok) {
     const errorText = await res.text()
     console.error('Error response:', errorText)
     throw new Error('No se pudo obtener el producto.');
   }
-  return res.json();
+  const data = await res.json();
+  
+  // Adjuntar reseñas al producto
+  const item = data?.data ?? data;
+  const items = [item];
+  const itemsConResenas = await adjuntarResenas(items);
+  
+  return {
+    ...data,
+    data: itemsConResenas[0] ?? item
+  };
 }
 
 export async function actualizarProducto(id, payload) {
