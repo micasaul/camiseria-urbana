@@ -23,7 +23,6 @@ export async function obtenerCarritoUsuario() {
     const userData = await userRes.json();
     const userDocumentId = userData.documentId;
     
-    // Buscar carrito del usuario
     const res = await fetch(
       `${BACKEND_URL}/api/carritos?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=detalle_carritos`,
       {
@@ -171,6 +170,8 @@ export async function obtenerCarritoCompleto() {
       if (!imagenUrl.startsWith('http')) {
         imagenUrl = `${BACKEND_URL}${imagenUrl}`
       }
+
+      const precioBase = Number(productoAttrs?.precio ?? 0)
       
       return {
         id: detalle.id ?? detalleAttrs?.id,
@@ -179,7 +180,8 @@ export async function obtenerCarritoCompleto() {
         name: productoAttrs?.nombre ?? '',
         size: variacionAttrs?.talle ?? '',
         color: variacionAttrs?.color ?? '',
-        price: `$${Number(productoAttrs?.precio ?? 0).toFixed(2)}`,
+        priceValue: precioBase,
+        price: `$${precioBase.toFixed(2)}`,
         quantity: detalleAttrs?.cantidad ?? 1,
         stock: variacionAttrs?.stock ?? 0
       };
@@ -198,7 +200,7 @@ export async function obtenerCarritoCompleto() {
  */
 export async function agregarAlCarrito(carritoDocumentId, variacionDocumentId, cantidad) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/detalle-carritos`, {
+    const res = await fetch(`${BACKEND_URL}/api/detalles-carritos`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -207,8 +209,8 @@ export async function agregarAlCarrito(carritoDocumentId, variacionDocumentId, c
       body: JSON.stringify({
         data: {
           cantidad: cantidad,
-          carrito: { connect: [{ documentId: carritoDocumentId }] },
-          variacion: { connect: [{ documentId: variacionDocumentId }] }
+          carrito: carritoDocumentId,
+          variacion: variacionDocumentId
         }
       })
     });
@@ -223,5 +225,65 @@ export async function agregarAlCarrito(carritoDocumentId, variacionDocumentId, c
   } catch (error) {
     console.error('Error al agregar al carrito:', error);
     throw error;
+  }
+}
+
+/**
+ * @param {string}
+ * @param {number}
+ * @returns {Promise<Object>}
+ */
+export async function actualizarDetalleCarrito(detalleDocumentId, cantidad) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/detalles-carritos/${detalleDocumentId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({
+        data: {
+          cantidad: cantidad
+        }
+      })
+    })
+
+    if (!res.ok) {
+      const errorText = await res.text()
+      console.error('Error response:', errorText)
+      throw new Error('No se pudo actualizar el detalle del carrito.')
+    }
+
+    return res.json()
+  } catch (error) {
+    console.error('Error al actualizar detalle del carrito:', error)
+    throw error
+  }
+}
+
+/**
+ * @param {string}
+ * @returns {Promise<Object|null>}
+ */
+export async function eliminarDetalleCarrito(detalleDocumentId) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/detalles-carritos/${detalleDocumentId}`, {
+      method: 'DELETE',
+      headers: {
+        ...getAuthHeaders()
+      }
+    })
+
+    if (!res.ok) {
+      const errorText = await res.text()
+      console.error('Error response:', errorText)
+      throw new Error('No se pudo eliminar el detalle del carrito.')
+    }
+
+    const text = await res.text()
+    return text ? JSON.parse(text) : null
+  } catch (error) {
+    console.error('Error al eliminar detalle del carrito:', error)
+    throw error
   }
 }

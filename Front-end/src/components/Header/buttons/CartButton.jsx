@@ -4,7 +4,11 @@ import CartCard from '../../cards/cart-card/CartCard.jsx'
 import WhiteButton from '../../buttons/white-btn/WhiteButton.jsx'
 import BlueButton from '../../buttons/blue-btn/BlueButton.jsx'
 import { useAuth } from '../../../context/AuthContext.jsx'
-import { obtenerCarritoCompleto } from '../../../api/carrito.js'
+import {
+  obtenerCarritoCompleto,
+  actualizarDetalleCarrito,
+  eliminarDetalleCarrito
+} from '../../../api/carrito.js'
 
 const formatearPrecio = (valor) => {
   if (typeof valor === 'number') {
@@ -14,11 +18,21 @@ const formatearPrecio = (valor) => {
     return 0
   }
   const limpio = String(valor).replace(/[^0-9,.-]/g, '')
-  if (limpio.includes(',')) {
-    const normalizado = limpio.replace(/\./g, '').replace(',', '.')
-    return Number(normalizado) || 0
+  if (!limpio) {
+    return 0
   }
-  return Number(limpio.replace(/\./g, '')) || 0
+  const tieneComa = limpio.includes(',')
+  const tienePunto = limpio.includes('.')
+  if (tieneComa && tienePunto) {
+    if (limpio.lastIndexOf(',') > limpio.lastIndexOf('.')) {
+      return Number(limpio.replace(/\./g, '').replace(',', '.')) || 0
+    }
+    return Number(limpio.replace(/,/g, '')) || 0
+  }
+  if (tieneComa) {
+    return Number(limpio.replace(',', '.')) || 0
+  }
+  return Number(limpio) || 0
 }
 
 export default function CartButton({ isOpen, onClick, onClose }) {
@@ -48,13 +62,17 @@ export default function CartButton({ isOpen, onClick, onClose }) {
 
   const subtotal = useMemo(() => {
     return itemsCarrito.reduce((acum, item) => {
-      const precioUnitario = formatearPrecio(item.price)
+      const precioUnitario =
+        typeof item.priceValue === 'number' ? item.priceValue : formatearPrecio(item.price)
       const cantidad = item.quantity ?? 1
       return acum + precioUnitario * cantidad
     }, 0)
   }, [itemsCarrito])
 
-  const subtotalFormateado = `$${subtotal.toLocaleString('es-AR')}`
+  const subtotalFormateado = `$${subtotal.toLocaleString('es-AR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`
 
   const handleExplorar = () => {
     if (onClose) {
@@ -77,12 +95,46 @@ export default function CartButton({ isOpen, onClick, onClose }) {
     navigate('/checkout')
   }
 
-  const actualizarCantidad = (id, nuevaCantidad) => {
+  const actualizarCantidad = async (detalleDocumentId, nuevaCantidad) => {
+    if (!detalleDocumentId) return
+    const anterior = itemsCarrito.find(
+      (item) => (item.documentId ?? item.id) === detalleDocumentId
+    )?.quantity
+
     setItemsCarrito((prevItems) =>
       prevItems.map((item) =>
-        item.id === id ? { ...item, quantity: nuevaCantidad } : item
+        (item.documentId ?? item.id) === detalleDocumentId
+          ? { ...item, quantity: nuevaCantidad }
+          : item
       )
     )
+
+    try {
+      await actualizarDetalleCarrito(detalleDocumentId, nuevaCantidad)
+    } catch (error) {
+      console.error('Error al actualizar cantidad:', error)
+      if (typeof anterior === 'number') {
+        setItemsCarrito((prevItems) =>
+          prevItems.map((item) =>
+            (item.documentId ?? item.id) === detalleDocumentId
+              ? { ...item, quantity: anterior }
+              : item
+          )
+        )
+      }
+    }
+  }
+
+  const handleRemove = async (detalleDocumentId) => {
+    if (!detalleDocumentId) return
+    try {
+      await eliminarDetalleCarrito(detalleDocumentId)
+      setItemsCarrito((prevItems) =>
+        prevItems.filter((item) => (item.documentId ?? item.id) !== detalleDocumentId)
+      )
+    } catch (error) {
+      console.error('Error al eliminar del carrito:', error)
+    }
   }
 
   return (
@@ -137,8 +189,10 @@ export default function CartButton({ isOpen, onClick, onClose }) {
                       color={item.color}
                       quantity={item.quantity}
                       stock={item.stock}
-                      onQuantityChange={(cantidad) => actualizarCantidad(item.id, cantidad)}
-                      onRemove={() => {}}
+                      onQuantityChange={(cantidad) =>
+                        actualizarCantidad(item.documentId ?? item.id, cantidad)
+                      }
+                      onRemove={() => handleRemove(item.documentId ?? item.id)}
                     />
                   ))}
                 </div>

@@ -224,6 +224,14 @@
   gap: 16px;
 }
 
+.producto-accion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+}
+
 .producto-cantidad {
   display: flex;
   flex-direction: column;
@@ -273,6 +281,11 @@
 .producto-stock {
   font-size: 14px;
   color: #6b7280;
+}
+
+.producto-error {
+  font-size: 14px;
+  color: #dc2626;
 }
 
 .producto-resenas-section {

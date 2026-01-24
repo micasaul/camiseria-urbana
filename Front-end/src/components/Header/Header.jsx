@@ -55,9 +55,21 @@ export default function Header() {
     }
   }, [])
 
+  useEffect(() => {
+    const handleOpenCart = () => {
+      setIsCartOpen(true)
+      setIsMenuOpen(false)
+      setIsAccountOpen(false)
+      setIsSearchOpen(false)
+      setIsWishlistOpen(false)
+    }
+
+    window.addEventListener('cart:open', handleOpenCart)
+    return () => window.removeEventListener('cart:open', handleOpenCart)
+  }, [])
+
   const cargarProductosOferta = async () => {
     try {
-      // Activar promos antes de cargar productos
       await fetch(`${BACKEND_URL}/api/promo-productos/activa`)
       
       const respuesta = await fetch(`${BACKEND_URL}/api/promo-productos/activas/productos`)

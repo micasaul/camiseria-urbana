@@ -31,6 +31,20 @@ export default function Producto() {
   const [cantidad, setCantidad] = useState(1)
   const [descuento, setDescuento] = useState(0)
   const [enWishlist, setEnWishlist] = useState(false)
+  const [carritoError, setCarritoError] = useState('')
+
+  const obtenerErrorCarrito = () => {
+    if (!colorSeleccionado && !talleSeleccionado) {
+      return 'Selecciona color y talle para agregar al carrito.'
+    }
+    if (!colorSeleccionado) {
+      return 'Selecciona un color para agregar al carrito.'
+    }
+    if (!talleSeleccionado) {
+      return 'Selecciona un talle para agregar al carrito.'
+    }
+    return ''
+  }
 
   useEffect(() => {
     let activo = true
@@ -119,7 +133,9 @@ export default function Producto() {
     : precioBase
 
   const handleAgregarCarrito = async () => {
-    if (!colorSeleccionado || !talleSeleccionado) {
+    const error = obtenerErrorCarrito()
+    if (error) {
+      setCarritoError(error)
       return
     }
     
@@ -136,6 +152,8 @@ export default function Producto() {
       const carrito = await obtenerCarritoUsuario()
       
       await agregarAlCarrito(carrito.documentId, variacion.documentId, cantidad)
+      setCarritoError('')
+      window.dispatchEvent(new CustomEvent('cart:open'))
     } catch (error) {
       console.error('Error al agregar al carrito:', error)
     }
@@ -177,6 +195,12 @@ export default function Producto() {
         .catch(() => setEnWishlist(false))
     }
   }, [producto?.documentId, rol])
+
+  useEffect(() => {
+    if (carritoError) {
+      setCarritoError(obtenerErrorCarrito())
+    }
+  }, [colorSeleccionado, talleSeleccionado, carritoError])
 
   if (cargando) {
     return <div className="producto-page">Cargando...</div>
@@ -316,15 +340,20 @@ export default function Producto() {
                 <span className="producto-stock">Stock disponible: {stockDisponible}</span>
               )}
             </div>
-            <BlueButton
-              width="100%"
-              height="48px"
-              fontSize="16px"
-              onClick={handleAgregarCarrito}
-              disabled={!colorSeleccionado || !talleSeleccionado || stockDisponible === 0}
-            >
-              Agregar al carrito
-            </BlueButton>
+            <div className="producto-accion">
+              <BlueButton
+                width="100%"
+                height="48px"
+                fontSize="16px"
+                onClick={handleAgregarCarrito}
+                disabled={stockDisponible === 0 && colorSeleccionado && talleSeleccionado}
+              >
+                Agregar al carrito
+              </BlueButton>
+              {carritoError && (
+                <span className="producto-error">{carritoError}</span>
+              )}
+            </div>
           </div>
         </div>
       </div>
