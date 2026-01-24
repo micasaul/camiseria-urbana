@@ -41,16 +41,40 @@ export default function ProductosListar() {
   const filas = useMemo(
     () =>
       productos.map((producto) => {
+        const variacionesRaw =
+          producto?.variaciones ??
+          producto?.variacions?.data ??
+          producto?.variacions ??
+          []
+        const variacionesLista = Array.isArray(variacionesRaw)
+          ? variacionesRaw
+          : variacionesRaw?.data ?? []
+        const variacionesNormalizadas = variacionesLista.map((variacion) => {
+          const attrs = variacion?.attributes ?? variacion
+          return {
+            id: variacion?.id ?? attrs?.id,
+            documentId: variacion?.documentId ?? attrs?.documentId ?? null,
+            color: attrs?.color ?? variacion?.color ?? '',
+            stock: Number(
+              attrs?.stock ??
+              variacion?.stock ??
+              attrs?.cantidad ??
+              variacion?.cantidad ??
+              0
+            )
+          }
+        })
         const coloresDisponibles = Array.from(
           new Set(
-            (producto.variaciones ?? [])
+            variacionesNormalizadas
               .map((variacion) => variacion.color)
               .filter(Boolean)
           )
         )
-        const cantidadTotal = calcularCantidadTotal(producto.variaciones)
+        const cantidadTotal = calcularCantidadTotal(variacionesNormalizadas)
         return {
           ...producto,
+          variaciones: variacionesNormalizadas,
           coloresDisponibles,
           cantidadTotal
         }

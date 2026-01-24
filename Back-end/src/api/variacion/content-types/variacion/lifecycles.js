@@ -33,6 +33,54 @@ const notifyStockSubscribers = async (variacion, notifications) => {
   }
 };
 
+const productoTieneStock = (variaciones = []) => {
+  return variaciones.some((variacion) => Number(variacion?.stock ?? 0) > 0);
+};
+
+const eliminarDetallesCarrito = async (variacionIds) => {
+  if (!variacionIds.length) return;
+
+  const pageSize = 100;
+  let page = 1;
+
+  while (true) {
+    const detalles = await strapi.entityService.findMany(
+      'api::detalle-carrito.detalle-carrito',
+      {
+        filters: { variacion: { id: { $in: variacionIds } } },
+        pagination: { page, pageSize },
+      }
+    );
+
+    if (!detalles.length) break;
+
+    await Promise.all(
+      detalles.map((detalle) =>
+        strapi.entityService.delete('api::detalle-carrito.detalle-carrito', detalle.id)
+      )
+    );
+
+    if (detalles.length < pageSize) break;
+    page += 1;
+  }
+};
+
+const limpiarCarritosSiProductoSinStock = async (productoId) => {
+  if (!productoId) return;
+
+  const producto = /** @type {any} */ (await strapi.entityService.findOne(
+    'api::producto.producto',
+    productoId,
+    { populate: { variacions: true } }
+  ));
+
+  const variaciones = producto?.variacions ?? [];
+  if (productoTieneStock(variaciones)) return;
+
+  const variacionIds = variaciones.map((variacion) => variacion.id).filter(Boolean);
+  await eliminarDetallesCarrito(variacionIds);
+};
+
 module.exports = {
   async beforeUpdate(event) {
     const { where } = event.params || {};
@@ -52,28 +100,45 @@ module.exports = {
   async afterUpdate(event) {
     const newStock = event.result?.stock;
     const previousStock = event.state?.previousStock;
-
-    if (!isStockRestored(previousStock, newStock)) return;
+    const shouldNotify = isStockRestored(previousStock, newStock);
 
     const variacionId = event.result.id;
-    const variacion =
+    const variacion = /** @type {any} */ (
       event.state?.previousVariacion ||
-      (await strapi.entityService.findOne('api::variacion.variacion', variacionId, {
-        populate: ['producto'],
-      }));
-
-    const pendientes = await strapi.entityService.findMany(
-      'api::notificacion-stock.notificacion-stock',
-      {
-        filters: {
-          variacion: { id: variacionId },
-          enviado: false,
-        },
-        populate: ['users_permissions_user'],
-      }
+        (await strapi.entityService.findOne('api::variacion.variacion', variacionId, {
+          populate: ['producto'],
+        }))
     );
 
-    await notifyStockSubscribers(variacion, pendientes);
+    if (shouldNotify) {
+      const pendientes = await strapi.entityService.findMany(
+        'api::notificacion-stock.notificacion-stock',
+        {
+          filters: {
+            variacion: { id: variacionId },
+            enviado: false,
+          },
+          populate: ['users_permissions_user'],
+        }
+      );
+
+      await notifyStockSubscribers(variacion, pendientes);
+    }
+
+    try {
+      let productoId = variacion?.producto?.id ?? variacion?.producto;
+      if (!productoId) {
+        const variacionCompleta = /** @type {any} */ (await strapi.entityService.findOne(
+          'api::variacion.variacion',
+          variacionId,
+          { populate: ['producto'] }
+        ));
+        productoId = variacionCompleta?.producto?.id ?? variacionCompleta?.producto;
+      }
+      await limpiarCarritosSiProductoSinStock(productoId);
+    } catch (error) {
+      strapi.log?.error?.('Error al limpiar carritos sin stock', error);
+    }
   },
 };
 

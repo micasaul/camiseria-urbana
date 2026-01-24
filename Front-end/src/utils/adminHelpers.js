@@ -74,7 +74,7 @@ export const validarPrecio = (valor) => {
 
 export const calcularCantidadTotal = (variaciones) => {
   return (variaciones ?? []).reduce(
-    (acc, variacion) => acc + Number(variacion.stock || 0),
+    (acc, variacion) => acc + Number(variacion?.stock ?? variacion?.cantidad ?? 0),
     0
   )
 }

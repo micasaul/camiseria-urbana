@@ -44,6 +44,21 @@ export default function Catalogo() {
   const [precioMaxReal, setPrecioMaxReal] = useState(0)
   const [descuentosMap, setDescuentosMap] = useState(new Map())
 
+  const ordenarPorStock = (items) => {
+    const conStock = []
+    const sinStock = []
+    items.forEach((producto) => {
+      const variaciones = producto?.variaciones ?? []
+      const tieneStock = variaciones.some((variacion) => Number(variacion?.stock ?? 0) > 0)
+      if (tieneStock) {
+        conStock.push(producto)
+      } else {
+        sinStock.push(producto)
+      }
+    })
+    return [...conStock, ...sinStock]
+  }
+
   useEffect(() => {
     let activo = true
     getProductoEnums()
@@ -147,7 +162,7 @@ export default function Catalogo() {
     getProductosConFiltros(filtros, paginacion.page, paginacion.pageSize)
       .then((data) => {
         if (!activo) return
-        setProductos(data.items)
+        setProductos(ordenarPorStock(data.items))
         setPaginacion(data.pagination)
       })
       .catch((error) => {

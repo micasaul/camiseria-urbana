@@ -69,7 +69,13 @@ export default function Producto() {
           precio: attrs?.precio ?? 0,
           material: attrs?.material ?? '',
           imagen: attrs?.imagen?.data?.attributes?.url ?? attrs?.imagen?.url ?? '/assets/fallback.jpg',
-          variaciones: (attrs?.variacions?.data ?? attrs?.variacions ?? []).map(v => ({
+          variaciones: (
+            attrs?.variaciones?.data ??
+            attrs?.variaciones ??
+            attrs?.variacions?.data ??
+            attrs?.variacions ??
+            []
+          ).map(v => ({
             id: v.id ?? v.attributes?.id,
             documentId: v.documentId ?? v.attributes?.documentId ?? null,
             color: v.attributes?.color ?? v.color ?? '',
@@ -122,6 +128,12 @@ export default function Producto() {
     return obtenerStockDisponible(producto?.variaciones, colorSeleccionado, talleSeleccionado)
   }, [producto, colorSeleccionado, talleSeleccionado])
 
+  const sinStockProducto = useMemo(() => {
+    const variaciones = producto?.variaciones ?? []
+    if (!variaciones.length) return true
+    return !variaciones.some((variacion) => Number(variacion?.stock ?? 0) > 0)
+  }, [producto])
+
   const imagenes = useMemo(() => {
     if (!producto) return []
     return [producto.imagen, producto.imagen, producto.imagen, producto.imagen]
@@ -140,6 +152,10 @@ export default function Producto() {
     }
     
     if (rol === 'guest') {
+      return
+    }
+
+    if (sinStockProducto) {
       return
     }
 
@@ -232,8 +248,9 @@ export default function Producto() {
               )
             })}
           </div>
-          <div className="producto-imagen-grande">
+          <div className={`producto-imagen-grande${sinStockProducto ? ' agotado' : ''}`}>
             <img src={imagenUrl} alt={producto.nombre} />
+            {sinStockProducto && <div className="producto-agotado">AGOTADO</div>}
           </div>
         </div>
 
@@ -345,10 +362,10 @@ export default function Producto() {
                 width="100%"
                 height="48px"
                 fontSize="16px"
-                onClick={handleAgregarCarrito}
-                disabled={stockDisponible === 0 && colorSeleccionado && talleSeleccionado}
+                onClick={sinStockProducto ? undefined : handleAgregarCarrito}
+                disabled={sinStockProducto || (stockDisponible === 0 && colorSeleccionado && talleSeleccionado)}
               >
-                Agregar al carrito
+                {sinStockProducto ? 'Sin stock' : 'Agregar al carrito'}
               </BlueButton>
               {carritoError && (
                 <span className="producto-error">{carritoError}</span>

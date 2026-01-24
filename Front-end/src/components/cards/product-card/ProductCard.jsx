@@ -8,6 +8,9 @@ export default function ProductCard({ producto, descuento = 0 }) {
     ? producto.imagen 
     : `${BACKEND_URL}${producto.imagen || '/assets/fallback.jpg'}`
 
+  const variaciones = producto?.variaciones ?? []
+  const sinStock = !variaciones.some((variacion) => Number(variacion?.stock ?? 0) > 0)
+
   const precioBase = Number(producto.precio) || 0
   const descuentoNum = Number(descuento) || 0
   const precioFinal = descuentoNum > 0 
@@ -19,12 +22,13 @@ export default function ProductCard({ producto, descuento = 0 }) {
   
   return (
     <Link to={`/producto/${productoId}`} className="product-card">
-      <div className="product-card-image-container">
+      <div className={`product-card-image-container${sinStock ? ' agotado' : ''}`}>
         <img 
           src={imagenUrl} 
           alt={producto.nombre} 
           className="product-card-image"
         />
+        {sinStock && <div className="product-card-agotado">AGOTADO</div>}
       </div>
       <div className="product-card-info">
         <h3 className="product-card-name">{producto.nombre}</h3>

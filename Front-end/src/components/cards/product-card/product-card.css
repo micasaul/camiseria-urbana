@@ -23,12 +23,35 @@
   overflow: hidden;
   background-color: #f5f5f5;
   flex-shrink: 0;
+  position: relative;
 }
 
 .product-card-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.product-card-image-container.agotado::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.product-card-agotado {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  color: #172A3A;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+  z-index: 1;
 }
 
 .product-card-info {

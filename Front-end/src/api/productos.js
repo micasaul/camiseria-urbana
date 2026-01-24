@@ -6,19 +6,105 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+const normalizarVariacion = (variacion) => {
+  const variacionAttrs = variacion?.attributes ?? variacion;
+  const stockRaw =
+    variacionAttrs?.stock ??
+    variacion?.stock ??
+    variacionAttrs?.cantidad ??
+    variacion?.cantidad ??
+    0;
+  const stockNumber = Number(stockRaw);
+  return {
+    id: variacion?.id ?? variacionAttrs?.id,
+    documentId: variacion?.documentId ?? variacionAttrs?.documentId ?? null,
+    color: variacionAttrs?.color ?? variacion?.color ?? '',
+    talle: variacionAttrs?.talle ?? variacion?.talle ?? '',
+    stock: Number.isNaN(stockNumber) ? 0 : stockNumber
+  };
+};
+
+const normalizarVariaciones = (variacionesRaw) => {
+  const lista = Array.isArray(variacionesRaw)
+    ? variacionesRaw
+    : variacionesRaw?.data ?? [];
+  return lista.map(normalizarVariacion);
+};
+
+const adjuntarVariaciones = async (items = []) => {
+  const productosIds = items
+    .map((producto) => producto?.documentId ?? producto?.id)
+    .filter(Boolean);
+
+  if (!productosIds.length) {
+    return items;
+  }
+
+  const params = new URLSearchParams();
+  productosIds.forEach((id, index) => {
+    params.append(`filters[producto][documentId][$in][${index}]`, id);
+  });
+  params.append('populate[producto]', 'true');
+  params.append('pagination[pageSize]', '1000');
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/variaciones?${params.toString()}`);
+    if (!res.ok) {
+      return items;
+    }
+    const data = await res.json();
+    const variacionesRaw = data?.data ?? [];
+    const variacionesPorProducto = new Map();
+
+    variacionesRaw.forEach((variacion) => {
+      const variacionAttrs = variacion?.attributes ?? variacion;
+      const producto = variacionAttrs?.producto?.data ?? variacionAttrs?.producto;
+      const productoAttrs = producto?.attributes ?? producto;
+      const productoId =
+        producto?.documentId ??
+        productoAttrs?.documentId ??
+        producto?.id ??
+        productoAttrs?.id;
+      if (!productoId) return;
+      const lista = variacionesPorProducto.get(productoId) ?? [];
+      lista.push(normalizarVariacion(variacion));
+      variacionesPorProducto.set(productoId, lista);
+    });
+
+    return items.map((producto) => {
+      const key = String(producto?.documentId ?? producto?.id ?? '');
+      return {
+        ...producto,
+        variaciones: variacionesPorProducto.get(key) ?? producto?.variaciones ?? []
+      };
+    });
+  } catch (error) {
+    console.error('Error al obtener variaciones:', error);
+    return items;
+  }
+};
+
 export async function getProductos(page = 1, pageSize = 10) {
   try {
-    const res = await fetch(
-      `${BACKEND_URL}/api/productos?populate[0]=variacions&populate[1]=promo_productos&populate[2]=promo_productos.promo&pagination[page]=${page}&pagination[pageSize]=${pageSize}`
-    );
+    const params = new URLSearchParams();
+    params.append('populate[0]', 'variacions');
+    params.append('populate[1]', 'promo_productos');
+    params.append('populate[2]', 'promo_productos.promo');
+    params.append('pagination[page]', page);
+    params.append('pagination[pageSize]', pageSize);
+
+    const res = await fetch(`${BACKEND_URL}/api/productos?${params.toString()}`);
     if (!res.ok) throw new Error('Error al obtener productos');
 
     const data = await res.json();
-    const items = data.data.map(item => {
+    let items = data.data.map(item => {
       const attrs = item?.attributes ?? item;
       const variacionesRaw =
+        attrs?.variaciones?.data ??
+        attrs?.variaciones ??
         attrs?.variacions?.data ??
         attrs?.variacions ??
+        item?.variaciones ??
         item?.variacions ??
         [];
       const variaciones = Array.isArray(variacionesRaw)
@@ -35,17 +121,10 @@ export async function getProductos(page = 1, pageSize = 10) {
         precio: attrs?.precio ?? 0,
         imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
         promo_productos: promoProductos,
-        variaciones: variaciones.map((variacion) => {
-          const variacionAttrs = variacion?.attributes ?? variacion;
-          return {
-            id: variacion.id ?? variacionAttrs?.id,
-            documentId: variacion.documentId ?? variacionAttrs?.documentId ?? null,
-            color: variacionAttrs?.color ?? '',
-            stock: variacionAttrs?.stock ?? 0
-          };
-        })
+        variaciones: normalizarVariaciones(variaciones)
       };
     });
+    items = await adjuntarVariaciones(items);
     return {
       items,
       pagination: data?.meta?.pagination ?? { page: 1, pageSize, pageCount: 1, total: items.length }
@@ -197,11 +276,14 @@ export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 
     if (!res.ok) throw new Error('Error al obtener productos');
 
     const data = await res.json();
-    const items = (data.data || []).map(item => {
+    let items = (data.data || []).map(item => {
       const attrs = item?.attributes ?? item;
       const variacionesRaw =
+        attrs?.variaciones?.data ??
+        attrs?.variaciones ??
         attrs?.variacions?.data ??
         attrs?.variacions ??
+        item?.variaciones ??
         item?.variacions ??
         [];
       const variaciones = Array.isArray(variacionesRaw)
@@ -218,18 +300,10 @@ export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 
         precio: attrs?.precio ?? 0,
         imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
         promo_productos: promoProductos,
-        variaciones: variaciones.map((variacion) => {
-          const variacionAttrs = variacion?.attributes ?? variacion;
-          return {
-            id: variacion.id ?? variacionAttrs?.id,
-            documentId: variacion.documentId ?? variacionAttrs?.documentId ?? null,
-            color: variacionAttrs?.color ?? '',
-            talle: variacionAttrs?.talle ?? '',
-            stock: variacionAttrs?.stock ?? 0
-          };
-        })
+        variaciones: normalizarVariaciones(variaciones)
       };
     });
+    items = await adjuntarVariaciones(items);
     return {
       items,
       pagination: data?.meta?.pagination ?? { page: 1, pageSize, pageCount: 1, total: items.length }
@@ -260,11 +334,14 @@ export async function buscarProductos(query, page = 1, pageSize = 12) {
     if (!res.ok) throw new Error('Error al buscar productos');
 
     const data = await res.json();
-    const items = (data.data || []).map(item => {
+    let items = (data.data || []).map(item => {
       const attrs = item?.attributes ?? item;
       const variacionesRaw =
+        attrs?.variaciones?.data ??
+        attrs?.variaciones ??
         attrs?.variacions?.data ??
         attrs?.variacions ??
+        item?.variaciones ??
         item?.variacions ??
         [];
       const variaciones = Array.isArray(variacionesRaw)
@@ -281,18 +358,10 @@ export async function buscarProductos(query, page = 1, pageSize = 12) {
         precio: attrs?.precio ?? 0,
         imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
         promo_productos: promoProductos,
-        variaciones: variaciones.map((variacion) => {
-          const variacionAttrs = variacion?.attributes ?? variacion;
-          return {
-            id: variacion.id ?? variacionAttrs?.id,
-            documentId: variacion.documentId ?? variacionAttrs?.documentId ?? null,
-            color: variacionAttrs?.color ?? '',
-            talle: variacionAttrs?.talle ?? '',
-            stock: variacionAttrs?.stock ?? 0
-          };
-        })
+        variaciones: normalizarVariaciones(variaciones)
       };
     });
+    items = await adjuntarVariaciones(items);
     return {
       items,
       pagination: data?.meta?.pagination ?? { page: 1, pageSize, pageCount: 1, total: items.length }
