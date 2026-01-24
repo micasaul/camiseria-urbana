@@ -62,7 +62,7 @@ export function AuthProvider({ children }) {
       }
 
       const data = await respuesta.json()
-      console.info('Usuario actual Strapi:', data)
+      console.info('Usuario actual Strapi:', data, token)
       setUsuario(data)
       const rolCalculado = normalizarRol(data?.role?.name)
       setRol(rolCalculado)

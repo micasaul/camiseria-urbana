@@ -4,7 +4,7 @@ import WishlistCard from '../../cards/wishlist-card/WishlistCard.jsx'
 import WhiteButton from '../../buttons/white-btn/WhiteButton.jsx'
 import BlueButton from '../../buttons/blue-btn/BlueButton.jsx'
 import { useAuth } from '../../../context/AuthContext.jsx'
-import { obtenerWishlistCompleta } from '../../../api/wishlist.js'
+import { obtenerWishlistCompleta, eliminarDeWishlist } from '../../../api/wishlist.js'
 
 export default function WishlistButton({ isOpen, onClick, onClose }) {
   const navigate = useNavigate()
@@ -43,6 +43,18 @@ export default function WishlistButton({ isOpen, onClick, onClose }) {
       onClose()
     }
     navigate('/login')
+  }
+
+  const handleRemove = async (wishlistDocumentId) => {
+    if (!wishlistDocumentId) return
+    try {
+      await eliminarDeWishlist(wishlistDocumentId)
+      setItemsWishlist((prev) =>
+        prev.filter((item) => (item.documentId ?? item.id) !== wishlistDocumentId)
+      )
+    } catch (error) {
+      console.error('Error al eliminar de wishlist:', error)
+    }
   }
 
   return (
@@ -92,7 +104,7 @@ export default function WishlistButton({ isOpen, onClick, onClose }) {
                     imageSrc={item.imageSrc}
                     name={item.name}
                     price={item.price}
-                    onRemove={() => {}}
+                    onRemove={() => handleRemove(item.documentId ?? item.id)}
                   />
                 ))}
               </div>

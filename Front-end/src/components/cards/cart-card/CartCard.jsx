@@ -34,7 +34,6 @@ export default function CartCard({
 
   const handleIncrease = () => {
     if (count + 1 > stock) {
-      window.alert('No hay suficiente stock disponible.')
       return
     }
     updateCount(count + 1)

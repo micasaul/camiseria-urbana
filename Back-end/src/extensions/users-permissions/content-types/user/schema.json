@@ -78,12 +78,6 @@
       "target": "api::carrito.carrito",
       "mappedBy": "users_permissions_user"
     },
-    "wishlists": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::wishlist.wishlist",
-      "mappedBy": "users_permissions_user"
-    },
     "ventas": {
       "type": "relation",
       "relation": "oneToMany",
@@ -106,6 +100,12 @@
       "type": "relation",
       "relation": "oneToOne",
       "target": "api::newsletter.newsletter",
+      "mappedBy": "users_permissions_user"
+    },
+    "wishlists": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::wishlist.wishlist",
       "mappedBy": "users_permissions_user"
     }
   }

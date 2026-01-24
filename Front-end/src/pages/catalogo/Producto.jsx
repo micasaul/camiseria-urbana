@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { getProductoPorId } from '../../api/productos.js'
 import { obtenerDescuentosActivos } from '../../api/promos.js'
 import { obtenerCarritoUsuario, agregarAlCarrito } from '../../api/carrito.js'
-import { agregarAWishlist, estaEnWishlist } from '../../api/wishlist.js'
+import { agregarAWishlist, eliminarDeWishlist, estaEnWishlist } from '../../api/wishlist.js'
 import { 
   calcularPromedioResenas, 
   obtenerColoresEnStock, 
@@ -120,64 +120,60 @@ export default function Producto() {
 
   const handleAgregarCarrito = async () => {
     if (!colorSeleccionado || !talleSeleccionado) {
-      alert('Por favor selecciona color y talle')
       return
     }
     
     if (rol === 'guest') {
-      alert('Necesitas iniciar sesión para agregar al carrito')
       return
     }
 
     try {
       const variacion = encontrarVariacion(producto.variaciones, colorSeleccionado, talleSeleccionado)
       if (!variacion || !variacion.documentId) {
-        alert('No se pudo encontrar la variación seleccionada')
         return
       }
 
       const carrito = await obtenerCarritoUsuario()
       
       await agregarAlCarrito(carrito.documentId, variacion.documentId, cantidad)
-      
-      alert('Producto agregado al carrito exitosamente')
     } catch (error) {
       console.error('Error al agregar al carrito:', error)
-      alert('Error al agregar al carrito. Por favor intenta nuevamente.')
     }
   }
 
   const handleToggleWishlist = async () => {
     if (rol === 'guest') {
-      alert('Necesitas iniciar sesión para agregar a wishlist')
       return
     }
 
     if (!producto?.documentId) {
-      alert('Error: no se pudo obtener el producto')
       return
     }
 
     try {
       if (enWishlist) {
-        // TODO: Implementar eliminar de wishlist si es necesario
-        alert('Eliminar de wishlist aún no implementado')
+        const wishlistId = typeof enWishlist === 'string' ? enWishlist : null
+        if (wishlistId) {
+          await eliminarDeWishlist(wishlistId)
+        }
+        setEnWishlist(false)
         return
       }
 
-      await agregarAWishlist(producto.documentId)
-      setEnWishlist(true)
-      alert('Producto agregado a wishlist')
+      const creada = await agregarAWishlist(producto.documentId)
+      const item = creada?.data ?? creada
+      const attrs = item?.attributes ?? item
+      const wishlistId = item?.documentId ?? attrs?.documentId ?? true
+      setEnWishlist(wishlistId)
     } catch (error) {
       console.error('Error al agregar a wishlist:', error)
-      alert('Error al agregar a wishlist. Por favor intenta nuevamente.')
     }
   }
 
   useEffect(() => {
     if (producto?.documentId && rol !== 'guest') {
       estaEnWishlist(producto.documentId)
-        .then(setEnWishlist)
+        .then((resultado) => setEnWishlist(resultado || false))
         .catch(() => setEnWishlist(false))
     }
   }, [producto?.documentId, rol])

@@ -21,11 +21,11 @@ export async function obtenerCarritoUsuario() {
     }
     
     const userData = await userRes.json();
-    const userId = userData.id;
+    const userDocumentId = userData.documentId;
     
     // Buscar carrito del usuario
     const res = await fetch(
-      `${BACKEND_URL}/api/carritos?filters[users_permissions_user][id][$eq]=${userId}&populate[0]=detalle_carritos`,
+      `${BACKEND_URL}/api/carritos?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=detalle_carritos`,
       {
         headers: {
           ...getAuthHeaders()
@@ -72,7 +72,7 @@ export async function crearCarrito() {
     }
     
     const userData = await userRes.json();
-    const userId = userData.id;
+    const userDocumentId = userData.documentId;
     
     const res = await fetch(`${BACKEND_URL}/api/carritos`, {
       method: 'POST',
@@ -83,7 +83,7 @@ export async function crearCarrito() {
       body: JSON.stringify({
         data: {
           fecha: new Date().toISOString(),
-          users_permissions_user: { connect: [{ id: userId }] }
+          users_permissions_user: { connect: [{ documentId: userDocumentId }] }
         }
       })
     });
@@ -123,11 +123,11 @@ export async function obtenerCarritoCompleto() {
     }
     
     const userData = await userRes.json();
-    const userId = userData.id;
+    const userDocumentId = userData.documentId;
     
 
     const res = await fetch(
-      `${BACKEND_URL}/api/carritos?filters[users_permissions_user][id][$eq]=${userId}&populate[0]=detalle_carritos&populate[1]=detalle_carritos.variacion&populate[2]=detalle_carritos.variacion.producto`,
+      `${BACKEND_URL}/api/carritos?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=detalle_carritos&populate[1]=detalle_carritos.variacion&populate[2]=detalle_carritos.variacion.producto`,
       {
         headers: {
           ...getAuthHeaders()

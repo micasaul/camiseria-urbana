@@ -11,20 +11,16 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "fecha": {
-      "type": "datetime",
-      "required": true
+    "producto": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::producto.producto",
+      "inversedBy": "wishlists"
     },
     "users_permissions_user": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
-      "inversedBy": "wishlists"
-    },
-    "producto": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::producto.producto",
       "inversedBy": "wishlists"
     }
   }

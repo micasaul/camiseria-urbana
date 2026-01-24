@@ -18,7 +18,7 @@ export async function agregarAWishlist(productoDocumentId) {
     }
     
     const userData = await userRes.json();
-    const userId = userData.id;
+    const userDocumentId = userData.documentId;
     
     const res = await fetch(`${BACKEND_URL}/api/wishlists`, {
       method: 'POST',
@@ -28,9 +28,8 @@ export async function agregarAWishlist(productoDocumentId) {
       },
       body: JSON.stringify({
         data: {
-          fecha: new Date().toISOString(),
-          users_permissions_user: userId,
-          producto: { connect: [{ documentId: productoDocumentId }] }
+          users_permissions_user: userDocumentId,
+          producto: productoDocumentId
         }
       })
     });
@@ -45,6 +44,29 @@ export async function agregarAWishlist(productoDocumentId) {
   } catch (error) {
     console.error('Error al agregar a wishlist:', error);
     throw error;
+  }
+}
+
+export async function eliminarDeWishlist(wishlistDocumentId) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/wishlists/${wishlistDocumentId}`, {
+      method: 'DELETE',
+      headers: {
+        ...getAuthHeaders()
+      }
+    })
+
+    if (!res.ok) {
+      const errorText = await res.text()
+      console.error('Error response:', errorText)
+      throw new Error('No se pudo eliminar de la wishlist.')
+    }
+
+    const text = await res.text()
+    return text ? JSON.parse(text) : null
+  } catch (error) {
+    console.error('Error al eliminar de wishlist:', error)
+    throw error
   }
 }
 
@@ -64,10 +86,10 @@ export async function obtenerWishlistCompleta() {
     }
     
     const userData = await userRes.json();
-    const userId = userData.id;
+    const userDocumentId = userData.documentId;
     
     const res = await fetch(
-      `${BACKEND_URL}/api/wishlists?filters[users_permissions_user][id][$eq]=${userId}&populate[0]=producto`,
+      `${BACKEND_URL}/api/wishlists?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=producto`,
       {
         headers: {
           ...getAuthHeaders()
@@ -119,7 +141,7 @@ export async function obtenerWishlistCompleta() {
 
 /**
  * @param {string} 
- * @returns {Promise<boolean>} 
+ * @returns {Promise<string|false>} 
  */
 export async function estaEnWishlist(productoDocumentId) {
   try {
@@ -134,10 +156,10 @@ export async function estaEnWishlist(productoDocumentId) {
     }
     
     const userData = await userRes.json();
-    const userId = userData.id;
+    const userDocumentId = userData.documentId;
     
     const res = await fetch(
-      `${BACKEND_URL}/api/wishlists?filters[users_permissions_user][id][$eq]=${userId}&filters[producto][documentId][$eq]=${productoDocumentId}`,
+      `${BACKEND_URL}/api/wishlists?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&filters[producto][documentId][$eq]=${productoDocumentId}`,
       {
         headers: {
           ...getAuthHeaders()
@@ -150,7 +172,11 @@ export async function estaEnWishlist(productoDocumentId) {
     }
 
     const data = await res.json();
-    return (data?.data ?? []).length > 0;
+    const items = data?.data ?? []
+    if (items.length === 0) return false
+    const wishlist = items[0]
+    const attrs = wishlist?.attributes ?? wishlist
+    return wishlist?.documentId ?? attrs?.documentId ?? wishlist?.id ?? attrs?.id ?? false
   } catch (error) {
     console.error('Error al verificar wishlist:', error);
     return false;
