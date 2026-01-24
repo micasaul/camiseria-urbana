@@ -8,5 +8,13 @@ module.exports = {
         auth: false,
       },
     },
+    {
+      method: 'GET',
+      path: '/productos',
+      handler: 'producto.find',
+      config: {
+        auth: false,
+      },
+    },
   ],
 };

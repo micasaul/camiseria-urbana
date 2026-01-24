@@ -5,6 +5,7 @@
  */
 
 const { createCoreController } = require('@strapi/strapi').factories;
+const { actualizarPromosActivas } = require('../../../extensions/promos/promo-cron');
 
 module.exports = createCoreController('api::producto.producto', ({ strapi }) => ({
   async enums(ctx) {
@@ -18,5 +19,13 @@ module.exports = createCoreController('api::producto.producto', ({ strapi }) => 
         color: variacion?.attributes?.color?.enum ?? [],
       },
     };
+  },
+
+  async find(ctx) {
+    // Activar promos antes de devolver productos (igual que el menú)
+    await actualizarPromosActivas();
+    
+    // Usar el método find por defecto de Strapi
+    return super.find(ctx);
   },
 }));

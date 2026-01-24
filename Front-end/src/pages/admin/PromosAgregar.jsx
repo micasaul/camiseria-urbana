@@ -85,7 +85,10 @@ export default function PromosAgregar() {
       .then((data) => {
         if (!activo) return
         setRelacionesPrevias(data)
-        const ids = data.map((rel) => rel?.attributes?.producto?.data?.id ?? rel?.producto?.id).filter(Boolean)
+        const ids = data.map((rel) => {
+          const productoData = rel?.attributes?.producto?.data ?? rel?.producto
+          return productoData?.documentId ?? productoData?.id
+        }).filter(Boolean)
         setProductosSeleccionados(ids)
       })
       .catch(() => {
@@ -281,17 +284,20 @@ export default function PromosAgregar() {
             Productos<span className="admin-required">*</span>
           </label>
           <div className="admin-product-select">
-            {productosOrdenados.map((producto) => (
-              <label key={producto.id} className="admin-product-option">
-                <input
-                  type="checkbox"
-                  checked={productosSeleccionados.includes(producto.id)}
-                  onChange={() => toggleProducto(producto.id)}
-                />
-                <span className="admin-product-thumb" />
-                <span>{producto.nombre || 'Sin nombre'}</span>
-              </label>
-            ))}
+            {productosOrdenados.map((producto) => {
+              const productoDocumentId = producto.documentId ?? producto.id
+              return (
+                <label key={producto.id} className="admin-product-option">
+                  <input
+                    type="checkbox"
+                    checked={productosSeleccionados.includes(productoDocumentId)}
+                    onChange={() => toggleProducto(productoDocumentId)}
+                  />
+                  <span className="admin-product-thumb" />
+                  <span>{producto.nombre || 'Sin nombre'}</span>
+                </label>
+              )
+            })}
           </div>
         </div>
         <div className="admin-actions admin-actions-fixed">

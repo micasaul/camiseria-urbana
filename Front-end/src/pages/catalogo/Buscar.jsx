@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { buscarProductos } from '../../api/productos.js'
+import { obtenerDescuentosActivos } from '../../api/promos.js'
 import ProductCard from '../../components/cards/product-card/ProductCard.jsx'
 import PageButton from '../../components/forms/page-button/page-button.jsx'
 import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
@@ -15,10 +16,29 @@ export default function Buscar() {
   const [cargando, setCargando] = useState(true)
   const [pagina, setPagina] = useState(1)
   const [paginacion, setPaginacion] = useState({ page: 1, pageSize: 12, pageCount: 1, total: 0 })
+  const [descuentosMap, setDescuentosMap] = useState(new Map())
 
   useEffect(() => {
     setPagina(1)
   }, [query])
+
+  useEffect(() => {
+    let activo = true
+    obtenerDescuentosActivos()
+      .then((map) => {
+        if (!activo) return
+        setDescuentosMap(map)
+      })
+      .catch((error) => {
+        console.error('Error al obtener descuentos:', error)
+        if (!activo) return
+        setDescuentosMap(new Map())
+      })
+    
+    return () => {
+      activo = false
+    }
+  }, [])
 
   useEffect(() => {
     let activo = true
@@ -81,9 +101,17 @@ export default function Buscar() {
             <>
               <h2 className="buscar-title">Resultados para "{query}"</h2>
               <div className="buscar-grid">
-                {productos.map((producto) => (
-                  <ProductCard key={producto.id} producto={producto} />
-                ))}
+                {productos.map((producto) => {
+                  const productoKey = String(producto.documentId ?? producto.id)
+                  const descuento = descuentosMap.get(productoKey) ?? 0
+                  return (
+                    <ProductCard 
+                      key={producto.id} 
+                      producto={producto} 
+                      descuento={descuento}
+                    />
+                  )
+                })}
               </div>
 
               <PageButton

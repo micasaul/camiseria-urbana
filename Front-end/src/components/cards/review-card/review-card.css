@@ -1,0 +1,44 @@
+.review-card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.review-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.review-card-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.review-card-stars .estrella {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.review-card-stars .estrella.llena {
+  color: #facc15;
+}
+
+.review-card-stars .estrella.vacia {
+  color: #e5e7eb;
+}
+
+.review-card-name {
+  font-weight: 500;
+  font-size: 14px;
+  color: #172A3A;
+}
+
+.review-card-comment {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.5;
+}

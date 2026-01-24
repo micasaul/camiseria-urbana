@@ -57,6 +57,9 @@ export default function Header() {
 
   const cargarProductosOferta = async () => {
     try {
+      // Activar promos antes de cargar productos
+      await fetch(`${BACKEND_URL}/api/promo-productos/activa`)
+      
       const respuesta = await fetch(`${BACKEND_URL}/api/promo-productos/activas/productos`)
       if (!respuesta.ok) {
         return
@@ -77,23 +80,6 @@ export default function Header() {
     { label: 'Jean', to: '/catalogo?material=Jean' }
   ]), [])
 
-  const wishlistItems = useMemo(() => ([
-    { id: 1, name: 'Camisa Lino', price: '$12.500', imageSrc: LogoCamiseriaUrbana },
-    { id: 2, name: 'Camisa Algodón', price: '$10.900', imageSrc: LogoCamiseriaUrbana }
-  ]), [])
-
-  const cartItems = useMemo(() => ([
-    {
-      id: 1,
-      name: 'Camisa Jean',
-      price: '$14.200',
-      size: 'L',
-      color: 'Azul',
-      quantity: 2,
-      stock: 5,
-      imageSrc: LogoCamiseriaUrbana
-    }
-  ]), [])
 
   const closePanels = () => {
     setIsMenuOpen(false)
@@ -195,7 +181,6 @@ export default function Header() {
           isOpen={isWishlistOpen}
           onClick={handleWishlistToggle}
           onClose={() => setIsWishlistOpen(false)}
-          items={wishlistItems}
         />
 
         {/* Carrito */}
@@ -203,7 +188,6 @@ export default function Header() {
           isOpen={isCartOpen}
           onClick={handleCartToggle}
           onClose={() => setIsCartOpen(false)}
-          items={cartItems}
         />
 
       </div>

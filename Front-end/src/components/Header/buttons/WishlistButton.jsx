@@ -4,15 +4,32 @@ import WishlistCard from '../../cards/wishlist-card/WishlistCard.jsx'
 import WhiteButton from '../../buttons/white-btn/WhiteButton.jsx'
 import BlueButton from '../../buttons/blue-btn/BlueButton.jsx'
 import { useAuth } from '../../../context/AuthContext.jsx'
+import { obtenerWishlistCompleta } from '../../../api/wishlist.js'
 
-export default function WishlistButton({ isOpen, onClick, onClose, items = [] }) {
+export default function WishlistButton({ isOpen, onClick, onClose }) {
   const navigate = useNavigate()
   const { rol } = useAuth()
-  const [itemsWishlist, setItemsWishlist] = useState(items)
+  const [itemsWishlist, setItemsWishlist] = useState([])
+  const [cargando, setCargando] = useState(false)
 
   useEffect(() => {
-    setItemsWishlist(items)
-  }, [items])
+    if (isOpen && rol !== 'guest') {
+      setCargando(true)
+      obtenerWishlistCompleta()
+        .then((items) => {
+          setItemsWishlist(items)
+        })
+        .catch((error) => {
+          console.error('Error al cargar wishlist:', error)
+          setItemsWishlist([])
+        })
+        .finally(() => {
+          setCargando(false)
+        })
+    } else if (rol === 'guest') {
+      setItemsWishlist([])
+    }
+  }, [isOpen, rol])
 
   const handleExplorar = () => {
     if (onClose) {
@@ -55,6 +72,10 @@ export default function WishlistButton({ isOpen, onClick, onClose, items = [] })
                 <BlueButton width="220px" height="36px" fontSize="15px" onClick={handleLogin}>
                   Login
                 </BlueButton>
+              </div>
+            ) : cargando ? (
+              <div className="cart-empty">
+                <p className="cart-empty-text">Cargando...</p>
               </div>
             ) : itemsWishlist.length === 0 ? (
               <div className="cart-empty">

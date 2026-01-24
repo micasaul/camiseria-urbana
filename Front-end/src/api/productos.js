@@ -9,7 +9,7 @@ const getAuthHeaders = () => {
 export async function getProductos(page = 1, pageSize = 10) {
   try {
     const res = await fetch(
-      `${BACKEND_URL}/api/productos?populate=variacions&pagination[page]=${page}&pagination[pageSize]=${pageSize}`
+      `${BACKEND_URL}/api/productos?populate[0]=variacions&populate[1]=promo_productos&populate[2]=promo_productos.promo&pagination[page]=${page}&pagination[pageSize]=${pageSize}`
     );
     if (!res.ok) throw new Error('Error al obtener productos');
 
@@ -24,6 +24,9 @@ export async function getProductos(page = 1, pageSize = 10) {
       const variaciones = Array.isArray(variacionesRaw)
         ? variacionesRaw
         : [];
+      const promoProductosRaw = attrs?.promo_productos?.data ?? attrs?.promo_productos ?? item?.promo_productos ?? [];
+      const promoProductos = Array.isArray(promoProductosRaw) ? promoProductosRaw : [];
+      
       return {
         id: item.id ?? attrs?.id,
         documentId: item.documentId ?? attrs?.documentId ?? null,
@@ -31,6 +34,7 @@ export async function getProductos(page = 1, pageSize = 10) {
         material: attrs?.material ?? '',
         precio: attrs?.precio ?? 0,
         imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
+        promo_productos: promoProductos,
         variaciones: variaciones.map((variacion) => {
           const variacionAttrs = variacion?.attributes ?? variacion;
           return {
@@ -107,10 +111,13 @@ export async function crearVariacion(payload) {
 }
 
 export async function getProductoPorId(id) {
+  // Usar la misma sintaxis que funciona en otras funciones
   const res = await fetch(
-    `${BACKEND_URL}/api/productos/${id}?populate[0]=variacions&populate[1]=marca`
+    `${BACKEND_URL}/api/productos/${id}?populate[0]=variacions&populate[1]=marca&populate[2]=resenas&populate[3]=resenas.users_permissions_user&populate[4]=promo_productos&populate[5]=promo_productos.promo&populate[6]=wishlists`
   );
   if (!res.ok) {
+    const errorText = await res.text()
+    console.error('Error response:', errorText)
     throw new Error('No se pudo obtener el producto.');
   }
   return res.json();
@@ -153,7 +160,9 @@ export async function actualizarVariacion(id, payload) {
 export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 9) {
   try {
     const params = new URLSearchParams();
-    params.append('populate', 'variacions');
+    params.append('populate[0]', 'variacions');
+    params.append('populate[1]', 'promo_productos');
+    params.append('populate[2]', 'promo_productos.promo');
     params.append('pagination[page]', page);
     params.append('pagination[pageSize]', pageSize);
 
@@ -198,6 +207,9 @@ export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 
       const variaciones = Array.isArray(variacionesRaw)
         ? variacionesRaw
         : [];
+      const promoProductosRaw = attrs?.promo_productos?.data ?? attrs?.promo_productos ?? item?.promo_productos ?? [];
+      const promoProductos = Array.isArray(promoProductosRaw) ? promoProductosRaw : [];
+      
       return {
         id: item.id ?? attrs?.id,
         documentId: item.documentId ?? attrs?.documentId ?? null,
@@ -205,6 +217,7 @@ export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 
         material: attrs?.material ?? '',
         precio: attrs?.precio ?? 0,
         imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
+        promo_productos: promoProductos,
         variaciones: variaciones.map((variacion) => {
           const variacionAttrs = variacion?.attributes ?? variacion;
           return {
@@ -233,7 +246,9 @@ export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 
 export async function buscarProductos(query, page = 1, pageSize = 12) {
   try {
     const params = new URLSearchParams();
-    params.append('populate', 'variacions');
+    params.append('populate[0]', 'variacions');
+    params.append('populate[1]', 'promo_productos');
+    params.append('populate[2]', 'promo_productos.promo');
     params.append('pagination[page]', page);
     params.append('pagination[pageSize]', pageSize);
     
@@ -255,6 +270,9 @@ export async function buscarProductos(query, page = 1, pageSize = 12) {
       const variaciones = Array.isArray(variacionesRaw)
         ? variacionesRaw
         : [];
+      const promoProductosRaw = attrs?.promo_productos?.data ?? attrs?.promo_productos ?? item?.promo_productos ?? [];
+      const promoProductos = Array.isArray(promoProductosRaw) ? promoProductosRaw : [];
+      
       return {
         id: item.id ?? attrs?.id,
         documentId: item.documentId ?? attrs?.documentId ?? null,
@@ -262,6 +280,7 @@ export async function buscarProductos(query, page = 1, pageSize = 12) {
         material: attrs?.material ?? '',
         precio: attrs?.precio ?? 0,
         imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
+        promo_productos: promoProductos,
         variaciones: variaciones.map((variacion) => {
           const variacionAttrs = variacion?.attributes ?? variacion;
           return {

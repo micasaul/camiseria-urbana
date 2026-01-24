@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { getProductosConFiltros } from '../../api/productos.js'
 import { getProductoEnums } from '../../api/enums.js'
+import { obtenerDescuentosActivos } from '../../api/promos.js'
 import ColorSelector from '../../components/forms/color/ColorSelector.jsx'
 import ProductCard from '../../components/cards/product-card/ProductCard.jsx'
 import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
@@ -41,6 +42,7 @@ export default function Catalogo() {
   const [colores, setColores] = useState([])
   const [precioMinReal, setPrecioMinReal] = useState(0)
   const [precioMaxReal, setPrecioMaxReal] = useState(0)
+  const [descuentosMap, setDescuentosMap] = useState(new Map())
 
   useEffect(() => {
     let activo = true
@@ -76,6 +78,8 @@ export default function Catalogo() {
   }, [materialFromUrl, materiales])
 
   useEffect(() => {
+    let activo = true
+    
     const obtenerPreciosReales = async () => {
       try {
         const [resMin, resMax] = await Promise.all([
@@ -88,7 +92,7 @@ export default function Catalogo() {
           const itemMin = dataMin?.data?.[0]
           if (itemMin) {
             const attrsMin = itemMin?.attributes ?? itemMin
-            setPrecioMinReal(attrsMin?.precio ?? 0)
+            if (activo) setPrecioMinReal(attrsMin?.precio ?? 0)
           }
         }
         
@@ -97,16 +101,34 @@ export default function Catalogo() {
           const itemMax = dataMax?.data?.[0]
           if (itemMax) {
             const attrsMax = itemMax?.attributes ?? itemMax
-            setPrecioMaxReal(attrsMax?.precio ?? 10000)
+            if (activo) setPrecioMaxReal(attrsMax?.precio ?? 10000)
           }
         }
       } catch (error) {
         console.error('Error al obtener precios reales:', error)
-        setPrecioMinReal(0)
-        setPrecioMaxReal(10000)
+        if (activo) {
+          setPrecioMinReal(0)
+          setPrecioMaxReal(10000)
+        }
       }
     }
     obtenerPreciosReales()
+    
+    // Obtener descuentos activos
+    obtenerDescuentosActivos()
+      .then((map) => {
+        if (!activo) return
+        setDescuentosMap(map)
+      })
+      .catch((error) => {
+        console.error('Error al obtener descuentos:', error)
+        if (!activo) return
+        setDescuentosMap(new Map())
+      })
+    
+    return () => {
+      activo = false
+    }
   }, [])
 
   useEffect(() => {
@@ -397,9 +419,18 @@ export default function Catalogo() {
           ) : (
             <>
               <div className="catalogo-grid">
-                {productos.map((producto) => (
-                  <ProductCard key={producto.id} producto={producto} />
-                ))}
+                {productos.map((producto) => {
+                  const productoKey = String(producto.documentId ?? producto.id)
+                  const descuento = descuentosMap.get(productoKey) ?? 0
+                  console.log(`Producto ${producto.nombre} (${productoKey}): descuento=${descuento}`)
+                  return (
+                    <ProductCard 
+                      key={producto.id} 
+                      producto={producto} 
+                      descuento={descuento}
+                    />
+                  )
+                })}
               </div>
 
               <PageButton

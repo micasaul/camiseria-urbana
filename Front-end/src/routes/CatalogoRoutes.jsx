@@ -7,7 +7,7 @@ export default function CatalogoRoutes() {
   return (
     <>
       <Route path="/catalogo" element={<Catalogo />} />
-      <Route path="/producto/:id" element={<Producto />} />
+      <Route path="/producto/:documentId" element={<Producto />} />
       <Route path="/buscar" element={<Buscar />} />
     </>
   )

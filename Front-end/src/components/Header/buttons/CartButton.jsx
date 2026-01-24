@@ -4,6 +4,7 @@ import CartCard from '../../cards/cart-card/CartCard.jsx'
 import WhiteButton from '../../buttons/white-btn/WhiteButton.jsx'
 import BlueButton from '../../buttons/blue-btn/BlueButton.jsx'
 import { useAuth } from '../../../context/AuthContext.jsx'
+import { obtenerCarritoCompleto } from '../../../api/carrito.js'
 
 const formatearPrecio = (valor) => {
   if (typeof valor === 'number') {
@@ -20,14 +21,30 @@ const formatearPrecio = (valor) => {
   return Number(limpio.replace(/\./g, '')) || 0
 }
 
-export default function CartButton({ isOpen, onClick, onClose, items = [] }) {
+export default function CartButton({ isOpen, onClick, onClose }) {
   const navigate = useNavigate()
   const { rol } = useAuth()
-  const [itemsCarrito, setItemsCarrito] = useState(items)
+  const [itemsCarrito, setItemsCarrito] = useState([])
+  const [cargando, setCargando] = useState(false)
 
   useEffect(() => {
-    setItemsCarrito(items)
-  }, [items])
+    if (isOpen && rol !== 'guest') {
+      setCargando(true)
+      obtenerCarritoCompleto()
+        .then((items) => {
+          setItemsCarrito(items)
+        })
+        .catch((error) => {
+          console.error('Error al cargar carrito:', error)
+          setItemsCarrito([])
+        })
+        .finally(() => {
+          setCargando(false)
+        })
+    } else if (rol === 'guest') {
+      setItemsCarrito([])
+    }
+  }, [isOpen, rol])
 
   const subtotal = useMemo(() => {
     return itemsCarrito.reduce((acum, item) => {
@@ -95,6 +112,10 @@ export default function CartButton({ isOpen, onClick, onClose, items = [] }) {
                 <BlueButton width="220px" height="36px" fontSize="15px" onClick={handleLogin}>
                   Login
                 </BlueButton>
+              </div>
+            ) : cargando ? (
+              <div className="cart-empty">
+                <p className="cart-empty-text">Cargando...</p>
               </div>
             ) : itemsCarrito.length === 0 ? (
               <div className="cart-empty">

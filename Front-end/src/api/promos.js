@@ -147,3 +147,73 @@ export async function eliminarPromo(id) {
   }
   return res.json();
 }
+
+/**
+ * Obtiene los descuentos activos basándose en los promo_productos activos (actualizados por el cron)
+ * Solo lee el estado activo, no verifica fechas ni actualiza nada
+ * @returns {Promise<Map<string, number>>} Mapa de productoId/documentId -> descuento máximo
+ */
+export async function obtenerDescuentosActivos() {
+  try {
+    // Obtener solo los promo_productos activos con sus promos y productos
+    // El cron ya actualiza el campo 'activo' según las fechas de la promo
+    const res = await fetch(
+      `${BACKEND_URL}${PROMO_PRODUCTO_ENDPOINT}?filters[activo][$eq]=true&populate[0]=promo&populate[1]=producto`
+    )
+    
+    if (!res.ok) {
+      console.error('Error al obtener promo_productos activos:', res.status)
+      return new Map()
+    }
+    
+    const data = await res.json()
+    const promoProductos = data?.data ?? []
+    const descuentosMap = new Map()
+    
+    console.log(`Promo_productos activos encontrados: ${promoProductos.length}`)
+    
+    // Recorrer promo_productos activos y aplicar descuentos
+    promoProductos.forEach((promoProductoItem) => {
+      const ppAttrs = promoProductoItem?.attributes ?? promoProductoItem
+      
+      // Obtener la promo asociada
+      const promo = ppAttrs?.promo?.data ?? promoProductoItem?.promo?.data ?? ppAttrs?.promo ?? promoProductoItem?.promo
+      if (!promo) {
+        console.warn('  - Promo no encontrada en promo_producto')
+        return
+      }
+      
+      const promoAttrs = promo?.attributes ?? promo
+      const descuento = Number(promoAttrs?.descuento ?? 0)
+      if (descuento <= 0) return
+      
+      // Obtener el producto asociado
+      const producto = ppAttrs?.producto?.data ?? promoProductoItem?.producto?.data ?? ppAttrs?.producto ?? promoProductoItem?.producto
+      if (!producto) {
+        console.warn('  - Producto no encontrado en promo_producto')
+        return
+      }
+      
+      const productoAttrs = producto?.attributes ?? producto
+      const productoId = producto?.documentId ?? productoAttrs?.documentId ?? producto?.id ?? productoAttrs?.id
+      if (!productoId) {
+        console.warn('  - No se pudo obtener ID del producto')
+        return
+      }
+      
+      // Usar el máximo descuento si hay múltiples promos para el mismo producto
+      const key = String(productoId)
+      const descuentoActual = descuentosMap.get(key) ?? 0
+      if (descuento > descuentoActual) {
+        descuentosMap.set(key, descuento)
+        console.log(`  ✓ Descuento ${descuento}% aplicado a producto ${key} (${productoAttrs?.nombre ?? 'sin nombre'})`)
+      }
+    })
+    
+    console.log('Mapa de descuentos final:', Array.from(descuentosMap.entries()))
+    return descuentosMap
+  } catch (error) {
+    console.error('Error al obtener descuentos activos:', error)
+    return new Map()
+  }
+}
