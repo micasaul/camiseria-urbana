@@ -46,8 +46,8 @@ export default {
           ctx.throw(404, "Venta no encontrada");
         }
 
-        if (encontrada.estado !== "En proceso") {
-          ctx.throw(400, "Venta no está en proceso");
+        if (encontrada.estado !== "pendiente") {
+          ctx.throw(400, "Venta no está en estado pendiente");
         }
 
         const ventaEntity = /** @type {any} */ (encontrada);
@@ -98,12 +98,24 @@ export default {
             metadata: { ventaId },
             notification_url: `${process.env.BACKEND_URL}/api/pagos/webhook`,
             back_urls: {
-              success: `http://localhost:5173/payment/success?ventaId=${ventaId}`,
-              pending: `http://localhost:5173/payment/pending?ventaId=${ventaId}`,
-              failure: `http://localhost:5173/payment/failure?ventaId=${ventaId}`,
+              success: `http://localhost:5173/pago/success?ventaId=${ventaId}`,
+              pending: `http://localhost:5173/pago/pending?ventaId=${ventaId}`,
+              failure: `http://localhost:5173/pago/failure?ventaId=${ventaId}`,
             },
           },
         });
+
+        if (response.id) {
+          await strapi.entityService.update(
+            /** @type {any} */ ("api::venta.venta"),
+            encontrada.id,
+            {
+              data: {
+                preference_id: String(response.id),
+              },
+            }
+          );
+        }
 
         ctx.body = {
           init_point: response.init_point,
@@ -116,68 +128,108 @@ export default {
 
   async webhook(ctx) {
     const payload = ctx.request.body || {};
-    const ventaId = obtenerVentaId(payload);
-
+    
     try {
+      if (payload.type !== "payment") {
+        ctx.send({ received: true });
+        return;
+      }
+
       if (!payload.data?.id) {
         ctx.send({ received: true });
         return;
       }
 
-      const pago = await obtenerPago(payload.data.id);
-      const ventaPagoId = obtenerVentaId(pago) || ventaId;
-      const pagoEstado = pago?.status;
-
-      if (pagoEstado === "approved" && ventaPagoId) {
-        // Actualizar venta a estado "Enviado" o "Entregado" según corresponda
-        const ventas = await strapi.entityService.findMany(
-          /** @type {any} */ ("api::venta.venta"),
-          /** @type {any} */ ({
-            filters: { documentId: String(ventaPagoId) },
-            limit: 1,
-          })
-        );
-        const venta = ventas[0];
-        if (venta && venta.estado === "En proceso") {
-          await strapi.entityService.update(
-            /** @type {any} */ ("api::venta.venta"),
-            venta.id,
-            { data: { estado: "Enviado" } }
-          );
-        }
-      } else if ((pagoEstado === "rejected" || pagoEstado === "failure") && ventaPagoId) {
-        // Revertir venta si el pago falla
-        await strapi.service("api::venta.venta").revertirVenta(ventaPagoId);
+      const paymentId = payload.data.id;
+      
+      const pago = await obtenerPago(paymentId);
+      
+      if (!pago) {
+        strapi.log.warn(`No se pudo obtener el pago ${paymentId} desde Mercado Pago`);
+        ctx.send({ received: true });
+        return;
       }
-    } catch (error) {
-      console.error("Error procesando webhook Mercado Pago:", error);
-    }
 
-    ctx.send({ received: true });
-  },
-  async retorno(ctx) {
-    const { status, ventaId, external_reference: externalReference } =
-      ctx.request.query || {};
-    const idVenta = ventaId || externalReference;
+      const ventaId = pago.external_reference || obtenerVentaId(payload);
+      
+      if (!ventaId) {
+        strapi.log.warn(`No se encontró ventaId en el pago ${paymentId}`);
+        ctx.send({ received: true });
+        return;
+      }
 
-    if (status === "approved" && idVenta) {
       const ventas = await strapi.entityService.findMany(
         /** @type {any} */ ("api::venta.venta"),
         /** @type {any} */ ({
-          filters: { documentId: String(idVenta) },
+          filters: { documentId: String(ventaId) },
           limit: 1,
+          populate: {
+            users_permissions_user: true,
+            detalle_ventas: {
+              populate: {
+                variacion: {
+                  populate: {
+                    producto: true,
+                  },
+                },
+              },
+            },
+          },
         })
       );
+      
       const venta = ventas[0];
-      if (venta && venta.estado === "En proceso") {
-        await strapi.entityService.update(
-          /** @type {any} */ ("api::venta.venta"),
-          venta.id,
-          { data: { estado: "Enviado" } }
-        );
+      
+      if (!venta) {
+        strapi.log.warn(`Venta ${ventaId} no encontrada para el pago ${paymentId}`);
+        ctx.send({ received: true });
+        return;
       }
-    } else if ((status === "failure" || status === "rejected") && idVenta) {
-      await strapi.service("api::venta.venta").revertirVenta(idVenta);
+
+      const ventaEntity = /** @type {any} */ (venta);
+      const pagoEstado = pago.status;
+
+      await strapi.entityService.update(
+        /** @type {any} */ ("api::venta.venta"),
+        venta.id,
+        {
+          data: {
+            payment_id: String(paymentId),
+          },
+        }
+      );
+
+      if (ventaEntity.estado === "pendiente") {
+        if (pagoEstado === "approved") {
+          await strapi.service("api::venta.venta").confirmarPago(ventaId);
+          
+          const usuario = ventaEntity.users_permissions_user;
+          if (usuario?.email) {
+            try {
+              await strapi.plugins.email.services.email.send({
+                to: usuario.email,
+                subject: "Confirmación de compra - Camisería Urbana",
+                text: `Hola ${usuario.email}, Agradecemos tu compra! Te va a llegar en unos días, te dejamos información para estar al día: Orden: ${ventaId}, Número de seguimiento: ${ventaEntity.nroSeguimiento}`,
+                html: `
+                  <h2>Hola ${usuario.email},</h2>
+                  <p>Agradecemos tu compra! Te va a llegar en unos días, te dejamos información para estar al día:</p>
+                  <p><strong>Orden:</strong> ${ventaId}</p>
+                  <p><strong>Número de seguimiento:</strong> ${ventaEntity.nroSeguimiento}</p>
+                  <p>Gracias por confiar en nosotros.</p>
+                `,
+              });
+            } catch (emailError) {
+              strapi.log.error(`Error enviando email de confirmación:`, emailError);
+            }
+          }
+        } else if (pagoEstado === "rejected" || pagoEstado === "cancelled" || pagoEstado === "refunded" || pagoEstado === "charged_back" || pagoEstado === "expired") {
+          await strapi.service("api::venta.venta").cancelarVenta(ventaId);
+        }
+      } else {
+        strapi.log.info(`Venta ${ventaId} ya fue procesada, estado actual: ${ventaEntity.estado}`);
+      }
+    } catch (error) {
+      strapi.log.error("Error procesando webhook Mercado Pago:", error);
     }
 
     ctx.send({ received: true });

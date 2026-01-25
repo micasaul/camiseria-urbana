@@ -18,8 +18,8 @@ function AppRoutes() {
         {HomeRoutes()}
         {CatalogoRoutes()}
         {CuentaRoutes()}
-        {PagosRoutes()}
         {InfoRoutes()}
+        {PagosRoutes()}
 
         {/* Ruta para cuando algo se rompe */}
         <Route path="*" element={<Error />} />

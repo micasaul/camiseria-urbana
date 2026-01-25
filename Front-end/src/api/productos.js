@@ -285,7 +285,6 @@ export async function crearVariacion(payload) {
 }
 
 export async function getProductoPorId(id) {
-  // Usar la misma sintaxis que funciona en otras funciones
   const res = await fetch(
     `${BACKEND_URL}/api/productos/${id}?populate[0]=variacions&populate[1]=marca&populate[2]=promo_productos&populate[3]=promo_productos.promo&populate[4]=wishlists`
   );
@@ -296,7 +295,6 @@ export async function getProductoPorId(id) {
   }
   const data = await res.json();
   
-  // Adjuntar reseñas al producto
   const item = data?.data ?? data;
   const items = [item];
   const itemsConResenas = await adjuntarResenas(items);

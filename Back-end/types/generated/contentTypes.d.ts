@@ -1006,15 +1006,17 @@ export interface ApiVentaVenta extends Struct.CollectionTypeSchema {
     >;
     envio: Schema.Attribute.Integer;
     estado: Schema.Attribute.Enumeration<
-      ['En proceso', 'Enviado', 'Entregado']
+      ['pendiente', 'En proceso', 'cancelado', 'Enviado', 'Entregado']
     > &
       Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'En proceso'>;
+      Schema.Attribute.DefaultTo<'pendiente'>;
     fecha: Schema.Attribute.DateTime & Schema.Attribute.Required;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::venta.venta'> &
       Schema.Attribute.Private;
     nroSeguimiento: Schema.Attribute.Text & Schema.Attribute.Required;
+    payment_id: Schema.Attribute.String;
+    preference_id: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     total: Schema.Attribute.Decimal &
       Schema.Attribute.Required &

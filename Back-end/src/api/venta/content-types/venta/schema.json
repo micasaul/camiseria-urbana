@@ -18,12 +18,20 @@
     "estado": {
       "type": "enumeration",
       "required": true,
-      "default": "En proceso",
+      "default": "pendiente",
       "enum": [
+        "pendiente",
         "En proceso",
+        "cancelado",
         "Enviado",
         "Entregado"
       ]
+    },
+    "payment_id": {
+      "type": "string"
+    },
+    "preference_id": {
+      "type": "string"
     },
     "total": {
       "type": "decimal",

@@ -149,13 +149,10 @@ export async function eliminarPromo(id) {
 }
 
 /**
- * Obtiene los descuentos activos basándose en los promo_productos activos (actualizados por el cron)
- * Solo lee el estado activo, no verifica fechas ni actualiza nada
- * @returns {Promise<Map<string, number>>} Mapa de productoId/documentId -> descuento máximo
+ * @returns {Promise<Map<string, number>>} 
  */
 export async function obtenerDescuentosActivos() {
   try {
-    // Dispara el cron y obtiene promo_productos activos en preview
     const res = await fetch(`${BACKEND_URL}/api/promo-productos/activas/productos`)
     
     if (!res.ok) {
@@ -169,11 +166,9 @@ export async function obtenerDescuentosActivos() {
     
     console.log(`Promo_productos activos encontrados: ${promoProductos.length}`)
     
-    // Recorrer promo_productos activos y aplicar descuentos
     promoProductos.forEach((promoProductoItem) => {
       const ppAttrs = promoProductoItem?.attributes ?? promoProductoItem
       
-      // Obtener la promo asociada
       const promo = ppAttrs?.promo?.data ?? promoProductoItem?.promo?.data ?? ppAttrs?.promo ?? promoProductoItem?.promo
       if (!promo) {
         console.warn('  - Promo no encontrada en promo_producto')
@@ -184,7 +179,6 @@ export async function obtenerDescuentosActivos() {
       const descuento = Number(promoAttrs?.descuento ?? 0)
       if (descuento <= 0) return
       
-      // Obtener el producto asociado
       const producto = ppAttrs?.producto?.data ?? promoProductoItem?.producto?.data ?? ppAttrs?.producto ?? promoProductoItem?.producto
       if (!producto) {
         console.warn('  - Producto no encontrado en promo_producto')
@@ -198,7 +192,6 @@ export async function obtenerDescuentosActivos() {
         return
       }
       
-      // Usar el máximo descuento si hay múltiples promos para el mismo producto
       const key = String(productoId)
       const descuentoActual = descuentosMap.get(key) ?? 0
       if (descuento > descuentoActual) {

@@ -106,7 +106,7 @@ module.exports = createCoreService(
           /** @type {any} */ ({
             data: {
               fecha: new Date(),
-              estado: 'En proceso',
+              estado: 'pendiente',
               total: subtotalVenta,
               envio,
               nroSeguimiento,
@@ -141,8 +141,6 @@ module.exports = createCoreService(
           )
         );
 
-        // Descontar stock de variaciones
-        const variacionesActualizadas = [];
         for (const item of itemsValidos) {
           const variacionActual = await strapi.entityService.findOne(
             /** @type {any} */ ('api::variacion.variacion'),
@@ -151,34 +149,15 @@ module.exports = createCoreService(
           );
 
           if (!variacionActual) {
-            continue;
+            throw new errors.ValidationError(`Variación ${item.variacion} no encontrada`);
           }
 
           const stockActual = aNumero(variacionActual.stock);
-          const nuevoStock = stockActual - item.cantidad;
-
-          if (nuevoStock < 0) {
+          if (stockActual < item.cantidad) {
             throw new errors.ValidationError(`Stock insuficiente para la variación ${item.variacion}`);
-          }
-
-          const variacionActualizada = await strapi.entityService.update(
-            /** @type {any} */ ('api::variacion.variacion'),
-            item.variacion,
-            /** @type {any} */ ({
-              data: {
-                stock: nuevoStock,
-              },
-              transaction: trx,
-            })
-          );
-
-          // Guardar documentId para publicar después de la transacción
-          if (variacionActualizada?.documentId) {
-            variacionesActualizadas.push(variacionActualizada.documentId);
           }
         }
 
-        // Limpiar carrito
         for (const detalle of detalleCarritos) {
           await strapi.entityService.delete(
             /** @type {any} */ ('api::detalle-carrito.detalle-carrito'),
@@ -187,7 +166,6 @@ module.exports = createCoreService(
           );
         }
 
-        // Crear nuevo carrito vacío
         const carritoNuevo = await strapi.entityService.create(
           /** @type {any} */ ('api::carrito.carrito'),
           /** @type {any} */ ({
@@ -199,28 +177,10 @@ module.exports = createCoreService(
           })
         );
 
-        return { venta, items, carritoNuevo, carritoOriginal: carrito, variacionesActualizadas };
+        return { venta, items, carritoNuevo, carritoOriginal: carrito };
       });
 
-      // Publicar variaciones DESPUÉS de que la transacción se complete
-      if (resultado.variacionesActualizadas && resultado.variacionesActualizadas.length > 0) {
-        // Hacer publish en paralelo (no bloqueamos la respuesta)
-        Promise.all(
-          resultado.variacionesActualizadas.map((documentId) =>
-            strapi.documents('api::variacion.variacion')
-              .publish({ documentId })
-              .catch((error) => {
-                strapi.log.warn(`Error al publicar variación ${documentId}:`, error);
-              })
-          )
-        ).catch(() => {
-          // Ignorar errores de publicación, ya están logueados individualmente
-        });
-      }
-
-      // Retornar sin las variacionesActualizadas (no es necesario en la respuesta)
-      const { variacionesActualizadas, ...resultadoFinal } = resultado;
-      return resultadoFinal;
+      return resultado;
     },
     async revertirVenta(ventaId) {
       if (!ventaId) {
@@ -257,43 +217,42 @@ module.exports = createCoreService(
 
         const usuarioId = ventaEntity?.users_permissions_user?.id;
 
-        // Restaurar stock de variaciones
         const variacionesRestauradas = [];
-        for (const detalle of detalleVentas) {
-          const variacion = detalle?.variacion;
-          const variacionId = variacion?.id;
-          const cantidad = aNumero(detalle?.cantidad);
+        if (ventaEntity.estado === 'En proceso') {
+          for (const detalle of detalleVentas) {
+            const variacion = detalle?.variacion;
+            const variacionId = variacion?.id;
+            const cantidad = aNumero(detalle?.cantidad);
 
-          if (!variacionId || cantidad <= 0) {
-            continue;
-          }
+            if (!variacionId || cantidad <= 0) {
+              continue;
+            }
 
-          const variacionActual = await strapi.entityService.findOne(
-            /** @type {any} */ ('api::variacion.variacion'),
-            variacionId,
-            /** @type {any} */ ({ transaction: trx })
-          );
-
-          if (variacionActual) {
-            const variacionActualizada = await strapi.entityService.update(
+            const variacionActual = await strapi.entityService.findOne(
               /** @type {any} */ ('api::variacion.variacion'),
               variacionId,
-              /** @type {any} */ ({
-                data: {
-                  stock: aNumero(variacionActual.stock) + cantidad,
-                },
-                transaction: trx,
-              })
+              /** @type {any} */ ({ transaction: trx })
             );
 
-            // Guardar documentId para publicar después de la transacción
-            if (variacionActualizada?.documentId) {
-              variacionesRestauradas.push(variacionActualizada.documentId);
+            if (variacionActual) {
+              const variacionActualizada = await strapi.entityService.update(
+                /** @type {any} */ ('api::variacion.variacion'),
+                variacionId,
+                /** @type {any} */ ({
+                  data: {
+                    stock: aNumero(variacionActual.stock) + cantidad,
+                  },
+                  transaction: trx,
+                })
+              );
+
+              if (variacionActualizada?.documentId) {
+                variacionesRestauradas.push(variacionActualizada.documentId);
+              }
             }
           }
         }
 
-        // Obtener o crear carrito del usuario
         let carrito = null;
         if (usuarioId) {
           const carritos = await strapi.entityService.findMany(
@@ -310,7 +269,6 @@ module.exports = createCoreService(
           carrito = carritos[0];
         }
 
-        // Si no hay carrito, crear uno nuevo
         if (!carrito) {
           carrito = await strapi.entityService.create(
             /** @type {any} */ ('api::carrito.carrito'),
@@ -324,7 +282,6 @@ module.exports = createCoreService(
           );
         }
 
-        // Restaurar items al carrito
         for (const detalle of detalleVentas) {
           const variacion = detalle?.variacion;
           const variacionId = variacion?.id;
@@ -352,7 +309,6 @@ module.exports = createCoreService(
           );
         }
 
-        // Eliminar detalles de venta
         for (const detalle of detalleVentas) {
           await strapi.entityService.delete(
             /** @type {any} */ ('api::detalle-venta.detalle-venta'),
@@ -371,9 +327,7 @@ module.exports = createCoreService(
         return { carrito, variacionesRestauradas };
       });
 
-      // Publicar variaciones DESPUÉS de que la transacción se complete
       if (resultado.variacionesRestauradas && resultado.variacionesRestauradas.length > 0) {
-        // Hacer publish en paralelo (no bloqueamos la respuesta)
         Promise.all(
           resultado.variacionesRestauradas.map((documentId) =>
             strapi.documents('api::variacion.variacion')
@@ -383,13 +337,159 @@ module.exports = createCoreService(
               })
           )
         ).catch(() => {
-          // Ignorar errores de publicación, ya están logueados individualmente
         });
       }
 
-      // Retornar sin las variacionesRestauradas (no es necesario en la respuesta)
       const { variacionesRestauradas, ...resultadoFinal } = resultado;
       return resultadoFinal;
+    },
+    async confirmarPago(ventaId) {
+      if (!ventaId) {
+        throw new errors.ValidationError('ventaId requerido');
+      }
+
+      const resultado = await strapi.db.transaction(async ({ trx }) => {
+        const ventas = await strapi.entityService.findMany(
+          /** @type {any} */ ('api::venta.venta'),
+          /** @type {any} */ ({
+            filters: { documentId: String(ventaId) },
+            limit: 1,
+            populate: {
+              detalle_ventas: {
+                populate: {
+                  variacion: true,
+                },
+              },
+            },
+            transaction: trx,
+          })
+        );
+        const venta = ventas[0];
+
+        if (!venta) {
+          throw new errors.NotFoundError('Venta no encontrada');
+        }
+
+        const ventaEntity = /** @type {any} */ (venta);
+        
+        // Solo confirmar si está en estado pendiente
+        if (ventaEntity.estado !== 'pendiente') {
+          strapi.log.warn(`Venta ${ventaId} ya fue procesada, estado actual: ${ventaEntity.estado}`);
+          return { venta: ventaEntity, yaProcesada: true };
+        }
+
+        const detalleVentas = /** @type {any[]} */ (
+          ventaEntity.detalle_ventas || []
+        );
+
+        const variacionesActualizadas = [];
+        for (const detalle of detalleVentas) {
+          const variacion = detalle?.variacion;
+          const variacionId = variacion?.id;
+          const cantidad = aNumero(detalle?.cantidad);
+
+          if (!variacionId || cantidad <= 0) {
+            continue;
+          }
+
+          const variacionActual = await strapi.entityService.findOne(
+            /** @type {any} */ ('api::variacion.variacion'),
+            variacionId,
+            /** @type {any} */ ({ transaction: trx })
+          );
+
+          if (!variacionActual) {
+            continue;
+          }
+
+          const stockActual = aNumero(variacionActual.stock);
+          const nuevoStock = stockActual - cantidad;
+
+          if (nuevoStock < 0) {
+            throw new errors.ValidationError(`Stock insuficiente para la variación ${variacionId}`);
+          }
+
+          const variacionActualizada = await strapi.entityService.update(
+            /** @type {any} */ ('api::variacion.variacion'),
+            variacionId,
+            /** @type {any} */ ({
+              data: {
+                stock: nuevoStock,
+              },
+              transaction: trx,
+            })
+          );
+
+          if (variacionActualizada?.documentId) {
+            variacionesActualizadas.push(variacionActualizada.documentId);
+          }
+        }
+
+        const ventaActualizada = await strapi.entityService.update(
+          /** @type {any} */ ('api::venta.venta'),
+          venta.id,
+          /** @type {any} */ ({
+            data: {
+              estado: 'En proceso',
+            },
+            transaction: trx,
+          })
+        );
+
+        return { venta: ventaActualizada, variacionesActualizadas };
+      });
+
+      if (resultado.variacionesActualizadas && resultado.variacionesActualizadas.length > 0) {
+        Promise.all(
+          resultado.variacionesActualizadas.map((documentId) =>
+            strapi.documents('api::variacion.variacion')
+              .publish({ documentId })
+              .catch((error) => {
+                strapi.log.warn(`Error al publicar variación ${documentId}:`, error);
+              })
+          )
+        ).catch(() => {
+        });
+      }
+
+      return resultado;
+    },
+    async cancelarVenta(ventaId) {
+      if (!ventaId) {
+        throw new errors.ValidationError('ventaId requerido');
+      }
+
+      const ventas = await strapi.entityService.findMany(
+        /** @type {any} */ ('api::venta.venta'),
+        /** @type {any} */ ({
+          filters: { documentId: String(ventaId) },
+          limit: 1,
+        })
+      );
+      const venta = ventas[0];
+
+      if (!venta) {
+        throw new errors.NotFoundError('Venta no encontrada');
+      }
+
+      const ventaEntity = /** @type {any} */ (venta);
+      
+      if (ventaEntity.estado !== 'pendiente') {
+        strapi.log.warn(`Venta ${ventaId} ya fue procesada, estado actual: ${ventaEntity.estado}`);
+        return { venta: ventaEntity, yaProcesada: true };
+      }
+
+      const ventaActualizada = await strapi.entityService.update(
+        /** @type {any} */ ('api::venta.venta'),
+        venta.id,
+        /** @type {any} */ ({
+          data: {
+            estado: 'cancelado',
+          },
+        })
+      );
+
+      return { venta: ventaActualizada };
     },
   })
 );

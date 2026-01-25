@@ -131,7 +131,6 @@ export default function Catalogo() {
     }
     obtenerPreciosReales()
     
-    // Obtener descuentos activos
     obtenerDescuentosActivos()
       .then((map) => {
         if (!activo) return

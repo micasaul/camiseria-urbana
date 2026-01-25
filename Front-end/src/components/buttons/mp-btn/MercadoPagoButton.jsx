@@ -12,7 +12,6 @@ const MercadoPagoButton = ({ productos, subtotal, envio, usuario, disabled }) =>
     let ventaId = null;
     
     try {
-      // 1. Obtener el carrito del usuario
       const userRes = await fetch(`${BACKEND_URL}/api/users/me`, {
         headers: {
           ...getAuthHeaders()
@@ -49,7 +48,6 @@ const MercadoPagoButton = ({ productos, subtotal, envio, usuario, disabled }) =>
       const carrito = carritos[0];
       const carritoDocumentId = carrito.documentId ?? carrito.id;
       
-      // 2. Crear venta desde el carrito (subtotal, envío, usuario)
       const ventaRes = await fetch(`${BACKEND_URL}/api/ventas/fromCarrito`, {
         method: "POST",
         headers: {
@@ -78,7 +76,6 @@ const MercadoPagoButton = ({ productos, subtotal, envio, usuario, disabled }) =>
         throw new Error('No se pudo obtener el ID de la venta');
       }
 
-      // 3. Crear preferencia de pago con el ventaId
       const response = await fetch(`${BACKEND_URL}/api/pagos/create-preference`, {
         method: "POST",
         headers: {
@@ -91,7 +88,6 @@ const MercadoPagoButton = ({ productos, subtotal, envio, usuario, disabled }) =>
       });
 
       if (!response.ok) {
-        // Si hay error en MP, revertir la venta (restaurar stock y carrito)
         if (ventaId) {
           try {
             await fetch(`${BACKEND_URL}/api/ventas/revertir`, {
@@ -118,10 +114,8 @@ const MercadoPagoButton = ({ productos, subtotal, envio, usuario, disabled }) =>
       const redirectUrl = data.init_point || data.initPoint || data.url;
 
       if (redirectUrl) {
-        // Si no hay error, redirigir a MP (la venta queda con "en proceso" y se creó un carrito nuevo vacío)
         window.location.href = redirectUrl;
       } else {
-        // Si no hay URL, revertir la venta
         if (ventaId) {
           try {
             await fetch(`${BACKEND_URL}/api/ventas/revertir`, {
@@ -142,7 +136,6 @@ const MercadoPagoButton = ({ productos, subtotal, envio, usuario, disabled }) =>
       }
     } catch (error) {
       console.error("Error creando preferencia de pago:", error);
-      // Si hay error y la venta fue creada, revertirla (restaurar stock y carrito)
       if (ventaId) {
         try {
           await fetch(`${BACKEND_URL}/api/ventas/revertir`, {
