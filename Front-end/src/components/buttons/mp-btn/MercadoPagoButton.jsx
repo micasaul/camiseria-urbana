@@ -49,7 +49,7 @@ const MercadoPagoButton = ({ productos, subtotal, envio, usuario, disabled }) =>
       const carrito = carritos[0];
       const carritoDocumentId = carrito.documentId ?? carrito.id;
       
-      // 2. Crear venta desde el carrito (con envío)
+      // 2. Crear venta desde el carrito (subtotal, envío, usuario)
       const ventaRes = await fetch(`${BACKEND_URL}/api/ventas/fromCarrito`, {
         method: "POST",
         headers: {
@@ -58,7 +58,9 @@ const MercadoPagoButton = ({ productos, subtotal, envio, usuario, disabled }) =>
         },
         body: JSON.stringify({
           carritoId: carritoDocumentId,
-          envio: envio
+          subtotal,
+          envio,
+          usuario: { nombre: usuario?.nombre, provincia: usuario?.provincia }
         }),
       });
 

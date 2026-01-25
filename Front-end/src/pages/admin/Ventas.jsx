@@ -42,8 +42,8 @@ export default function Ventas() {
       <div className="admin-table">
         <div className="admin-table-header admin-table-ventas">
           <span>Fecha</span>
-          <span>Orden</span>
-          <span>Cliente</span>
+          <span className="admin-venta-orden">Orden</span>
+          <span className="admin-venta-cliente">Cliente</span>
           <span>Monto</span>
           <span>Estado</span>
           <span></span>
@@ -51,8 +51,8 @@ export default function Ventas() {
         {cargando && (
           <div className="admin-table-row admin-table-ventas">
             <span>—</span>
-            <span>Cargando...</span>
-            <span>—</span>
+            <span className="admin-venta-orden">—</span>
+            <span className="admin-venta-cliente">—</span>
             <span>—</span>
             <span>—</span>
             <span>—</span>
@@ -61,8 +61,8 @@ export default function Ventas() {
         {!cargando && error && (
           <div className="admin-table-row admin-table-ventas">
             <span>—</span>
-            <span>{error}</span>
-            <span>—</span>
+            <span className="admin-venta-orden">{error}</span>
+            <span className="admin-venta-cliente">—</span>
             <span>—</span>
             <span>—</span>
             <span>—</span>
@@ -71,8 +71,8 @@ export default function Ventas() {
         {!cargando && !error && ventas.length === 0 && (
           <div className="admin-table-row admin-table-ventas">
             <span>—</span>
-            <span>Sin ventas</span>
-            <span>—</span>
+            <span className="admin-venta-orden">Sin ventas</span>
+            <span className="admin-venta-cliente">—</span>
             <span>—</span>
             <span>—</span>
             <span>—</span>
@@ -82,11 +82,12 @@ export default function Ventas() {
           !error &&
           ventas.map((venta) => {
             const attrs = venta?.attributes ?? venta
+            const ordenId = venta.documentId ?? attrs?.documentId ?? venta.id ?? attrs?.id
             return (
               <div key={venta.id ?? attrs?.id} className="admin-table-row admin-table-ventas">
                 <span>{formatearFecha(attrs?.fecha)}</span>
-                <span>{attrs?.nroSeguimiento ? `#${attrs.nroSeguimiento}` : '—'}</span>
-                <span>{obtenerClienteVenta(venta)}</span>
+                <span className="admin-venta-orden">{ordenId ? `#${ordenId}` : '—'}</span>
+                <span className="admin-venta-cliente">{obtenerClienteVenta(venta)}</span>
                 <span>{attrs?.total ? `$ ${Number(attrs.total).toLocaleString('es-AR')}` : '$ 0'}</span>
                 <span>{attrs?.estado ?? '—'}</span>
                 <Link

@@ -4,14 +4,18 @@ const { createCoreService } = require('@strapi/strapi').factories;
 const { errors } = require('@strapi/utils');
 const pricingService = require('../../../services/pricing');
 const { aNumero } = require('../../../utils/numero');
+const { generarNroSeguimiento } = require('../../../utils/seguimiento');
 
 module.exports = createCoreService(
   /** @type {any} */ ('api::venta.venta'),
   ({ strapi }) => ({
-    async createFromCarrito(carritoId, envio = 0) {
+    async createFromCarrito(carritoId, opts = {}) {
       if (!carritoId) {
         throw new errors.ValidationError('carritoId requerido');
       }
+      const envio = aNumero(opts.envio ?? 0);
+      const subtotalFront = opts.subtotal != null ? aNumero(opts.subtotal) : null;
+      const usuario = opts.usuario ?? {};
 
       const resultado = await strapi.db.transaction(async ({ trx }) => {
         const carritos = await strapi.entityService.findMany(
@@ -88,13 +92,14 @@ module.exports = createCoreService(
         );
 
         const itemsValidos = itemsVenta.filter(Boolean);
-        const subtotal = itemsValidos.reduce(
+        const subtotalBack = itemsValidos.reduce(
           (acc, item) => acc + item.subtotal,
           0
         );
-        const total = subtotal + aNumero(envio);
+        const subtotalVenta = subtotalFront != null ? subtotalFront : subtotalBack;
 
         const usuarioId = carritoEntity?.users_permissions_user?.id;
+        const nroSeguimiento = generarNroSeguimiento(usuario?.provincia);
 
         const venta = await strapi.entityService.create(
           /** @type {any} */ ('api::venta.venta'),
@@ -102,9 +107,9 @@ module.exports = createCoreService(
             data: {
               fecha: new Date(),
               estado: 'En proceso',
-              total,
-              envio: aNumero(envio),
-              nroSeguimiento: '',
+              total: subtotalVenta,
+              envio,
+              nroSeguimiento,
               users_permissions_user: usuarioId || null,
             },
             status: 'published',

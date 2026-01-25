@@ -41,10 +41,11 @@ export default function DetalleVenta() {
     }
   }, [id])
 
+  const ventaItem = useMemo(() => venta?.data ?? venta, [venta])
   const detalle = useMemo(() => {
-    const item = venta?.data ?? venta
-    return item?.attributes ?? item ?? {}
-  }, [venta])
+    return ventaItem?.attributes ?? ventaItem ?? {}
+  }, [ventaItem])
+  const ordenId = ventaItem?.documentId ?? ventaItem?.id
 
   const detalleItems = useMemo(() => {
     const attrs = detalle
@@ -74,16 +75,12 @@ export default function DetalleVenta() {
           <div className="admin-venta-col">
             <div className="admin-venta-heading">
               <h2 className="admin-venta-title">
-                Orden {detalle?.nroSeguimiento ? `#${detalle.nroSeguimiento}` : '—'}
+                Orden {ordenId ? `#${ordenId}` : '—'}
               </h2>
               <p className="admin-venta-date">{detalle?.fecha ? detalle.fecha.split('T')[0] : '—'}</p>
             </div>
 
             <div className="admin-venta-meta admin-venta-meta-center">
-              <div className="admin-venta-meta-item">
-                <span className="admin-venta-meta-title">Dirección:</span>
-                <span className="admin-venta-meta-value">—</span>
-              </div>
               <div className="admin-venta-meta-item">
                 <span className="admin-venta-meta-title">Seguimiento:</span>
                 <span className="admin-venta-meta-value">{detalle?.nroSeguimiento || '—'}</span>
@@ -153,15 +150,15 @@ export default function DetalleVenta() {
             <div className="admin-venta-summary">
               <div className="admin-venta-summary-row">
                 <span>Subtotal</span>
-                <span>{detalle?.total ? `$ ${Number(detalle.total).toLocaleString('es-AR')}` : '$ 0'}</span>
+                <span>{detalle?.total != null ? `$ ${Number(detalle.total).toLocaleString('es-AR')}` : '$ 0'}</span>
               </div>
               <div className="admin-venta-summary-row">
                 <span>Envío</span>
-                <span>$ 0</span>
+                <span>{detalle?.envio != null ? `$ ${Number(detalle.envio).toLocaleString('es-AR')}` : '$ 0'}</span>
               </div>
               <div className="admin-venta-summary-row total">
                 <span className="admin-venta-total-label">Total</span>
-                <span>{detalle?.total ? `$ ${Number(detalle.total).toLocaleString('es-AR')}` : '$ 0'}</span>
+                <span>{`$ ${(Number(detalle?.total ?? 0) + Number(detalle?.envio ?? 0)).toLocaleString('es-AR')}`}</span>
               </div>
             </div>
           </div>

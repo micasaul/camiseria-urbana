@@ -525,6 +525,15 @@ button.white-btn.admin-white-action:hover {
   align-items: center;
 }
 
+.admin-venta-orden {
+  padding-right: 20px;
+  margin-left: -15px;
+}
+
+.admin-venta-cliente {
+  padding-left: 20px;
+}
+
 .admin-detail-link {
   color: #1b2a41;
   text-decoration: underline;

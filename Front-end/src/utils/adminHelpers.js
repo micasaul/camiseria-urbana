@@ -82,7 +82,8 @@ export const calcularCantidadTotal = (variaciones) => {
 export const obtenerClienteVenta = (venta) => {
   const attrs = venta?.attributes ?? venta
   const usuario = attrs?.users_permissions_user?.data ?? attrs?.users_permissions_user ?? null
-  return usuario?.email ?? usuario?.username ?? '—'
+  const u = usuario?.attributes ?? usuario
+  return u?.email ?? u?.username ?? '—'
 }
 
 export const resetearFormularioProducto = ({
