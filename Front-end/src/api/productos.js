@@ -377,6 +377,12 @@ export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 
       params.append('sort', filtros.ordenarPor);
     }
 
+    if (filtros.ids && Array.isArray(filtros.ids) && filtros.ids.length > 0) {
+      filtros.ids.forEach((id, index) => {
+        params.append(`filters[documentId][$in][${index}]`, String(id));
+      });
+    }
+
     const res = await fetch(`${BACKEND_URL}/api/productos?${params.toString()}`);
     if (!res.ok) throw new Error('Error al obtener productos');
 

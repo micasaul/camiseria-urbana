@@ -28,7 +28,16 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
         pageSize,
         sort: { createdAt: 'desc' },
         publicationState: 'live',
-        populate: { users_permissions_user: true },
+        populate: {
+          users_permissions_user: true,
+          detalle_ventas: {
+            populate: {
+              variacion: {
+                populate: { producto: true },
+              },
+            },
+          },
+        },
       }
     );
 

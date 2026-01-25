@@ -14,6 +14,7 @@ const BACKEND_URL = import.meta.env.BACKEND_URL ?? 'http://localhost:1337'
 export default function Catalogo() {
   const [searchParams] = useSearchParams()
   const materialFromUrl = searchParams.get('material') || ''
+  const ofertasFromUrl = searchParams.get('ofertas') === '1'
   
   const [productos, setProductos] = useState([])
   const [cargando, setCargando] = useState(true)
@@ -43,6 +44,7 @@ export default function Catalogo() {
   const [precioMinReal, setPrecioMinReal] = useState(0)
   const [precioMaxReal, setPrecioMaxReal] = useState(0)
   const [descuentosMap, setDescuentosMap] = useState(new Map())
+  const [descuentosLoaded, setDescuentosLoaded] = useState(false)
 
   const ordenarPorStock = (items) => {
     const conStock = []
@@ -134,11 +136,13 @@ export default function Catalogo() {
       .then((map) => {
         if (!activo) return
         setDescuentosMap(map)
+        setDescuentosLoaded(true)
       })
       .catch((error) => {
         console.error('Error al obtener descuentos:', error)
         if (!activo) return
         setDescuentosMap(new Map())
+        setDescuentosLoaded(true)
       })
     
     return () => {
@@ -149,14 +153,32 @@ export default function Catalogo() {
   useEffect(() => {
     let activo = true
     setCargando(true)
-    
+
+    if (ofertasFromUrl && !descuentosLoaded) {
+      return () => { activo = false }
+    }
+
+    const idsOfertas = ofertasFromUrl
+      ? [...descuentosMap.entries()]
+          .filter(([, d]) => (Number(d) ?? 0) > 0)
+          .map(([id]) => id)
+      : []
+
+    if (ofertasFromUrl && idsOfertas.length === 0) {
+      setProductos([])
+      setPaginacion({ page: 1, pageSize: paginacion.pageSize, pageCount: 1, total: 0 })
+      setCargando(false)
+      return () => { activo = false }
+    }
+
     const filtros = {
       ...(filtrosAplicados.material && { material: filtrosAplicados.material }),
       ...(filtrosAplicados.precioMin && { precioMin: Number(filtrosAplicados.precioMin) }),
       ...(filtrosAplicados.precioMax && { precioMax: Number(filtrosAplicados.precioMax) }),
       ...(filtrosAplicados.colores.length > 0 && { colores: filtrosAplicados.colores }),
       ...(filtrosAplicados.talles.length > 0 && { talles: filtrosAplicados.talles }),
-      ...(filtrosAplicados.ordenarPor && { ordenarPor: filtrosAplicados.ordenarPor })
+      ...(filtrosAplicados.ordenarPor && { ordenarPor: filtrosAplicados.ordenarPor }),
+      ...(ofertasFromUrl && idsOfertas.length > 0 && { ids: idsOfertas })
     }
 
     getProductosConFiltros(filtros, paginacion.page, paginacion.pageSize)
@@ -169,7 +191,7 @@ export default function Catalogo() {
         console.error('Error al cargar productos:', error)
         if (!activo) return
         setProductos([])
-        setPaginacion({ page: 1, pageSize: 9, pageCount: 1, total: 0 })
+        setPaginacion({ page: 1, pageSize: paginacion.pageSize, pageCount: 1, total: 0 })
       })
       .finally(() => {
         if (!activo) return
@@ -179,11 +201,15 @@ export default function Catalogo() {
     return () => {
       activo = false
     }
-  }, [filtrosAplicados, paginacion.page])
+  }, [filtrosAplicados, paginacion.page, ofertasFromUrl, descuentosLoaded, descuentosMap])
 
   useEffect(() => {
     setPaginacion(prev => ({ ...prev, page: 1 }))
   }, [filtrosAplicados])
+
+  useEffect(() => {
+    setPaginacion(prev => ({ ...prev, page: 1 }))
+  }, [ofertasFromUrl])
 
   const handlePrecioMinChange = (e) => {
     const valor = e.target.value
@@ -437,7 +463,6 @@ export default function Catalogo() {
                 {productos.map((producto) => {
                   const productoKey = String(producto.documentId ?? producto.id)
                   const descuento = descuentosMap.get(productoKey) ?? 0
-                  console.log(`Producto ${producto.nombre} (${productoKey}): descuento=${descuento}`)
                   return (
                     <ProductCard 
                       key={producto.id} 
