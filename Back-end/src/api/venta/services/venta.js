@@ -13,7 +13,7 @@ module.exports = createCoreService(
         throw new errors.ValidationError('carritoId requerido');
       }
 
-      return await strapi.db.transaction(async ({ trx }) => {
+      const resultado = await strapi.db.transaction(async ({ trx }) => {
         const carritos = await strapi.entityService.findMany(
           /** @type {any} */ ('api::carrito.carrito'),
           /** @type {any} */ ({
@@ -137,6 +137,7 @@ module.exports = createCoreService(
         );
 
         // Descontar stock de variaciones
+        const variacionesActualizadas = [];
         for (const item of itemsValidos) {
           const variacionActual = await strapi.entityService.findOne(
             /** @type {any} */ ('api::variacion.variacion'),
@@ -155,7 +156,7 @@ module.exports = createCoreService(
             throw new errors.ValidationError(`Stock insuficiente para la variación ${item.variacion}`);
           }
 
-          await strapi.entityService.update(
+          const variacionActualizada = await strapi.entityService.update(
             /** @type {any} */ ('api::variacion.variacion'),
             item.variacion,
             /** @type {any} */ ({
@@ -165,6 +166,11 @@ module.exports = createCoreService(
               transaction: trx,
             })
           );
+
+          // Guardar documentId para publicar después de la transacción
+          if (variacionActualizada?.documentId) {
+            variacionesActualizadas.push(variacionActualizada.documentId);
+          }
         }
 
         // Limpiar carrito
@@ -188,15 +194,35 @@ module.exports = createCoreService(
           })
         );
 
-        return { venta, items, carritoNuevo, carritoOriginal: carrito };
+        return { venta, items, carritoNuevo, carritoOriginal: carrito, variacionesActualizadas };
       });
+
+      // Publicar variaciones DESPUÉS de que la transacción se complete
+      if (resultado.variacionesActualizadas && resultado.variacionesActualizadas.length > 0) {
+        // Hacer publish en paralelo (no bloqueamos la respuesta)
+        Promise.all(
+          resultado.variacionesActualizadas.map((documentId) =>
+            strapi.documents('api::variacion.variacion')
+              .publish({ documentId })
+              .catch((error) => {
+                strapi.log.warn(`Error al publicar variación ${documentId}:`, error);
+              })
+          )
+        ).catch(() => {
+          // Ignorar errores de publicación, ya están logueados individualmente
+        });
+      }
+
+      // Retornar sin las variacionesActualizadas (no es necesario en la respuesta)
+      const { variacionesActualizadas, ...resultadoFinal } = resultado;
+      return resultadoFinal;
     },
     async revertirVenta(ventaId) {
       if (!ventaId) {
         throw new errors.ValidationError('ventaId requerido');
       }
 
-      return await strapi.db.transaction(async ({ trx }) => {
+      const resultado = await strapi.db.transaction(async ({ trx }) => {
         const ventas = await strapi.entityService.findMany(
           /** @type {any} */ ('api::venta.venta'),
           /** @type {any} */ ({
@@ -227,6 +253,7 @@ module.exports = createCoreService(
         const usuarioId = ventaEntity?.users_permissions_user?.id;
 
         // Restaurar stock de variaciones
+        const variacionesRestauradas = [];
         for (const detalle of detalleVentas) {
           const variacion = detalle?.variacion;
           const variacionId = variacion?.id;
@@ -243,7 +270,7 @@ module.exports = createCoreService(
           );
 
           if (variacionActual) {
-            await strapi.entityService.update(
+            const variacionActualizada = await strapi.entityService.update(
               /** @type {any} */ ('api::variacion.variacion'),
               variacionId,
               /** @type {any} */ ({
@@ -253,6 +280,11 @@ module.exports = createCoreService(
                 transaction: trx,
               })
             );
+
+            // Guardar documentId para publicar después de la transacción
+            if (variacionActualizada?.documentId) {
+              variacionesRestauradas.push(variacionActualizada.documentId);
+            }
           }
         }
 
@@ -331,8 +363,28 @@ module.exports = createCoreService(
           /** @type {any} */ ({ transaction: trx })
         );
 
-        return { carrito };
+        return { carrito, variacionesRestauradas };
       });
+
+      // Publicar variaciones DESPUÉS de que la transacción se complete
+      if (resultado.variacionesRestauradas && resultado.variacionesRestauradas.length > 0) {
+        // Hacer publish en paralelo (no bloqueamos la respuesta)
+        Promise.all(
+          resultado.variacionesRestauradas.map((documentId) =>
+            strapi.documents('api::variacion.variacion')
+              .publish({ documentId })
+              .catch((error) => {
+                strapi.log.warn(`Error al publicar variación ${documentId}:`, error);
+              })
+          )
+        ).catch(() => {
+          // Ignorar errores de publicación, ya están logueados individualmente
+        });
+      }
+
+      // Retornar sin las variacionesRestauradas (no es necesario en la respuesta)
+      const { variacionesRestauradas, ...resultadoFinal } = resultado;
+      return resultadoFinal;
     },
   })
 );
