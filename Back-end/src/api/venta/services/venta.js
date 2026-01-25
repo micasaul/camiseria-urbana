@@ -8,68 +8,67 @@ const { aNumero } = require('../../../utils/numero');
 module.exports = createCoreService(
   /** @type {any} */ ('api::venta.venta'),
   ({ strapi }) => ({
-    async createFromReserva(reservaId) {
-      if (!reservaId) {
-        throw new errors.ValidationError('reservaId requerido');
+    async createFromCarrito(carritoId, envio = 0) {
+      if (!carritoId) {
+        throw new errors.ValidationError('carritoId requerido');
       }
 
       return await strapi.db.transaction(async ({ trx }) => {
-        const reservas = await strapi.entityService.findMany(
-          /** @type {any} */ ('api::reserva.reserva'),
+        const carritos = await strapi.entityService.findMany(
+          /** @type {any} */ ('api::carrito.carrito'),
           /** @type {any} */ ({
-            filters: { documentId: String(reservaId) },
+            filters: { documentId: String(carritoId) },
             limit: 1,
             populate: {
-              detalle_reservas: {
+              detalle_carritos: {
                 populate: {
-                  variacion: true,
+                  variacion: {
+                    populate: {
+                      producto: true,
+                    },
+                  },
                 },
               },
-              carrito: {
-                populate: {
-                  detalle_carritos: true,
-                  users_permissions_user: true,
-                },
-              },
+              users_permissions_user: true,
             },
             transaction: trx,
           })
         );
-        const reserva = reservas[0];
+        const carrito = carritos[0];
 
-        if (!reserva) {
-          throw new errors.NotFoundError('Reserva no encontrada');
+        if (!carrito) {
+          throw new errors.NotFoundError('Carrito no encontrado');
         }
 
-        if (reserva.estado !== 'CONFIRMADA') {
-          throw new errors.ValidationError('Reserva no confirmada');
-        }
-
-        const reservaEntity = /** @type {any} */ (reserva);
-        const ventasExistentes = await strapi.entityService.findMany(
-          /** @type {any} */ ('api::venta.venta'),
-          /** @type {any} */ ({
-            filters: { reserva: reserva.id },
-            limit: 1,
-            transaction: trx,
-          })
+        const carritoEntity = /** @type {any} */ (carrito);
+        const detalleCarritos = /** @type {any[]} */ (
+          carritoEntity.detalle_carritos || []
         );
 
-        if (ventasExistentes.length) {
-          return { venta: ventasExistentes[0], items: [], carritoNuevo: null };
+        if (!detalleCarritos.length) {
+          throw new errors.ValidationError('Carrito sin items');
         }
-        const detalleReservas = /** @type {any[]} */ (
-          reservaEntity.detalle_reservas || []
-        );
 
         const itemsVenta = await Promise.all(
-          detalleReservas.map(async (detalle) => {
-            const variacionId = detalle?.variacion?.id;
-            const variacionDocumentId = detalle?.variacion?.documentId;
+          detalleCarritos.map(async (detalle) => {
+            const variacion = detalle?.variacion;
+            const variacionId = variacion?.id;
+            const variacionDocumentId = variacion?.documentId;
             const cantidad = aNumero(detalle?.cantidad);
 
             if (!variacionId || !variacionDocumentId || cantidad <= 0) {
               return null;
+            }
+
+            // Verificar stock
+            const variacionActual = await strapi.entityService.findOne(
+              /** @type {any} */ ('api::variacion.variacion'),
+              variacionId,
+              /** @type {any} */ ({ transaction: trx })
+            );
+
+            if (!variacionActual || aNumero(variacionActual.stock) < cantidad) {
+              throw new errors.ValidationError(`Stock insuficiente para la variación ${variacionId}`);
             }
 
             const precio = await pricingService.getPrecioFinal(variacionId);
@@ -89,10 +88,13 @@ module.exports = createCoreService(
         );
 
         const itemsValidos = itemsVenta.filter(Boolean);
-        const total = itemsValidos.reduce(
+        const subtotal = itemsValidos.reduce(
           (acc, item) => acc + item.subtotal,
           0
         );
+        const total = subtotal + aNumero(envio);
+
+        const usuarioId = carritoEntity?.users_permissions_user?.id;
 
         const venta = await strapi.entityService.create(
           /** @type {any} */ ('api::venta.venta'),
@@ -101,11 +103,9 @@ module.exports = createCoreService(
               fecha: new Date(),
               estado: 'En proceso',
               total,
+              envio: aNumero(envio),
               nroSeguimiento: '',
-              reserva: {
-                connect: [{ documentId: reserva.documentId }],
-              },
-              users_permissions_user: reservaEntity?.carrito?.users_permissions_user?.id,
+              users_permissions_user: usuarioId || null,
             },
             status: 'published',
             transaction: trx,
@@ -136,11 +136,38 @@ module.exports = createCoreService(
           )
         );
 
-        const carritoId = reservaEntity?.carrito?.id;
-        const detalleCarritos = /** @type {any[]} */ (
-          reservaEntity?.carrito?.detalle_carritos || []
-        );
+        // Descontar stock de variaciones
+        for (const item of itemsValidos) {
+          const variacionActual = await strapi.entityService.findOne(
+            /** @type {any} */ ('api::variacion.variacion'),
+            item.variacion,
+            /** @type {any} */ ({ transaction: trx })
+          );
 
+          if (!variacionActual) {
+            continue;
+          }
+
+          const stockActual = aNumero(variacionActual.stock);
+          const nuevoStock = stockActual - item.cantidad;
+
+          if (nuevoStock < 0) {
+            throw new errors.ValidationError(`Stock insuficiente para la variación ${item.variacion}`);
+          }
+
+          await strapi.entityService.update(
+            /** @type {any} */ ('api::variacion.variacion'),
+            item.variacion,
+            /** @type {any} */ ({
+              data: {
+                stock: nuevoStock,
+              },
+              transaction: trx,
+            })
+          );
+        }
+
+        // Limpiar carrito
         for (const detalle of detalleCarritos) {
           await strapi.entityService.delete(
             /** @type {any} */ ('api::detalle-carrito.detalle-carrito'),
@@ -149,8 +176,7 @@ module.exports = createCoreService(
           );
         }
 
-        const usuarioId = reservaEntity?.carrito?.users_permissions_user?.id;
-
+        // Crear nuevo carrito vacío
         const carritoNuevo = await strapi.entityService.create(
           /** @type {any} */ ('api::carrito.carrito'),
           /** @type {any} */ ({
@@ -162,7 +188,150 @@ module.exports = createCoreService(
           })
         );
 
-        return { venta, items, carritoNuevo };
+        return { venta, items, carritoNuevo, carritoOriginal: carrito };
+      });
+    },
+    async revertirVenta(ventaId) {
+      if (!ventaId) {
+        throw new errors.ValidationError('ventaId requerido');
+      }
+
+      return await strapi.db.transaction(async ({ trx }) => {
+        const ventas = await strapi.entityService.findMany(
+          /** @type {any} */ ('api::venta.venta'),
+          /** @type {any} */ ({
+            filters: { documentId: String(ventaId) },
+            limit: 1,
+            populate: {
+              detalle_ventas: {
+                populate: {
+                  variacion: true,
+                },
+              },
+              users_permissions_user: true,
+            },
+            transaction: trx,
+          })
+        );
+        const venta = ventas[0];
+
+        if (!venta) {
+          throw new errors.NotFoundError('Venta no encontrada');
+        }
+
+        const ventaEntity = /** @type {any} */ (venta);
+        const detalleVentas = /** @type {any[]} */ (
+          ventaEntity.detalle_ventas || []
+        );
+
+        const usuarioId = ventaEntity?.users_permissions_user?.id;
+
+        // Restaurar stock de variaciones
+        for (const detalle of detalleVentas) {
+          const variacion = detalle?.variacion;
+          const variacionId = variacion?.id;
+          const cantidad = aNumero(detalle?.cantidad);
+
+          if (!variacionId || cantidad <= 0) {
+            continue;
+          }
+
+          const variacionActual = await strapi.entityService.findOne(
+            /** @type {any} */ ('api::variacion.variacion'),
+            variacionId,
+            /** @type {any} */ ({ transaction: trx })
+          );
+
+          if (variacionActual) {
+            await strapi.entityService.update(
+              /** @type {any} */ ('api::variacion.variacion'),
+              variacionId,
+              /** @type {any} */ ({
+                data: {
+                  stock: aNumero(variacionActual.stock) + cantidad,
+                },
+                transaction: trx,
+              })
+            );
+          }
+        }
+
+        // Obtener o crear carrito del usuario
+        let carrito = null;
+        if (usuarioId) {
+          const carritos = await strapi.entityService.findMany(
+            /** @type {any} */ ('api::carrito.carrito'),
+            /** @type {any} */ ({
+              filters: { users_permissions_user: { id: usuarioId } },
+              limit: 1,
+              populate: {
+                detalle_carritos: true,
+              },
+              transaction: trx,
+            })
+          );
+          carrito = carritos[0];
+        }
+
+        // Si no hay carrito, crear uno nuevo
+        if (!carrito) {
+          carrito = await strapi.entityService.create(
+            /** @type {any} */ ('api::carrito.carrito'),
+            /** @type {any} */ ({
+              data: {
+                fecha: new Date(),
+                users_permissions_user: usuarioId || null,
+              },
+              transaction: trx,
+            })
+          );
+        }
+
+        // Restaurar items al carrito
+        for (const detalle of detalleVentas) {
+          const variacion = detalle?.variacion;
+          const variacionId = variacion?.id;
+          const variacionDocumentId = variacion?.documentId;
+          const cantidad = aNumero(detalle?.cantidad);
+
+          if (!variacionId || !variacionDocumentId || cantidad <= 0) {
+            continue;
+          }
+
+          await strapi.entityService.create(
+            /** @type {any} */ ('api::detalle-carrito.detalle-carrito'),
+            /** @type {any} */ ({
+              data: {
+                carrito: {
+                  connect: [{ documentId: carrito.documentId }],
+                },
+                variacion: {
+                  connect: [{ documentId: variacionDocumentId }],
+                },
+                cantidad: cantidad,
+              },
+              transaction: trx,
+            })
+          );
+        }
+
+        // Eliminar detalles de venta
+        for (const detalle of detalleVentas) {
+          await strapi.entityService.delete(
+            /** @type {any} */ ('api::detalle-venta.detalle-venta'),
+            detalle.id,
+            /** @type {any} */ ({ transaction: trx })
+          );
+        }
+
+        // Eliminar venta
+        await strapi.entityService.delete(
+          /** @type {any} */ ('api::venta.venta'),
+          venta.id,
+          /** @type {any} */ ({ transaction: trx })
+        );
+
+        return { carrito };
       });
     },
   })

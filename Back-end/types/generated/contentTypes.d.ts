@@ -456,7 +456,6 @@ export interface ApiCarritoCarrito extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
-    reservas: Schema.Attribute.Relation<'oneToMany', 'api::reserva.reserva'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -540,56 +539,6 @@ export interface ApiDetalleCarritoDetalleCarrito
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    variacion: Schema.Attribute.Relation<
-      'manyToOne',
-      'api::variacion.variacion'
-    >;
-  };
-}
-
-export interface ApiDetalleReservaDetalleReserva
-  extends Struct.CollectionTypeSchema {
-  collectionName: 'detalles_reservas';
-  info: {
-    displayName: 'DetalleReserva';
-    pluralName: 'detalles-reservas';
-    singularName: 'detalle-reserva';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    cantidad: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 1;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<1>;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::detalle-reserva.detalle-reserva'
-    > &
-      Schema.Attribute.Private;
-    precioUnitario: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      >;
-    publishedAt: Schema.Attribute.DateTime;
-    reserva: Schema.Attribute.Relation<'manyToOne', 'api::reserva.reserva'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -803,46 +752,6 @@ export interface ApiNewsletterNewsletter extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiNotificacionStockNotificacionStock
-  extends Struct.CollectionTypeSchema {
-  collectionName: 'notificaciones_stock';
-  info: {
-    displayName: 'NotificacionStock';
-    pluralName: 'notificaciones-stock';
-    singularName: 'notificacion-stock';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    enviado: Schema.Attribute.Boolean &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<false>;
-    fechaSuscripcion: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::notificacion-stock.notificacion-stock'
-    > &
-      Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    users_permissions_user: Schema.Attribute.Relation<
-      'manyToOne',
-      'plugin::users-permissions.user'
-    >;
-    variacion: Schema.Attribute.Relation<
-      'manyToOne',
-      'api::variacion.variacion'
-    >;
-  };
-}
-
 export interface ApiProductoProducto extends Struct.CollectionTypeSchema {
   collectionName: 'productos';
   info: {
@@ -1002,54 +911,6 @@ export interface ApiResenaResena extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiReservaReserva extends Struct.CollectionTypeSchema {
-  collectionName: 'reservas';
-  info: {
-    displayName: 'Reserva';
-    pluralName: 'reservas';
-    singularName: 'reserva';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  attributes: {
-    carrito: Schema.Attribute.Relation<'manyToOne', 'api::carrito.carrito'>;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    detalle_reservas: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::detalle-reserva.detalle-reserva'
-    >;
-    estado: Schema.Attribute.Enumeration<
-      ['ACTIVA', 'CANCELADA', 'CONGELADA', 'CONFIRMADA']
-    > &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'ACTIVA'>;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::reserva.reserva'
-    > &
-      Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
-    total: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<0>;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    venceEn: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    ventas: Schema.Attribute.Relation<'oneToMany', 'api::venta.venta'>;
-  };
-}
-
 export interface ApiVariacionVariacion extends Struct.CollectionTypeSchema {
   collectionName: 'variaciones';
   info: {
@@ -1090,10 +951,6 @@ export interface ApiVariacionVariacion extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::detalle-carrito.detalle-carrito'
     >;
-    detalle_reservas: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::detalle-reserva.detalle-reserva'
-    >;
     detalle_ventas: Schema.Attribute.Relation<
       'oneToMany',
       'api::detalle-venta.detalle-venta'
@@ -1104,10 +961,6 @@ export interface ApiVariacionVariacion extends Struct.CollectionTypeSchema {
       'api::variacion.variacion'
     > &
       Schema.Attribute.Private;
-    notificacion_stocks: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::notificacion-stock.notificacion-stock'
-    >;
     producto: Schema.Attribute.Relation<'manyToOne', 'api::producto.producto'>;
     publishedAt: Schema.Attribute.DateTime;
     stock: Schema.Attribute.Integer &
@@ -1151,6 +1004,7 @@ export interface ApiVentaVenta extends Struct.CollectionTypeSchema {
       'manyToOne',
       'api::direccion.direccion'
     >;
+    envio: Schema.Attribute.Integer;
     estado: Schema.Attribute.Enumeration<
       ['En proceso', 'Enviado', 'Entregado']
     > &
@@ -1162,7 +1016,6 @@ export interface ApiVentaVenta extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     nroSeguimiento: Schema.Attribute.Text & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
-    reserva: Schema.Attribute.Relation<'manyToOne', 'api::reserva.reserva'>;
     total: Schema.Attribute.Decimal &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
@@ -1696,10 +1549,6 @@ export interface PluginUsersPermissionsUser
       'oneToOne',
       'api::newsletter.newsletter'
     >;
-    notificacion_stocks: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::notificacion-stock.notificacion-stock'
-    >;
     password: Schema.Attribute.Password &
       Schema.Attribute.Private &
       Schema.Attribute.SetMinMaxLength<{
@@ -1741,18 +1590,15 @@ declare module '@strapi/strapi' {
       'api::carrito.carrito': ApiCarritoCarrito;
       'api::compra-proveedor.compra-proveedor': ApiCompraProveedorCompraProveedor;
       'api::detalle-carrito.detalle-carrito': ApiDetalleCarritoDetalleCarrito;
-      'api::detalle-reserva.detalle-reserva': ApiDetalleReservaDetalleReserva;
       'api::detalle-venta.detalle-venta': ApiDetalleVentaDetalleVenta;
       'api::direccion-usuario.direccion-usuario': ApiDireccionUsuarioDireccionUsuario;
       'api::direccion.direccion': ApiDireccionDireccion;
       'api::marca.marca': ApiMarcaMarca;
       'api::newsletter.newsletter': ApiNewsletterNewsletter;
-      'api::notificacion-stock.notificacion-stock': ApiNotificacionStockNotificacionStock;
       'api::producto.producto': ApiProductoProducto;
       'api::promo-producto.promo-producto': ApiPromoProductoPromoProducto;
       'api::promo.promo': ApiPromoPromo;
       'api::resena.resena': ApiResenaResena;
-      'api::reserva.reserva': ApiReservaReserva;
       'api::variacion.variacion': ApiVariacionVariacion;
       'api::venta.venta': ApiVentaVenta;
       'api::wishlist.wishlist': ApiWishlistWishlist;

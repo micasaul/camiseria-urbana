@@ -12,14 +12,4 @@ module.exports = {
       rule: "0 0 * * *",
     },
   },
-  expirarReservas: {
-    task: async () => {
-      const reservaCron = require("../src/extensions/reservas/reserva-cron");
-      await reservaCron.cancelarReservasVencidas();
-    },
-    options: {
-      // Ejecutar cada 1 min
-      rule: "*/1 * * * *",
-    },
-  },
 };

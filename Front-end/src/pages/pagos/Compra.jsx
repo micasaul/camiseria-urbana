@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
-import BlueButton from "../../components/buttons/blue-btn/BlueButton.jsx";
-import "./Compra.css";
+import MercadoPagoButton from "../../components/buttons/mp-btn/MercadoPagoButton.jsx";
+import { obtenerCarritoCompleto } from "../../api/carrito.js";
+import { obtenerDescuentosActivos } from "../../api/promos.js";
+import { parsearPrecio, aplicarDescuentos, calcularSubtotal } from "../../utils/carrito.js";
+import { obtenerPrecioEnvio } from "../../utils/envio.js";
+import "./Compra.css"
 
 const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:1337";
 
 export default function Compra() {
   const [loading, setLoading] = useState(true);
-  const [carrito, setCarrito] = useState([]);
   const [productos, setProductos] = useState([]);
   const [usuario, setUsuario] = useState({
     nombre: "",
@@ -27,18 +30,17 @@ export default function Compra() {
   useEffect(() => {
     async function fetchCarrito() {
       try {
-        const res = await fetch(`${BACKEND_URL}/api/carritos?populate=productos.producto`);
-        const data = await res.json();
-
-        if (data.data?.length > 0) {
-          const carritoData = data.data[0].attributes.productos;
-          setCarrito(carritoData);
-
-          const productosEnCarrito = carritoData.map((item) => item.producto);
-          setProductos(productosEnCarrito);
-        }
+        const [items, descuentosMap] = await Promise.all([
+          obtenerCarritoCompleto(),
+          obtenerDescuentosActivos()
+        ]);
+        
+        const productosConDescuento = aplicarDescuentos(items, descuentosMap);
+        
+        setProductos(productosConDescuento);
       } catch (error) {
         console.error("Error cargando carrito:", error);
+        setProductos([]);
       } finally {
         setLoading(false);
       }
@@ -50,13 +52,6 @@ export default function Compra() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setUsuario((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const calcularSubtotal = () => {
-    return carrito.reduce((acc, item, i) => {
-      const precio = item.producto?.precio ?? 0;
-      return acc + precio * item.cantidad;
-    }, 0);
   };
 
   if (loading) return <p className="compra-loading">Cargando carrito...</p>;
@@ -123,39 +118,53 @@ export default function Compra() {
             />
           </div>
 
-          <BlueButton width="100%" height="45px" onClick={(e) => e.preventDefault()}>
-            Continuar con Pago
-          </BlueButton>
+          <MercadoPagoButton
+            productos={productos}
+            subtotal={calcularSubtotal(productos)}
+            envio={obtenerPrecioEnvio(usuario.provincia)}
+            usuario={usuario}
+            disabled={!usuario.provincia || !usuario.nombre || !usuario.telefono || !usuario.ciudad || !usuario.calle}
+          />
         </aside>
 
         {/* Columna Derecha: Resumen de Compra */}
         <main className="compra-resumen">
           <h2>Resumen de Compra</h2>
 
-          {productos.map((producto, index) => {
-            const itemCarrito = carrito[index];
-            const imagenUrl = producto.imagen?.startsWith("http")
-              ? producto.imagen
-              : `${BACKEND_URL}${producto.imagen || "/assets/fallback.jpg"}`;
-
+          {productos.map((producto) => {
             return (
-              <div key={producto.id} className="compra-producto">
-                <img src={imagenUrl} alt={producto.nombre} />
+              <div key={producto.id ?? producto.documentId} className="compra-producto">
+                <img src={producto.imageSrc} alt={producto.name} />
                 <div className="compra-producto-info">
-                  <h3>{producto.nombre}</h3>
-                  <p>Talle: {itemCarrito?.talla}</p>
-                  <p>Color: {itemCarrito?.color}</p>
-                  <p>Cantidad: {itemCarrito?.cantidad}</p>
-                  <p>Precio: ${producto.precio?.toFixed(2) || "0.00"}</p>
+                  <h3>{producto.name}</h3>
+                  <p>Talle: {producto.size}   -   Color: {producto.color}</p>
+                  <p>Cantidad: {producto.quantity}</p>
+                  {producto.hasDiscount ? (
+                    <p style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span className="compra-precio-original">Precio: {producto.priceOriginal}</span>
+                      <span className="compra-precio-final">Precio con descuento: {producto.priceFinal}</span>
+                    </p>
+                  ) : (
+                    <p>Precio: {producto.priceFinal}</p>
+                  )}
                 </div>
               </div>
             );
           })}
 
           <div className="compra-total">
-            <p>Subtotal: ${calcularSubtotal().toFixed(2)}</p>
-            <p>Envío: ENVÍO</p>
-            <p className="compra-total-final">TOTAL: ${calcularSubtotal().toFixed(2)}</p>
+            <p>
+              <span>Subtotal:</span>
+              <span>${calcularSubtotal(productos).toFixed(2)}</span>
+            </p>
+            <p>
+              <span>Envío:</span>
+              <span>${obtenerPrecioEnvio(usuario.provincia).toFixed(2)}</span>
+            </p>
+            <p className="compra-total-final">
+              <span>TOTAL:</span>
+              <span>${(calcularSubtotal(productos) + obtenerPrecioEnvio(usuario.provincia)).toFixed(2)}</span>
+            </p>
           </div>
         </main>
       </div>

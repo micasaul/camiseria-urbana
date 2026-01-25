@@ -34,12 +34,6 @@
       "type": "text",
       "required": true
     },
-    "reserva": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::reserva.reserva",
-      "inversedBy": "ventas"
-    },
     "users_permissions_user": {
       "type": "relation",
       "relation": "manyToOne",
@@ -57,6 +51,9 @@
       "relation": "oneToMany",
       "target": "api::detalle-venta.detalle-venta",
       "mappedBy": "venta"
+    },
+    "envio": {
+      "type": "integer"
     }
   }
 }

@@ -256,6 +256,9 @@ export async function actualizarDetalleCarrito(detalleDocumentId, cantidad) {
       throw new Error('No se pudo actualizar el detalle del carrito.')
     }
 
+    // Emitir evento para refrescar datos de productos
+    window.dispatchEvent(new CustomEvent('cart:updated'));
+
     return res.json()
   } catch (error) {
     console.error('Error al actualizar detalle del carrito:', error)

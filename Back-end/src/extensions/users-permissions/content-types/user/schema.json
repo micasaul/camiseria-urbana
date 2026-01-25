@@ -84,12 +84,6 @@
       "target": "api::venta.venta",
       "mappedBy": "users_permissions_user"
     },
-    "notificacion_stocks": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::notificacion-stock.notificacion-stock",
-      "mappedBy": "users_permissions_user"
-    },
     "newsletter": {
       "type": "relation",
       "relation": "oneToOne",
