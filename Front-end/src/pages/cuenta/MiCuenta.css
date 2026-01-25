@@ -1,0 +1,98 @@
+
+.mi-cuenta {
+  max-width: 1100px;
+  margin: 0 auto;
+  background-color: #FFFFFF;
+  padding: 4rem 5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+/* COLUMNAS */
+.perfil,
+.ventas {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* TÍTULOS */
+.perfil h2,
+.ventas h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: "Source Serif Pro", serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #172A3A;
+}
+
+/* ICONO PERFIL */
+.perfil h2 img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+/* DATOS PERSONALES */
+.perfil p {
+  font-size: 1rem;
+  font: bold 500 1rem/1.5rem "Alexandria", sans-serif;
+  color: #172A3A;
+}
+
+.perfil strong {
+  font-weight: 500;
+}
+*/
+.perfil button {
+  align-self: flex-start;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* LISTADO DE VENTAS */
+.ventas {
+  gap: 1.5rem;
+}
+
+/* CARD DE VENTA */
+.venta {
+  background-color: #FFFFFF;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* ORDEN */
+.venta p:first-child {
+  font-weight: 500;
+}
+
+/* ESTADO */
+.venta p:last-of-type {
+  color: #F4ACB7;
+  font-weight: 500;
+}
+
+/* BOTÓN MÁS DETALLES */
+.venta button {
+  align-self: flex-end;
+  margin-top: rem;
+  border-radius: 50px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .mi-cuenta {
+    grid-template-columns: 1fr;
+    gap: 4rem;
+    padding: 3rem 2rem;
+  }
+}

@@ -1,0 +1,82 @@
+/* src/pages/mi-cuenta/DetalleCompra.css */
+
+/* Fondo de la página */
+.detalle-compra-page {
+  background-color: #EDF4DE;
+  min-height: 100vh;
+  padding: 40px 0;
+  font-family: 'Alexandria', sans-serif;
+  color: #172A3A;
+}
+
+/* Contenedor blanco central */
+.detalle-compra-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px;
+  background-color: #fff;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 60px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-radius: 12px;
+}
+
+/* Columna izquierda */
+.detalle-columna-izq h1.detalle-orden {
+  font-family: "Source Serif Pro", serif;
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+}
+
+.detalle-columna-izq p {
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+}
+
+.detalle-label {
+  color: #F4ACB7;
+}
+
+.detalle-btn {
+  margin-top: 40px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* Columna derecha */
+.detalle-columna-der h2 {
+  margin-bottom: 20px;
+}
+
+.detalle-productos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detalle-productos-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  font-weight: 600;
+  padding: 10px 0;
+  border-bottom: 2px solid #F4ACB7;
+}
+
+.detalle-producto-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.detalle-producto-row span {
+  font-size: 1rem;
+}
+
+/* Botón volver al final */
+.detalle-volver {
+  max-width: 1200px;
+  margin: 40px auto 0;
+  display: flex;
+}
