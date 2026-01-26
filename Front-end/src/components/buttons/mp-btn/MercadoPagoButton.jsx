@@ -5,7 +5,7 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-const MercadoPagoButton = ({ productos, subtotal, envio, usuario, disabled }) => {
+const MercadoPagoButton = ({ productos, subtotal, envio, usuario, direccionId, disabled }) => {
   const handleClick = async () => {
     if (disabled) return;
     
@@ -58,7 +58,8 @@ const MercadoPagoButton = ({ productos, subtotal, envio, usuario, disabled }) =>
           carritoId: carritoDocumentId,
           subtotal,
           envio,
-          usuario: { nombre: usuario?.nombre, provincia: usuario?.provincia }
+          usuario: { nombre: usuario?.nombre, provincia: usuario?.provincia },
+          direccionId: direccionId || null
         }),
       });
 

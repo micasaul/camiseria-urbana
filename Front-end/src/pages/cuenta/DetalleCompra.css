@@ -23,10 +23,23 @@
 }
 
 /* Columna izquierda */
+.detalle-orden-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
 .detalle-columna-izq h1.detalle-orden {
   font-family: "Source Serif Pro", serif;
   font-size: 2.5rem;
-  margin-bottom: 20px;
+  margin: 0;
+}
+
+.detalle-fecha {
+  margin: 0;
+  color: #9aa3af;
+  font-size: 13px;
 }
 
 .detalle-columna-izq p {
@@ -57,7 +70,7 @@
 
 .detalle-productos-header {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: repeat(5, 1fr);
   font-weight: 600;
   padding: 10px 0;
   border-bottom: 2px solid #F4ACB7;
@@ -65,13 +78,48 @@
 
 .detalle-producto-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: repeat(5, 1fr);
   padding: 8px 0;
   border-bottom: 1px solid #eee;
 }
 
+.detalle-resena-link {
+  color: #F4ACB7;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: text-decoration 0.2s ease;
+}
+
+.detalle-resena-link:hover {
+  text-decoration: underline;
+  color: #F4ACB7;
+}
+
 .detalle-producto-row span {
   font-size: 1rem;
+}
+
+/* Totales */
+.detalle-totales {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #F4ACB7;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detalle-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1rem;
+  color: #172A3A;
+}
+
+.detalle-total-final {
+  font-weight: 600;
+  font-size: 1.2rem;
+  margin-top: 0.5rem;
 }
 
 /* Botón volver al final */

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react"
 import { useAuth } from "../../context/AuthContext"
 import { Link } from "react-router-dom"
 import BlueButton from "../../components/buttons/blue-btn/BlueButton"
+import LinkButton from "../../components/buttons/link-btn/LinkButton"
+import "./Direcciones.css"
 
 const API_URL = import.meta.env.VITE_BACKEND_URL
 
@@ -38,11 +40,17 @@ const Direcciones = () => {
         const direccionesList = direccionesUsuarios
           .map(item => {
             const attrs = item?.attributes ?? item
-            const direccion = attrs.direccion?.data?.attributes ?? attrs.direccion?.attributes ?? attrs.direccion
+            const direccionData = attrs.direccion?.data ?? attrs.direccion
+            const direccion = direccionData?.attributes ?? direccionData
+            const documentId = direccionData?.documentId ?? direccion?.documentId ?? direccionData?.id ?? direccion?.id
             const createdAt = attrs.createdAt || item?.createdAt
-            return direccion ? { ...direccion, createdAt } : null
+            return direccion ? { ...direccion, createdAt, documentId } : null
           })
           .filter(Boolean)
+          // Eliminamos duplicados basándonos en el documentId de la dirección
+          .filter((direccion, index, self) => 
+            index === self.findIndex(d => d.documentId === direccion.documentId)
+          )
           // Ordenamos por fecha de creación (más reciente primero)
           .sort((a, b) => {
             if (!a.createdAt || !b.createdAt) return 0
@@ -64,47 +72,44 @@ const Direcciones = () => {
   if (cargando || cargandoDirecciones) return <p>Cargando direcciones...</p>
   if (!usuario) return <p>No hay sesión activa</p>
 
-  // Ordenamos las direcciones por fecha de creación (más reciente primero)
-  const direccionActual = direcciones.length > 0 ? direcciones[0] : null
-  const direccionesHistorial = direcciones.slice(1) // Todas excepto la primera
+  const direccionesHistorial = direcciones
 
   return (
     <section className="direcciones">
-      <h1>Direcciones</h1>
-      
-      <div className="direccion-actual">
-        <h2>Dirección actual</h2>
-        {direccionActual ? (
-          <div className="direccion-info">
-            <p>
-              {direccionActual.calle ?? "—"} {direccionActual.numero ?? "—"}, CP:{" "}
-              {direccionActual.cp ?? "—"}
-            </p>
-          </div>
-        ) : (
-          <p>No tenés direcciones registradas.</p>
-        )}
+      <div className="direcciones-header">
+        <h1>Direcciones</h1>
+        <Link to="/cuenta/agregar-direccion">
+          <BlueButton>Agregar nueva</BlueButton>
+        </Link>
       </div>
 
-      {direccionesHistorial.length > 0 && (
+      {direccionesHistorial.length > 0 ? (
         <div className="direcciones-historial">
-          <h2>Historial de direcciones</h2>
-          {direccionesHistorial.map((direccion, index) => (
-            <div key={index} className="direccion-item">
+          {direccionesHistorial.map((direccion) => (
+            <div key={direccion.documentId || direccion.id} className="direccion-item">
               <div className="direccion-info">
-                <p>
-                  {direccion.calle ?? "—"} {direccion.numero ?? "—"}, CP:{" "}
-                  {direccion.cp ?? "—"}
+                <p className="direccion-linea">
+                  {direccion.calle ?? "—"} {direccion.numero ?? "—"}
+                </p>
+                <p className="direccion-linea">
+                  CP: {direccion.cp ?? "—"}
+                  {direccion.provincia && ` • ${direccion.provincia}`}
                 </p>
               </div>
             </div>
           ))}
         </div>
+      ) : (
+        <div className="direcciones-vacio">
+          <p>No tenés direcciones registradas.</p>
+        </div>
       )}
 
-      <Link to="/cuenta/agregar-direccion">
-        <BlueButton>Agregar nueva</BlueButton>
-      </Link>
+      <div className="direcciones-volver">
+        <Link to="/mi-cuenta">
+          <LinkButton>Volver a mi cuenta</LinkButton>
+        </Link>
+      </div>
     </section>
   )
 }

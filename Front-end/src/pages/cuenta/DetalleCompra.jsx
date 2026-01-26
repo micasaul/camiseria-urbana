@@ -7,7 +7,7 @@ import LinkButton from '../../components/buttons/link-btn/LinkButton.jsx'
 import './DetalleCompra.css'
 
 export default function DetalleCompra() {
-  const { id } = useParams()
+  const { documentId } = useParams()
   const [venta, setVenta] = useState(null)
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
@@ -21,8 +21,7 @@ export default function DetalleCompra() {
       .then((data) => {
         if (!activo) return
         const ventaEncontrada = data.items.find(v => 
-          (v.id ?? v.attributes?.id) === Number(id) ||
-          (v.documentId ?? v.attributes?.documentId) === id
+          (v.documentId ?? v.attributes?.documentId) === documentId
         )
         if (!ventaEncontrada) {
           setError('Venta no encontrada')
@@ -40,29 +39,83 @@ export default function DetalleCompra() {
       })
 
     return () => { activo = false }
-  }, [id])
+  }, [documentId])
 
   if (cargando) return <p className="detalle-loading">Cargando detalles de la compra...</p>
   if (error) return <p className="detalle-error">{error}</p>
   if (!venta) return <p className="detalle-error">No se encontró la venta</p>
 
   const attrs = venta.attributes ?? venta
+  
+  // La dirección puede venir como: direccion.data.attributes o direccion.attributes o direccion directamente
+  let direccion = {}
+  if (attrs?.direccion) {
+    if (attrs.direccion.data) {
+      direccion = attrs.direccion.data.attributes ?? attrs.direccion.data ?? {}
+    } else if (attrs.direccion.attributes) {
+      direccion = attrs.direccion.attributes
+    } else {
+      direccion = attrs.direccion
+    }
+  }
+  
+  // Procesar detalle_ventas
+  const detalleVentasRaw = attrs?.detalle_ventas?.data ?? attrs?.detalle_ventas ?? []
+  const detalleVentas = Array.isArray(detalleVentasRaw) ? detalleVentasRaw.map(item => {
+    const itemAttrs = item?.attributes ?? item
+    const variacionData = itemAttrs?.variacion?.data ?? itemAttrs?.variacion
+    const variacion = variacionData?.attributes ?? variacionData ?? {}
+    const productoData = variacion?.producto?.data ?? variacion?.producto
+    const producto = productoData?.attributes ?? productoData ?? {}
+    const descuento = Number(itemAttrs?.descuento ?? item?.descuento ?? 0)
+    const precioUnitario = Number(itemAttrs?.precioUnitario ?? item?.precioUnitario ?? 0)
+    // Calcular precio original: precioUnitario = precioOriginal * (1 - descuento/100)
+    // precioOriginal = precioUnitario / (1 - descuento/100)
+    const precioOriginal = descuento > 0 && descuento < 100 
+      ? precioUnitario / (1 - descuento / 100) 
+      : precioUnitario
+    return {
+      id: item?.id ?? itemAttrs?.id,
+      cantidad: itemAttrs?.cantidad ?? item?.cantidad ?? 0,
+      precioUnitario,
+      precioOriginal,
+      descuento,
+      subtotal: itemAttrs?.subtotal ?? item?.subtotal ?? 0,
+      variacion: {
+        producto: {
+          id: producto?.id ?? productoData?.id,
+          documentId: productoData?.documentId ?? producto?.documentId,
+          nombre: producto?.nombre ?? "—"
+        }
+      }
+    }
+  }) : []
+  
+  // Calcular subtotal sumando todos los subtotales de los productos
+  const subtotal = detalleVentas.reduce((sum, item) => {
+    return sum + (Number(item.subtotal) || 0)
+  }, 0)
+  
+  const envio = attrs?.envio != null ? Number(attrs.envio) : 0
+  const total = subtotal + envio
 
   return (
     <div className="detalle-compra-page">
       <div className="detalle-compra-container">
         {/* Columna izquierda */}
         <div className="detalle-columna-izq">
-          <h1 className="detalle-orden">ORDEN #{venta.id ?? attrs.id}</h1>
+          <div className="detalle-orden-heading">
+            <h1 className="detalle-orden">ORDEN #{venta.documentIdid ?? attrs.documentId}</h1>
+            <p className="detalle-fecha">
+              {attrs?.fecha ? attrs.fecha.split('T')[0] : "—"}
+            </p>
+          </div>
           
           <p>
-            <strong className="detalle-label">Fecha:</strong>{" "}
-            {attrs?.fecha ? formatearFecha(attrs.fecha) : "—"}
-          </p>
-          
-          <p>
-            <strong className="detalle-label">Estado:</strong>{" "}
-            {attrs?.estado ?? "—"}
+            <strong className="detalle-label">Dirección de envío:</strong>{" "}
+            {direccion.calle && direccion.numero 
+              ? `${direccion.calle} ${direccion.numero}, CP: ${direccion.cp ?? "—"}${direccion.provincia ? `, ${direccion.provincia}` : ""}`
+              : "—"}
           </p>
           
           <p>
@@ -71,31 +124,61 @@ export default function DetalleCompra() {
           </p>
           
           <p>
-            <strong className="detalle-label">Total:</strong>{" "}
-            {attrs?.total != null ? `$${attrs.total}` : "$0"}
+            <strong className="detalle-label">Estado:</strong>{" "}
+            {attrs?.estado ?? "—"}
           </p>
         </div>
 
         {/* Columna derecha */}
         <div className="detalle-columna-der">
           <h2>Productos</h2>
-          {attrs.detalle_ventas?.length > 0 ? (
-            <div className="detalle-productos">
-              <div className="detalle-productos-header">
-                <span>Producto</span>
-                <span>Cantidad</span>
-                <span>Precio unitario</span>
-                <span>Subtotal</span>
-              </div>
-              {attrs.detalle_ventas.map(item => (
-                <div key={item.id} className="detalle-producto-row">
-                  <span>{item.nombre}</span>
-                  <span>{item.cantidad}</span>
-                  <span>${item.precio}</span>
-                  <span>${item.cantidad * item.precio}</span>
+          {detalleVentas.length > 0 ? (
+            <>
+              <div className="detalle-productos">
+                <div className="detalle-productos-header">
+                  <span>Producto</span>
+                  <span>Cantidad</span>
+                  <span>Precio unitario</span>
+                  <span>Subtotal</span>
+                  <span>Acción</span>
                 </div>
-              ))}
-            </div>
+                {detalleVentas.map(item => (
+                  <div key={item.id} className="detalle-producto-row">
+                    <span>{item.variacion.producto.nombre}</span>
+                    <span>{item.cantidad}</span>
+                    <span>
+                      {item.descuento > 0 ? (
+                        <span style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '0.9rem' }}>
+                            ${item.precioOriginal.toFixed(2)}
+                          </span>
+                          <span>${item.precioUnitario.toFixed(2)}</span>
+                        </span>
+                      ) : (
+                        `$${item.precioUnitario.toFixed(2)}`
+                      )}
+                    </span>
+                    <span>${item.subtotal.toFixed(2)}</span>
+                    <span>
+                      <Link to={`/cuenta/crear-resena/${item.variacion.producto.documentId ?? item.variacion.producto.id}`} className="detalle-resena-link">
+                        Agregar reseña
+                      </Link>
+                    </span>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="detalle-totales">
+                <div className="detalle-total-row">
+                  <span>Envío:</span>
+                  <span>${envio.toFixed(2)}</span>
+                </div>
+                <div className="detalle-total-row detalle-total-final">
+                  <span>TOTAL:</span>
+                  <span>${total.toFixed(2)}</span>
+                </div>
+              </div>
+            </>
           ) : (
             <p>No hay productos asociados a esta venta</p>
           )}

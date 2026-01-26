@@ -134,6 +134,11 @@ export default function DetalleVenta() {
                 const imgAttrs = img?.attributes ?? img ?? {}
                 const imgPath = imgAttrs?.url ?? img?.url ?? '/assets/fallback.jpg'
                 const imagenUrl = imgPath.startsWith('http') ? imgPath : `${BACKEND_URL}${imgPath}`
+                const descuento = Number(item?.descuento ?? 0)
+                const precioUnitario = Number(item?.precioUnitario ?? 0)
+                const precioOriginal = descuento > 0 && descuento < 100 
+                  ? precioUnitario / (1 - descuento / 100) 
+                  : precioUnitario
                 return (
                   <div key={detalleItem.id ?? index} className="admin-venta-product">
                     <img
@@ -149,7 +154,18 @@ export default function DetalleVenta() {
                       <span className="admin-venta-product-qty">Cantidad: {item?.cantidad ?? 0}</span>
                     </div>
                     <span className="admin-venta-product-price">
-                      {item?.subtotal ? `$ ${Number(item.subtotal).toLocaleString('es-AR')}` : '$ 0'}
+                      {descuento > 0 ? (
+                        <span style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-end' }}>
+                          <span style={{ textDecoration: 'line-through', color: '#9aa3af', fontSize: '0.9rem' }}>
+                            $ {precioOriginal.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                          <span>
+                            {item?.subtotal ? `$ ${Number(item.subtotal).toLocaleString('es-AR')}` : '$ 0'}
+                          </span>
+                        </span>
+                      ) : (
+                        item?.subtotal ? `$ ${Number(item.subtotal).toLocaleString('es-AR')}` : '$ 0'
+                      )}
                     </span>
                   </div>
                 )

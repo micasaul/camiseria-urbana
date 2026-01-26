@@ -7,7 +7,7 @@ const getAuthHeaders = () => {
 
 export async function getVentas(page = 1, pageSize = 10) {
   const res = await fetch(
-    `${BACKEND_URL}/api/ventas?pagination[page]=${page}&pagination[pageSize]=${pageSize}&sort=createdAt:desc`,
+    `${BACKEND_URL}/api/ventas?pagination[page]=${page}&pagination[pageSize]=${pageSize}&sort=createdAt:desc&populate[0]=direccion&populate[1]=detalle_ventas&populate[2]=detalle_ventas.variacion&populate[3]=detalle_ventas.variacion.producto`,
     { headers: { ...getAuthHeaders() } }
   );
   if (!res.ok) {

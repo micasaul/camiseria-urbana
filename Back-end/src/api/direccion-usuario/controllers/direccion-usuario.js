@@ -9,7 +9,7 @@ const { createCoreController } = require('@strapi/strapi').factories;
 module.exports = createCoreController('api::direccion-usuario.direccion-usuario', ({ strapi }) => ({
   async crearDireccionUsuario(ctx) {
     try {
-      const { calle, numero, cp } = ctx.request.body.data || ctx.request.body;
+      const { calle, numero, cp, provincia } = ctx.request.body.data || ctx.request.body;
       
       // Verificamos el token manualmente
       const token = ctx.request.header.authorization?.replace('Bearer ', '');
@@ -31,8 +31,8 @@ module.exports = createCoreController('api::direccion-usuario.direccion-usuario'
         return ctx.unauthorized('No se pudo obtener el ID del usuario del token');
       }
 
-      if (!calle || !numero || !cp) {
-        return ctx.badRequest('Calle, número y código postal son obligatorios');
+      if (!calle || !numero || !cp || !provincia) {
+        return ctx.badRequest('Calle, número, código postal y provincia son obligatorios');
       }
 
       // Obtenemos el usuario con documentId
@@ -49,6 +49,7 @@ module.exports = createCoreController('api::direccion-usuario.direccion-usuario'
           calle,
           numero,
           cp,
+          provincia,
         },
         status: 'published',
       });

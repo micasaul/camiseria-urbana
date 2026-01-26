@@ -30,6 +30,7 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
         publicationState: 'live',
         populate: {
           users_permissions_user: true,
+          direccion: true,
           detalle_ventas: {
             populate: {
               variacion: {
@@ -71,7 +72,7 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
     ctx.body = { data: venta };
   },
   async fromCarrito(ctx) {
-    const { carritoId, envio, subtotal, usuario } = ctx.request.body || {};
+    const { carritoId, envio, subtotal, usuario, direccionId } = ctx.request.body || {};
 
     if (!carritoId) {
       return ctx.badRequest('carritoId requerido');
@@ -84,6 +85,7 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
           envio: envio ?? 0,
           subtotal,
           usuario: usuario ?? {},
+          direccionId: direccionId || null,
         });
 
       ctx.body = result;

@@ -16,6 +16,7 @@ module.exports = createCoreService(
       const envio = aNumero(opts.envio ?? 0);
       const subtotalFront = opts.subtotal != null ? aNumero(opts.subtotal) : null;
       const usuario = opts.usuario ?? {};
+      const direccionId = opts.direccionId && String(opts.direccionId).trim() !== '' ? String(opts.direccionId).trim() : null;
 
       const resultado = await strapi.db.transaction(async ({ trx }) => {
         const carritos = await strapi.entityService.findMany(
@@ -101,17 +102,45 @@ module.exports = createCoreService(
         const usuarioId = carritoEntity?.users_permissions_user?.id;
         const nroSeguimiento = generarNroSeguimiento(usuario?.provincia);
 
+        // Preparar datos de la venta
+        const ventaData = {
+          fecha: new Date(),
+          estado: 'pendiente',
+          total: subtotalVenta,
+          envio,
+          nroSeguimiento,
+          users_permissions_user: usuarioId || null,
+        };
+
+        strapi.log.info(`[createFromCarrito] direccionId recibido: ${direccionId}`);
+        if (direccionId) {
+          const direcciones = await strapi.entityService.findMany(
+            /** @type {any} */ ('api::direccion.direccion'),
+            /** @type {any} */ ({
+              filters: { documentId: String(direccionId) },
+              limit: 1,
+              transaction: trx,
+            })
+          );
+          
+          strapi.log.info(`[createFromCarrito] Direcciones encontradas: ${direcciones.length}`);
+          
+          if (direcciones.length > 0) {
+            const direccionEncontrada = direcciones[0];
+            strapi.log.info(`[createFromCarrito] Dirección encontrada con id: ${direccionEncontrada.id}`);
+            ventaData.direccion = direccionEncontrada.id || null;
+            strapi.log.info(`[createFromCarrito] ventaData.direccion asignado: ${ventaData.direccion}`);
+          } else {
+            strapi.log.warn(`[createFromCarrito] No se encontró dirección con documentId: ${direccionId}`);
+          }
+        } else {
+          strapi.log.warn(`[createFromCarrito] No se proporcionó direccionId`);
+        }
+
         const venta = await strapi.entityService.create(
           /** @type {any} */ ('api::venta.venta'),
           /** @type {any} */ ({
-            data: {
-              fecha: new Date(),
-              estado: 'pendiente',
-              total: subtotalVenta,
-              envio,
-              nroSeguimiento,
-              users_permissions_user: usuarioId || null,
-            },
+            data: ventaData,
             status: 'published',
             transaction: trx,
           })

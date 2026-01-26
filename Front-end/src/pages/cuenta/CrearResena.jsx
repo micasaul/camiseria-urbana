@@ -1,0 +1,221 @@
+import { useState, useEffect } from "react"
+import { useParams, useNavigate, Link } from "react-router-dom"
+import { useAuth } from "../../context/AuthContext"
+import BlueButton from "../../components/buttons/blue-btn/BlueButton"
+import LinkButton from "../../components/buttons/link-btn/LinkButton"
+import "./CrearResena.css"
+
+const API_URL = import.meta.env.VITE_BACKEND_URL
+
+const CrearResena = () => {
+  const { productoId } = useParams()
+  const { usuario } = useAuth()
+  const navigate = useNavigate()
+  const [producto, setProducto] = useState(null)
+  const [cargandoProducto, setCargandoProducto] = useState(true)
+  const [formData, setFormData] = useState({
+    valoracion: "",
+    comentario: ""
+  })
+  const [cargando, setCargando] = useState(false)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    if (!productoId) return
+
+    const fetchProducto = async () => {
+      try {
+        const token = localStorage.getItem("strapiToken")
+        const res = await fetch(
+          `${API_URL}/api/productos?filters[documentId][$eq]=${productoId}&populate=imagen`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }
+        )
+
+        if (!res.ok) throw new Error("No se pudo obtener el producto")
+
+        const data = await res.json()
+        const productos = data?.data ?? []
+        if (productos.length > 0) {
+          const prod = productos[0]
+          const attrs = prod?.attributes ?? prod
+          const imagenData = attrs?.imagen?.data ?? attrs?.imagen
+          const imagen = imagenData?.attributes ?? imagenData ?? {}
+          const imagenUrl = imagen?.url 
+            ? (imagen.url.startsWith('http') ? imagen.url : `${API_URL}${imagen.url}`)
+            : null
+
+          setProducto({
+            id: prod?.id,
+            documentId: prod?.documentId,
+            nombre: attrs?.nombre ?? "—",
+            imagenUrl
+          })
+        }
+      } catch (error) {
+        console.error("Error cargando producto:", error)
+        setError("No se pudo cargar el producto")
+      } finally {
+        setCargandoProducto(false)
+      }
+    }
+
+    fetchProducto()
+  }, [productoId])
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setCargando(true)
+    setError("")
+
+    try {
+      if (!formData.valoracion || Number(formData.valoracion) < 1 || Number(formData.valoracion) > 5) {
+        setError("Por favor seleccioná una valoración entre 1 y 5")
+        setCargando(false)
+        return
+      }
+
+      if (!usuario?.documentId) {
+        setError("No hay sesión activa")
+        setCargando(false)
+        return
+      }
+
+      if (!producto?.documentId) {
+        setError("No se pudo obtener el producto")
+        setCargando(false)
+        return
+      }
+
+      const token = localStorage.getItem("strapiToken")
+      if (!token) throw new Error("No hay token de sesión")
+
+      // Obtener el id numérico del usuario
+      const userRes = await fetch(`${API_URL}/api/users/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!userRes.ok) throw new Error("No se pudo obtener el usuario")
+      const userData = await userRes.json()
+      const userId = userData?.id
+
+      const productoIdNum = producto.id
+      if (!productoIdNum) throw new Error("No se pudo obtener el ID del producto")
+
+      const resenaRes = await fetch(`${API_URL}/api/resenas`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          data: {
+            valoracion: Number(formData.valoracion),
+            comentario: formData.comentario.trim() || null,
+            fecha: new Date().toISOString().split('T')[0],
+            users_permissions_user: userId,
+            producto: productoIdNum
+          }
+        })
+      })
+
+      if (!resenaRes.ok) {
+        const errorText = await resenaRes.text()
+        console.error("Error al crear reseña:", errorText)
+        throw new Error("No se pudo crear la reseña")
+      }
+
+      navigate(`/producto/${producto.documentId}`)
+    } catch (error) {
+      console.error("Error al guardar reseña:", error)
+      setError(error.message || "Error al guardar la reseña")
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  if (cargandoProducto) {
+    return <div className="crear-resena-page"><p className="crear-resena-loading">Cargando producto...</p></div>
+  }
+
+  if (!producto) {
+    return (
+      <div className="crear-resena-page">
+        <p className="crear-resena-error">No se pudo cargar el producto</p>
+        <Link to="/mi-cuenta">
+          <LinkButton>Volver a mi cuenta</LinkButton>
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div className="crear-resena-page">
+      <div className="crear-resena-container">
+        <h1>Agregar reseña</h1>
+
+        <div className="crear-resena-producto">
+          {producto.imagenUrl && (
+            <img src={producto.imagenUrl} alt={producto.nombre} className="crear-resena-imagen" />
+          )}
+          <div className="crear-resena-producto-info">
+            <h2>{producto.nombre}</h2>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="crear-resena-form">
+          <div className="form-group">
+            <label htmlFor="valoracion">Valoración *</label>
+            <select
+              id="valoracion"
+              name="valoracion"
+              value={formData.valoracion}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Seleccioná una valoración</option>
+              <option value="1">1 - Muy malo</option>
+              <option value="2">2 - Malo</option>
+              <option value="3">3 - Regular</option>
+              <option value="4">4 - Bueno</option>
+              <option value="5">5 - Excelente</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="comentario">Comentario</label>
+            <textarea
+              id="comentario"
+              name="comentario"
+              value={formData.comentario}
+              onChange={handleChange}
+              placeholder="Escribí tu comentario sobre el producto..."
+              rows="6"
+            />
+          </div>
+
+          {error && <p className="error-message">{error}</p>}
+
+          <div className="crear-resena-buttons">
+            <BlueButton type="submit" disabled={cargando}>
+              {cargando ? "Guardando..." : "Guardar reseña"}
+            </BlueButton>
+            <Link to={`/producto/${producto.documentId}`}>
+              <LinkButton>Cancelar</LinkButton>
+            </Link>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+export default CrearResena

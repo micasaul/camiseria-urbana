@@ -34,6 +34,10 @@
       "relation": "oneToMany",
       "target": "api::venta.venta",
       "mappedBy": "direccion"
+    },
+    "provincia": {
+      "type": "string",
+      "required": true
     }
   }
 }

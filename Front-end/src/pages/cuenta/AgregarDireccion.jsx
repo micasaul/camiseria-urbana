@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useAuth } from "../../context/AuthContext"
 import { useNavigate } from "react-router-dom"
 import BlueButton from "../../components/buttons/blue-btn/BlueButton"
+import { preciosEnvioPorProvincia } from "../../utils/envio.js"
 import "./AgregarDireccion.css"
 
 const API_URL = import.meta.env.VITE_BACKEND_URL
@@ -12,7 +13,8 @@ const AgregarDireccion = () => {
   const [formData, setFormData] = useState({
     calle: "",
     numero: "",
-    cp: ""
+    cp: "",
+    provincia: ""
   })
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState("")
@@ -31,6 +33,13 @@ const AgregarDireccion = () => {
     setError("")
 
     try {
+      // Validar que la provincia esté seleccionada
+      if (!formData.provincia || formData.provincia.trim() === "") {
+        setError("Por favor seleccioná una provincia")
+        setCargando(false)
+        return
+      }
+
       const token = localStorage.getItem("strapiToken")
       if (!token) throw new Error("No hay token de sesión")
 
@@ -44,9 +53,10 @@ const AgregarDireccion = () => {
         },
         body: JSON.stringify({
           data: {
-            calle: formData.calle,
-            numero: formData.numero,
-            cp: formData.cp
+            calle: formData.calle.trim(),
+            numero: formData.numero.trim(),
+            cp: formData.cp.trim(),
+            provincia: formData.provincia.trim()
           }
         })
       })
@@ -113,6 +123,24 @@ const AgregarDireccion = () => {
             required
             placeholder="Ingresá el código postal"
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="provincia">Provincia</label>
+          <select
+            id="provincia"
+            name="provincia"
+            value={formData.provincia}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Seleccioná una provincia</option>
+            {Array.from(preciosEnvioPorProvincia.keys()).map((provincia) => (
+              <option key={provincia} value={provincia}>
+                {provincia}
+              </option>
+            ))}
+          </select>
         </div>
 
         {error && <p className="error-message">{error}</p>}

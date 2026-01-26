@@ -113,40 +113,46 @@ const MiCuenta = () => {
     <div className="mi-cuenta">
       {/* PERFIL */}
       <section className="perfil">
-        <h2>
-          <img src={userIcon} alt="Usuario" />
-          Datos personales
-        </h2>
-
-        <p>
-          <strong>Nombre:</strong> {usuario.username}
-        </p>
-
-        <p>
-          <strong>Email:</strong> {usuario.email}
-        </p>
+        <div className="perfil-card">
+          <h2>
+            <img src={userIcon} alt="Usuario" />
+            Datos personales
+          </h2>
+          <p>
+            <strong>Nombre:</strong> {usuario.username}
+          </p>
+          <p>
+            <strong>Email:</strong> {usuario.email}
+          </p>
+        </div>
 
         {/* SECCIÓN DIRECCIONES */}
-        <h2>
-          <img src={mapIcon} alt="Direcciones" />
-          Direcciones
-        </h2>
-        <div>
-          <p><strong>Dirección actual</strong></p>
-          {cargandoDirecciones ? (
-            <p>Cargando dirección...</p>
-          ) : direcciones.length > 0 ? (
-            <p>
-              {direcciones[0].calle ?? "—"} {direcciones[0].numero ?? "—"}, CP:{" "}
-              {direcciones[0].cp ?? "—"}
-            </p>
-          ) : (
-            <p>No tenés direcciones registradas.</p>
-          )}
+        <div className="direcciones-card">
+          <h2>
+            <img src={mapIcon} alt="Direcciones" />
+            Direcciones
+          </h2>
+          <div>
+            {cargandoDirecciones ? (
+              <p>Cargando dirección...</p>
+            ) : direcciones.length > 0 ? (
+              <>
+                <p>
+                  {direcciones[0].calle ?? "—"} {direcciones[0].numero ?? "—"}, CP:{" "}
+                  {direcciones[0].cp ?? "—"}
+                </p>
+                <p>
+                  {direcciones[0].provincia ?? "—"}
+                </p>
+              </>
+            ) : (
+              <p>No tenés direcciones registradas.</p>
+            )}
+          </div>
+          <Link to="/cuenta/direcciones">
+            <BlueButton>Ver más</BlueButton>
+          </Link>
         </div>
-        <Link to="/cuenta/direcciones">
-          <BlueButton>Editar dirección</BlueButton>
-        </Link>
       </section>
 
       {/* VENTAS */}
@@ -169,27 +175,22 @@ const MiCuenta = () => {
             return (
               <div key={venta.id} className="venta">
                 <p>
-                  <strong>Orden número:</strong> #{venta.id}
+                  <strong>Orden:</strong> #{venta.documentId}
                 </p>
-
                 <p>
                   <strong>Fecha:</strong>{" "}
                   {fecha ? new Date(fecha).toLocaleDateString() : "—"}
                 </p>
-
-                <p>
-                  <strong>Total:</strong> ${total != null ? total : 0}
-                </p>
-
                 <p>
                   <strong>Estado:</strong> {estado ?? "Sin estado"}
                 </p>
-
                 <p>
                   <strong>Número de seguimiento:</strong> {nroSeguimiento ?? "—"}
                 </p>
-
-                <Link to={`/cuenta/detalle-compra/${venta.id}`}>
+                <p>
+                  <strong>Total:</strong> ${total != null ? total : 0}
+                </p>
+                <Link to={`/cuenta/detalle-compra/${venta.documentId ?? venta.attributes?.documentId ?? venta.id}`}>
                   <LinkButton>Más detalles</LinkButton>
                 </Link>
               </div>

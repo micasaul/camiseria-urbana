@@ -20,6 +20,8 @@
 
 /* TÍTULOS */
 .perfil h2,
+.perfil-card h2,
+.direcciones-card h2,
 .ventas h2 {
   display: flex;
   align-items: center;
@@ -31,27 +33,33 @@
 }
 
 /* ICONO PERFIL */
-.perfil h2 img {
+.perfil h2 img,
+.perfil-card h2 img,
+.direcciones-card h2 img {
   width: 22px;
   height: 22px;
   object-fit: contain;
 }
 
 /* DATOS PERSONALES */
-.perfil p {
+.perfil p,
+.perfil-card p,
+.direcciones-card p {
   font-size: 1rem;
   font: bold 500 1rem/1.5rem "Alexandria", sans-serif;
   color: #172A3A;
+}
+
+.perfil-card p {
+  margin-bottom: 0.2rem;
 }
 
 .perfil strong {
   font-weight: 500;
 }
 */
-.perfil button {
+.direcciones-card button {
   align-self: flex-start;
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* LISTADO DE VENTAS */
@@ -59,15 +67,22 @@
   gap: 1.5rem;
 }
 
-/* CARD DE VENTA */
+/* CARDS */
+.perfil-card,
+.direcciones-card,
 .venta {
   background-color: #FFFFFF;
   padding: 1.5rem 2rem;
   border-radius: 12px;
+  border: 1px solid #e5e7eb;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+}
+
+.perfil-card {
+  gap: 0.2rem;
 }
 
 /* ORDEN */
@@ -77,15 +92,21 @@
 
 /* ESTADO */
 .venta p:last-of-type {
-  color: #F4ACB7;
+  color: #172A3A;
   font-weight: 500;
 }
 
 /* BOTÓN MÁS DETALLES */
-.venta button {
+.venta button,
+.venta .link-btn {
   align-self: flex-end;
   margin-top: rem;
   border-radius: 50px;
+  color: #F4ACB7 !important;
+}
+
+.venta .link-btn:hover {
+  color: #F4ACB7 !important;
 }
 
 /* RESPONSIVE */

@@ -1,0 +1,87 @@
+.direcciones {
+  max-width: 1100px;
+  margin: 0 auto;
+  background-color: #FFFFFF;
+  padding: 4rem 5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+.direcciones-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+}
+
+.direcciones h1 {
+  font-family: "Source Serif Pro", serif;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #172A3A;
+  margin: 0;
+}
+
+.direcciones-historial {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.direccion-item {
+  background-color: #FFFFFF;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.direccion-item:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.direccion-info {
+  background-color: #FFFFFF !important;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.direccion-linea {
+  font-size: 1rem;
+  font: bold 500 1rem/1.5rem "Alexandria", sans-serif;
+  color: #172A3A;
+  margin: 0;
+}
+
+.direcciones-vacio {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 1rem;
+  margin-bottom: 2rem;
+}
+
+.direcciones-volver {
+  margin-top: 2rem;
+  display: flex;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .direcciones {
+    padding: 3rem 2rem;
+  }
+  
+  .direcciones-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  
+  .direcciones h1 {
+    font-size: 1.75rem;
+  }
+}
