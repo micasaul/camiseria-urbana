@@ -98,9 +98,9 @@ export default {
             metadata: { ventaId },
             notification_url: `${process.env.BACKEND_URL}/api/pagos/webhook`,
             back_urls: {
-              success: `http://localhost:5173/pago/success?ventaId=${ventaId}`,
-              pending: `http://localhost:5173/pago/pending?ventaId=${ventaId}`,
-              failure: `http://localhost:5173/pago/failure?ventaId=${ventaId}`,
+              success: `${process.env.FRONTEND_URL}/pago/success?ventaId=${ventaId}`,
+              pending: `${process.env.FRONTEND_URL}/pago/pending?ventaId=${ventaId}`,
+              failure: `${process.env.FRONTEND_URL}/pago/failure?ventaId=${ventaId}`,
             },
           },
         });

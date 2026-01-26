@@ -4,7 +4,7 @@ import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
 import { actualizarEstadoVenta, getVentaPorId } from '../../api/ventas.js'
 import './admin.css'
 
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? 'http://localhost:1337'
+const BACKEND_URL = import.meta.env.BACKEND_URL
 const ESTADOS_VENTA = ['En proceso', 'Enviado', 'Entregado']
 
 export default function DetalleVenta() {

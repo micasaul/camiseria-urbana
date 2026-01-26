@@ -18,7 +18,7 @@ import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import './Producto.css'
 
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? 'http://localhost:1337'
+const BACKEND_URL = import.meta.env.BACKEND_URL
 
 export default function Producto() {
   const { documentId } = useParams()

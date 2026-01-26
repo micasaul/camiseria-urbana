@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
 const AuthContext = createContext(null)
 
-const STRAPI_URL = import.meta.env.BACKEND_URL ?? 'http://localhost:1337'
+const STRAPI_URL = import.meta.env.BACKEND_URL
 const TOKEN_STORAGE_KEY = 'strapiToken'
 const USER_STORAGE_KEY = 'strapiUser'
 const ROLE_STORAGE_KEY = 'strapiRole'

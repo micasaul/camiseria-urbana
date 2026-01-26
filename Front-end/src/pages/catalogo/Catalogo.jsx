@@ -10,7 +10,7 @@ import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
 import PageButton from '../../components/forms/page-button/page-button.jsx'
 import './Catalogo.css'
 
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? 'http://localhost:1337'
+const BACKEND_URL = import.meta.env.BACKEND_URL
 
 export default function Catalogo() {
   const [searchParams] = useSearchParams()
