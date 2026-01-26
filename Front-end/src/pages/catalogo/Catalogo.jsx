@@ -1,25 +1,25 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { getProductosConFiltros } from '../../api/productos.js'
 import { getProductoEnums } from '../../api/enums.js'
 import { obtenerDescuentosActivos } from '../../api/promos.js'
-import { ordenarPorStock } from '../../utils/producto.js'
+import { calcularCantidadTotal } from '../../utils/adminHelpers.js'
 import ColorSelector from '../../components/forms/color/ColorSelector.jsx'
 import ProductCard from '../../components/cards/product-card/ProductCard.jsx'
 import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
 import PageButton from '../../components/forms/page-button/page-button.jsx'
 import './Catalogo.css'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+const ITEMS_POR_PAGINA = 6; 
 
 export default function Catalogo() {
   const [searchParams] = useSearchParams()
   const materialFromUrl = searchParams.get('material') || ''
   const ofertasFromUrl = searchParams.get('ofertas') === '1'
   
-  const [productos, setProductos] = useState([])
+  const [productos, setProductos] = useState([]) 
   const [cargando, setCargando] = useState(true)
-  const [paginacion, setPaginacion] = useState({ page: 1, pageSize: 6, pageCount: 1, total: 0 })
+  const [paginacion, setPaginacion] = useState({ page: 1, pageCount: 1, total: 0 })
   
   const [filtrosAplicados, setFiltrosAplicados] = useState({
     material: '',
@@ -63,95 +63,64 @@ export default function Catalogo() {
         setColores([])
       })
 
-    return () => {
-      activo = false
-    }
+    return () => { activo = false }
   }, [])
 
   useEffect(() => {
     if (materialFromUrl && materiales.length > 0) {
       if (materiales.includes(materialFromUrl)) {
         setMaterialPendiente(materialFromUrl)
-        setFiltrosAplicados(prev => ({
-          ...prev,
-          material: materialFromUrl
-        }))
+        setFiltrosAplicados(prev => ({ ...prev, material: materialFromUrl }))
       }
     }
   }, [materialFromUrl, materiales])
 
   useEffect(() => {
     let activo = true
-    
     const obtenerPreciosReales = async () => {
       try {
         const [resMin, resMax] = await Promise.all([
           fetch(`${VITE_BACKEND_URL}/api/productos?sort=precio:asc&pagination[pageSize]=1`),
           fetch(`${VITE_BACKEND_URL}/api/productos?sort=precio:desc&pagination[pageSize]=1`)
         ])
-        
         if (resMin.ok) {
           const dataMin = await resMin.json()
-          const itemMin = dataMin?.data?.[0]
-          if (itemMin) {
-            const attrsMin = itemMin?.attributes ?? itemMin
-            if (activo) setPrecioMinReal(attrsMin?.precio ?? 0)
-          }
+          if (activo) setPrecioMinReal(dataMin?.data?.[0]?.attributes?.precio ?? 0)
         }
-        
         if (resMax.ok) {
           const dataMax = await resMax.json()
-          const itemMax = dataMax?.data?.[0]
-          if (itemMax) {
-            const attrsMax = itemMax?.attributes ?? itemMax
-            if (activo) setPrecioMaxReal(attrsMax?.precio ?? 10000)
-          }
+          if (activo) setPrecioMaxReal(dataMax?.data?.[0]?.attributes?.precio ?? 10000)
         }
       } catch (error) {
-        console.error('Error al obtener precios reales:', error)
-        if (activo) {
-          setPrecioMinReal(0)
-          setPrecioMaxReal(10000)
-        }
+        if (activo) { setPrecioMinReal(0); setPrecioMaxReal(10000); }
       }
     }
     obtenerPreciosReales()
     
     obtenerDescuentosActivos()
       .then((map) => {
-        if (!activo) return
-        setDescuentosMap(map)
-        setDescuentosLoaded(true)
+        if (activo) { setDescuentosMap(map); setDescuentosLoaded(true); }
       })
-      .catch((error) => {
-        console.error('Error al obtener descuentos:', error)
-        if (!activo) return
-        setDescuentosMap(new Map())
-        setDescuentosLoaded(true)
+      .catch(() => {
+        if (activo) { setDescuentosMap(new Map()); setDescuentosLoaded(true); }
       })
     
-    return () => {
-      activo = false
-    }
+    return () => { activo = false }
   }, [])
 
   useEffect(() => {
     let activo = true
     setCargando(true)
 
-    if (ofertasFromUrl && !descuentosLoaded) {
-      return () => { activo = false }
-    }
+    if (ofertasFromUrl && !descuentosLoaded) return () => { activo = false }
 
     const idsOfertas = ofertasFromUrl
-      ? [...descuentosMap.entries()]
-          .filter(([, d]) => (Number(d) ?? 0) > 0)
-          .map(([id]) => id)
+      ? [...descuentosMap.entries()].filter(([, d]) => (Number(d) ?? 0) > 0).map(([id]) => id)
       : []
 
     if (ofertasFromUrl && idsOfertas.length === 0) {
       setProductos([])
-      setPaginacion({ page: 1, pageSize: paginacion.pageSize, pageCount: 1, total: 0 })
+      setPaginacion({ page: 1, pageCount: 1, total: 0 })
       setCargando(false)
       return () => { activo = false }
     }
@@ -166,35 +135,67 @@ export default function Catalogo() {
       ...(ofertasFromUrl && idsOfertas.length > 0 && { ids: idsOfertas })
     }
 
-    getProductosConFiltros(filtros, paginacion.page, paginacion.pageSize)
+    getProductosConFiltros(filtros, 1, 1000)
       .then((data) => {
         if (!activo) return
-        setProductos(ordenarPorStock(data.items))
-        setPaginacion(data.pagination)
+        
+        const items = data.items ?? []
+        
+        const productosProcesados = items.map((producto) => {
+          const variacionesRaw = producto?.variaciones ?? producto?.variacions?.data ?? producto?.variacions ?? []
+          const variacionesLista = Array.isArray(variacionesRaw) ? variacionesRaw : (variacionesRaw?.data ?? [])
+          
+          const variacionesNormalizadas = variacionesLista.map((variacion) => {
+            const attrs = variacion?.attributes ?? variacion
+            return { stock: Number(attrs?.stock ?? variacion?.stock ?? attrs?.cantidad ?? variacion?.cantidad ?? 0) }
+          })
+
+          const cantidadTotal = calcularCantidadTotal(variacionesNormalizadas)
+          const tieneStock = cantidadTotal > 0
+
+          const img = typeof producto.imagen === 'string' ? producto.imagen : ''
+          const tieneFoto = img.length > 0 && img !== '/assets/fallback.jpg' && !img.includes('fallback') && img !== 'null'
+
+          let prioridad = 4
+          if (tieneStock && tieneFoto) prioridad = 1
+          else if (tieneStock && !tieneFoto) prioridad = 2
+          else if (!tieneStock && tieneFoto) prioridad = 3
+          else if (!tieneStock && !tieneFoto) prioridad = 4
+
+          return { ...producto, cantidadTotal, prioridad, nombre: producto.nombre || '' }
+        })
+
+        productosProcesados.sort((a, b) => {
+          if (a.prioridad !== b.prioridad) return a.prioridad - b.prioridad
+          return a.nombre.localeCompare(b.nombre, 'es')
+        })
+        
+        setProductos(productosProcesados)
+        const totalItems = productosProcesados.length
+        setPaginacion({
+          page: 1,
+          pageCount: Math.ceil(totalItems / ITEMS_POR_PAGINA) || 1,
+          total: totalItems
+        })
       })
-      .catch((error) => {
-        console.error('Error al cargar productos:', error)
-        if (!activo) return
-        setProductos([])
-        setPaginacion({ page: 1, pageSize: paginacion.pageSize, pageCount: 1, total: 0 })
+      .catch(() => {
+        if (activo) {
+          setProductos([])
+          setPaginacion({ page: 1, pageCount: 1, total: 0 })
+        }
       })
       .finally(() => {
-        if (!activo) return
-        setCargando(false)
+        if (activo) setCargando(false)
       })
 
-    return () => {
-      activo = false
-    }
-  }, [filtrosAplicados, paginacion.page, ofertasFromUrl, descuentosLoaded, descuentosMap])
+    return () => { activo = false }
+  }, [filtrosAplicados, ofertasFromUrl, descuentosLoaded, descuentosMap])
 
-  useEffect(() => {
-    setPaginacion(prev => ({ ...prev, page: 1 }))
-  }, [filtrosAplicados])
-
-  useEffect(() => {
-    setPaginacion(prev => ({ ...prev, page: 1 }))
-  }, [ofertasFromUrl])
+  const productosEnPantalla = useMemo(() => {
+    const inicio = (paginacion.page - 1) * ITEMS_POR_PAGINA;
+    const fin = inicio + ITEMS_POR_PAGINA;
+    return productos.slice(inicio, fin);
+  }, [productos, paginacion.page]);
 
   const handlePrecioMinChange = (e) => {
     const valor = e.target.value
@@ -225,72 +226,34 @@ export default function Catalogo() {
 
     if (precioMinPendiente !== '') {
       const numMin = Number(precioMinPendiente)
-      if (isNaN(numMin)) {
-        setErrorPrecioMin('Debe ser un número válido')
-        hayError = true
-      } else if (numMin < precioMinReal) {
-        setErrorPrecioMin(`El mínimo no puede ser menor a $${precioMinReal.toFixed(2)}`)
-        hayError = true
-      } else if (numMin > precioMaxReal) {
-        setErrorPrecioMin(`El mínimo no puede ser mayor a $${precioMaxReal.toFixed(2)}`)
-        hayError = true
-      }
+      if (isNaN(numMin)) { setErrorPrecioMin('Inválido'); hayError = true; }
+      else if (numMin < precioMinReal) { setErrorPrecioMin(`Mínimo: $${precioMinReal}`); hayError = true; }
+      else if (numMin > precioMaxReal) { setErrorPrecioMin(`Máximo: $${precioMaxReal}`); hayError = true; }
     }
 
     if (precioMaxPendiente !== '') {
       const numMax = Number(precioMaxPendiente)
-      if (isNaN(numMax)) {
-        setErrorPrecioMax('Debe ser un número válido')
-        hayError = true
-      } else if (numMax > precioMaxReal) {
-        setErrorPrecioMax(`El máximo no puede ser mayor a $${precioMaxReal.toFixed(2)}`)
-        hayError = true
-      } else if (numMax < precioMinReal) {
-        setErrorPrecioMax(`El máximo no puede ser menor a $${precioMinReal.toFixed(2)}`)
-        hayError = true
-      }
+      if (isNaN(numMax)) { setErrorPrecioMax('Inválido'); hayError = true; }
+      else if (numMax > precioMaxReal) { setErrorPrecioMax(`Máximo: $${precioMaxReal}`); hayError = true; }
+      else if (numMax < precioMinReal) { setErrorPrecioMax(`Mínimo: $${precioMinReal}`); hayError = true; }
     }
 
-    if (precioMinPendiente !== '' && precioMaxPendiente !== '') {
-      const numMin = Number(precioMinPendiente)
-      const numMax = Number(precioMaxPendiente)
-      if (!isNaN(numMin) && !isNaN(numMax) && numMax < numMin) {
-        setErrorPrecioMax('El máximo no puede ser menor que el mínimo')
-        hayError = true
-      }
+    if (!hayError) {
+      setFiltrosAplicados({
+        material: materialPendiente,
+        precioMin: precioMinPendiente,
+        precioMax: precioMaxPendiente,
+        colores: coloresPendientes,
+        talles: tallesPendientes,
+        ordenarPor: ordenarPorPendiente
+      })
     }
-
-    if (hayError) {
-      return
-    }
-
-    setFiltrosAplicados({
-      material: materialPendiente,
-      precioMin: precioMinPendiente,
-      precioMax: precioMaxPendiente,
-      colores: coloresPendientes,
-      talles: tallesPendientes,
-      ordenarPor: ordenarPorPendiente
-    })
   }
 
   const limpiarFiltros = () => {
-    setOrdenarPorPendiente('')
-    setMaterialPendiente('')
-    setPrecioMinPendiente('')
-    setPrecioMaxPendiente('')
-    setColoresPendientes([])
-    setTallesPendientes([])
-    setErrorPrecioMin('')
-    setErrorPrecioMax('')
-    setFiltrosAplicados({
-      material: '',
-      precioMin: '',
-      precioMax: '',
-      colores: [],
-      talles: [],
-      ordenarPor: ''
-    })
+    setOrdenarPorPendiente(''); setMaterialPendiente(''); setPrecioMinPendiente(''); setPrecioMaxPendiente('');
+    setColoresPendientes([]); setTallesPendientes([]); setErrorPrecioMin(''); setErrorPrecioMax('');
+    setFiltrosAplicados({ material: '', precioMin: '', precioMax: '', colores: [], talles: [], ordenarPor: '' })
   }
 
   const cambiarPagina = (nuevaPagina) => {
@@ -307,11 +270,7 @@ export default function Catalogo() {
           <div className="catalogo-filters-header">
             <h2>Filtros</h2>
             {hayFiltrosActivos && (
-              <button 
-                type="button" 
-                className="catalogo-filters-clear"
-                onClick={limpiarFiltros}
-              >
+              <button type="button" className="catalogo-filters-clear" onClick={limpiarFiltros}>
                 Limpiar
               </button>
             )}
@@ -319,11 +278,7 @@ export default function Catalogo() {
 
           <div className="catalogo-filter-group">
             <label className="catalogo-filter-label">Ordenar por</label>
-            <select
-              className="catalogo-filter-select"
-              value={ordenarPorPendiente}
-              onChange={(e) => setOrdenarPorPendiente(e.target.value)}
-            >
+            <select className="catalogo-filter-select" value={ordenarPorPendiente} onChange={(e) => setOrdenarPorPendiente(e.target.value)}>
               <option value="">Sin ordenar</option>
               <option value="precio:desc">Precio: Mayor a menor</option>
               <option value="precio:asc">Precio: Menor a mayor</option>
@@ -338,12 +293,7 @@ export default function Catalogo() {
               {materiales.map((mat) => {
                 const isSelected = materialPendiente === mat
                 return (
-                  <button
-                    key={mat}
-                    type="button"
-                    className={`catalogo-material-btn${isSelected ? ' selected' : ''}`}
-                    onClick={() => setMaterialPendiente(isSelected ? '' : mat)}
-                  >
+                  <button key={mat} type="button" className={`catalogo-material-btn${isSelected ? ' selected' : ''}`} onClick={() => setMaterialPendiente(isSelected ? '' : mat)}>
                     {mat}
                   </button>
                 )
@@ -356,47 +306,20 @@ export default function Catalogo() {
             <div className="catalogo-precio-range">
               <div className="catalogo-precio-inputs">
                 <div className="catalogo-precio-input-wrapper">
-                  <input
-                    type="text"
-                    className={`catalogo-precio-input${errorPrecioMin ? ' error' : ''}`}
-                    placeholder="Mín"
-                    value={precioMinPendiente}
-                    onChange={handlePrecioMinChange}
-                    inputMode="numeric"
-                  />
-                  {errorPrecioMin && (
-                    <span className="catalogo-precio-error">{errorPrecioMin}</span>
-                  )}
+                  <input type="text" className={`catalogo-precio-input${errorPrecioMin ? ' error' : ''}`} placeholder="Mín" value={precioMinPendiente} onChange={handlePrecioMinChange} inputMode="numeric" />
                 </div>
                 <span className="catalogo-precio-separator">-</span>
                 <div className="catalogo-precio-input-wrapper">
-                  <input
-                    type="text"
-                    className={`catalogo-precio-input${errorPrecioMax ? ' error' : ''}`}
-                    placeholder="Máx"
-                    value={precioMaxPendiente}
-                    onChange={handlePrecioMaxChange}
-                    inputMode="numeric"
-                  />
-                  {errorPrecioMax && (
-                    <span className="catalogo-precio-error">{errorPrecioMax}</span>
-                  )}
+                  <input type="text" className={`catalogo-precio-input${errorPrecioMax ? ' error' : ''}`} placeholder="Máx" value={precioMaxPendiente} onChange={handlePrecioMaxChange} inputMode="numeric" />
                 </div>
               </div>
-              <p className="catalogo-precio-range-info">
-                Rango: ${precioMinReal.toFixed(2)} - ${precioMaxReal.toFixed(2)}
-              </p>
+              <p className="catalogo-precio-range-info">Rango: ${precioMinReal.toFixed(2)} - ${precioMaxReal.toFixed(2)}</p>
             </div>
           </div>
 
           <div className="catalogo-filter-group">
             <label className="catalogo-filter-label">Color</label>
-            <ColorSelector
-              colores={colores}
-              selectedColors={coloresPendientes}
-              onColorToggle={setColoresPendientes}
-              multiple={true}
-            />
+            <ColorSelector colores={colores} selectedColors={coloresPendientes} onColorToggle={setColoresPendientes} multiple={true} />
           </div>
 
           <div className="catalogo-filter-group">
@@ -405,18 +328,7 @@ export default function Catalogo() {
               {talles.map((talle) => {
                 const isSelected = tallesPendientes.includes(talle)
                 return (
-                  <button
-                    key={talle}
-                    type="button"
-                    className={`catalogo-talle-btn${isSelected ? ' selected' : ''}`}
-                    onClick={() => {
-                      if (isSelected) {
-                        setTallesPendientes(tallesPendientes.filter(t => t !== talle))
-                      } else {
-                        setTallesPendientes([...tallesPendientes, talle])
-                      }
-                    }}
-                  >
+                  <button key={talle} type="button" className={`catalogo-talle-btn${isSelected ? ' selected' : ''}`} onClick={() => setTallesPendientes(isSelected ? tallesPendientes.filter(t => t !== talle) : [...tallesPendientes, talle])}>
                     {talle}
                   </button>
                 )
@@ -425,13 +337,7 @@ export default function Catalogo() {
           </div>
 
           <div className="catalogo-filter-apply">
-            <BlueButton
-              width="100%"
-              height="40px"
-              onClick={aplicarFiltros}
-            >
-              Aplicar
-            </BlueButton>
+            <BlueButton width="100%" height="40px" onClick={aplicarFiltros}>Aplicar</BlueButton>
           </div>
         </aside>
 
@@ -445,22 +351,18 @@ export default function Catalogo() {
           ) : (
             <>
               <div className="catalogo-grid">
-                {productos.map((producto) => {
+                {productosEnPantalla.map((producto) => {
                   const productoKey = String(producto.documentId ?? producto.id)
                   const descuento = descuentosMap.get(productoKey) ?? 0
                   return (
-                    <ProductCard 
-                      key={producto.id} 
-                      producto={producto} 
-                      descuento={descuento}
-                    />
+                    <ProductCard key={producto.id} producto={producto} descuento={descuento} />
                   )
                 })}
               </div>
 
               <PageButton
                 pagina={paginacion.page}
-                pageCount={paginacion.pageCount || 1}
+                pageCount={paginacion.pageCount}
                 onPageChange={cambiarPagina}
                 className="catalogo-pagination"
               />

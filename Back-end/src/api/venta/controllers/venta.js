@@ -18,8 +18,8 @@ function dedupeByDocumentId(items) {
 
 module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
   async find(ctx) {
-    const page = Number(ctx.query['pagination[page]']) || 1;
-    const pageSize = Number(ctx.query['pagination[pageSize]']) || 10;
+    const page = Number(ctx.query?.pagination?.page) || 1;
+    const pageSize = Number(ctx.query?.pagination?.pageSize) || 10;
 
     const { results, pagination } = await strapi.entityService.findPage(
       'api::venta.venta',

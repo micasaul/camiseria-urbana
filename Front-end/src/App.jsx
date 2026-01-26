@@ -3,9 +3,6 @@ import AppRoutes from "./routes/AppRoutes.jsx";
 import './App.css';
 
 function App() {
-  useEffect(() => {
-    console.log("BACKEND_URL runtime:", import.meta.env.VITE_BACKEND_URL);
-  }, []);
 
   return (
     <AppRoutes />

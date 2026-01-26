@@ -9,18 +9,22 @@ export default function Ventas() {
   const [ventas, setVentas] = useState([])
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
-  const [pagina, setPagina] = useState(1)
-  const [paginacion, setPaginacion] = useState({ page: 1, pageCount: 1 })
+  const [paginacion, setPaginacion] = useState({ page: 1, pageSize: 10, pageCount: 1, total: 0 })
 
   useEffect(() => {
     let activo = true
     setCargando(true)
     setError('')
-    getVentas(pagina, 10)
+    
+    getVentas(paginacion.page, paginacion.pageSize)
       .then((data) => {
         if (!activo) return
         setVentas(data.items)
-        setPaginacion(data.pagination)
+        setPaginacion(prev => ({ 
+          ...prev, 
+          pageCount: data.pagination.pageCount,
+          total: data.pagination.total
+        }))
       })
       .catch(() => {
         if (!activo) return
@@ -34,7 +38,11 @@ export default function Ventas() {
     return () => {
       activo = false
     }
-  }, [pagina])
+  }, [paginacion.page])
+
+  const cambiarPagina = (nuevaPagina) => {
+    setPaginacion(prev => ({ ...prev, page: nuevaPagina }))
+  }
 
   return (
     <div className="admin-page">
@@ -103,7 +111,7 @@ export default function Ventas() {
       <PageButton
         pagina={paginacion.page}
         pageCount={paginacion.pageCount || 1}
-        onPageChange={(nuevaPagina) => setPagina(nuevaPagina)}
+        onPageChange={cambiarPagina}
       />
     </div>
   )

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getProductos, actualizarVariacion } from '../../api/productos.js'
 import { COLOR_HEX_MAP } from '../../utils/colorMap.js'
-import { calcularCantidadTotal, formatearPrecio, ordenarSinStockAlFinal } from '../../utils/adminHelpers.js'
+import { calcularCantidadTotal, formatearPrecio } from '../../utils/adminHelpers.js'
 import PageButton from '../../components/forms/page-button/page-button.jsx'
 import './admin.css'
 
@@ -84,7 +84,40 @@ export default function ProductosListar() {
     [productos]
   )
 
-  const filasOrdenadas = useMemo(() => ordenarSinStockAlFinal(filas), [filas])
+  const filasOrdenadas = useMemo(() => {
+    
+    const conStockYFoto = []
+    const conStockSinFoto = []
+    const sinStockConFoto = []
+    const sinStockSinFoto = []
+    
+    for (const producto of filas) {
+      const tieneStock = producto.cantidadTotal > 0
+      const tieneFoto = producto.imagen && 
+                        producto.imagen !== '/assets/fallback.jpg' && 
+                        !producto.imagen.includes('fallback')
+      
+      if (tieneStock && tieneFoto) {
+        conStockYFoto.push(producto)
+      } else if (tieneStock && !tieneFoto) {
+        conStockSinFoto.push(producto)
+      } else if (!tieneStock && tieneFoto) {
+        sinStockConFoto.push(producto)
+      } else {
+        sinStockSinFoto.push(producto)
+      }
+    }
+    
+    const porNombre = (a, b) =>
+      String(a?.nombre ?? '').localeCompare(String(b?.nombre ?? ''), 'es')
+    
+    conStockYFoto.sort(porNombre)
+    conStockSinFoto.sort(porNombre)
+    sinStockConFoto.sort(porNombre)
+    sinStockSinFoto.sort(porNombre)
+    
+    return [...conStockYFoto, ...conStockSinFoto, ...sinStockConFoto, ...sinStockSinFoto]
+  }, [filas])
 
   const handleEditar = (producto) => {
     const destino = producto.documentId ?? producto.id
