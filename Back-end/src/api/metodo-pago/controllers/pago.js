@@ -96,12 +96,13 @@ export default {
             items: mpItems,
             external_reference: String(ventaId),
             metadata: { ventaId },
-            notification_url: `${process.env.VITE_BACKEND_URL}/api/pagos/webhook`,
+            notification_url: `https://bombastic-malaysia-unmitigatedly.ngrok-free.dev/api/pagos/webhook`,
             back_urls: {
-              success: `${process.env.FRONTEND_URL}/pago/success?ventaId=${ventaId}`,
-              pending: `${process.env.FRONTEND_URL}/pago/pending?ventaId=${ventaId}`,
-              failure: `${process.env.FRONTEND_URL}/pago/failure?ventaId=${ventaId}`,
+              success: `https://camiseria-urbana.vercel.app/pago/success?ventaId=${ventaId}`,
+              pending: `https://camiseria-urbana.vercel.app/pago/pending?ventaId=${ventaId}`,
+              failure: `https://camiseria-urbana.vercel.app/pago/failure?ventaId=${ventaId}`,
             },
+            auto_return: "approved",
           },
         });
 
