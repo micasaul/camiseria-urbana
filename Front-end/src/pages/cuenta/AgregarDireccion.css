@@ -1,0 +1,73 @@
+.agregar-direccion {
+  padding: 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.agregar-direccion h1 {
+  margin-bottom: 2rem;
+  font-family: 'Alexandria', sans-serif;
+  font-weight: 600;
+  color: #1B2A41;
+  text-transform: uppercase;
+}
+
+.direccion-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-family: 'Alexandria', sans-serif;
+  font-weight: 500;
+  color: #1B2A41;
+}
+
+.form-group input {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: 'Alexandria', sans-serif;
+  font-size: 1rem;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #1B2A41;
+}
+
+.error-message {
+  color: #d32f2f;
+  font-family: 'Alexandria', sans-serif;
+  margin-top: 0.5rem;
+}
+
+.direccion-actual {
+  margin-bottom: 2rem;
+}
+
+.direccion-actual h2 {
+  font-family: 'Alexandria', sans-serif;
+  font-weight: 500;
+  color: #1B2A41;
+  margin-bottom: 1rem;
+}
+
+.direccion-info {
+  padding: 1rem;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.direccion-info p {
+  font-family: 'Alexandria', sans-serif;
+  color: #333;
+  margin: 0;
+}
