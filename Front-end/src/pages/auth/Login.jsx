@@ -5,7 +5,9 @@ const STRAPI_URL = import.meta.env.VITE_BACKEND_URL
 
 function Login() {
   const handleGoogleLogin = () => {
-    window.location.href = `${STRAPI_URL}/api/connect/google`
+    const frontendUrl = `${window.location.origin}/auth/callback`
+    
+    window.location.href = `${STRAPI_URL}/api/connect/google?callback=${encodeURIComponent(frontendUrl)}`
   }
 
   return (
