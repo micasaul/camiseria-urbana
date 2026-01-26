@@ -6,7 +6,7 @@ import { parsearPrecio, aplicarDescuentos, calcularSubtotal } from "../../utils/
 import { obtenerPrecioEnvio } from "../../utils/envio.js";
 import "./Compra.css"
 
-const BACKEND_URL = import.meta.env.BACKEND_URL;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function Compra() {
   const [loading, setLoading] = useState(true);

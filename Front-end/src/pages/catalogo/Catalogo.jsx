@@ -10,7 +10,7 @@ import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
 import PageButton from '../../components/forms/page-button/page-button.jsx'
 import './Catalogo.css'
 
-const BACKEND_URL = import.meta.env.BACKEND_URL
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function Catalogo() {
   const [searchParams] = useSearchParams()
@@ -86,8 +86,8 @@ export default function Catalogo() {
     const obtenerPreciosReales = async () => {
       try {
         const [resMin, resMax] = await Promise.all([
-          fetch(`${BACKEND_URL}/api/productos?sort=precio:asc&pagination[pageSize]=1`),
-          fetch(`${BACKEND_URL}/api/productos?sort=precio:desc&pagination[pageSize]=1`)
+          fetch(`${VITE_BACKEND_URL}/api/productos?sort=precio:asc&pagination[pageSize]=1`),
+          fetch(`${VITE_BACKEND_URL}/api/productos?sort=precio:desc&pagination[pageSize]=1`)
         ])
         
         if (resMin.ok) {

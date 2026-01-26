@@ -9,7 +9,7 @@ import WishlistButton from './buttons/WishlistButton.jsx'
 import CartButton from './buttons/CartButton.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 
-const BACKEND_URL = import.meta.env.BACKEND_URL
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function Header() {
   const navigate = useNavigate()

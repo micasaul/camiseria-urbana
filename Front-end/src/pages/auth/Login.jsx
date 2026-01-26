@@ -1,7 +1,7 @@
 import './Login.css'
 import LogoGoogle from '../../assets/logo-google.png'
 
-const STRAPI_URL = import.meta.env.BACKEND_URL
+const STRAPI_URL = import.meta.env.VITE_BACKEND_URL
 
 function Login() {
   const handleGoogleLogin = () => {

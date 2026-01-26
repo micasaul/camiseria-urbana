@@ -17,7 +17,7 @@ import { resetearFormularioProducto, validarPrecio } from '../../utils/adminHelp
 import ColorSelector from '../../components/forms/color/ColorSelector.jsx'
 import './admin.css'
 
-const BACKEND_URL = import.meta.env.BACKEND_URL
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function ProductosAgregar() {
   const [nombre, setNombre] = useState('')

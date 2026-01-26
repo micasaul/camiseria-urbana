@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import './product-card.css'
 
-const BACKEND_URL = import.meta.env.BACKEND_URL
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function ProductCard({ producto, descuento = 0 }) {
   const imagenUrl = producto.imagen?.startsWith('http') 

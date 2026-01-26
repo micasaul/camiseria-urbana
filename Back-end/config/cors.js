@@ -1,7 +1,7 @@
 module.exports = ({ env }) => ({
   enabled: true,
   origin: [
-    env('BACKEND_URL'),
+    env('VITE_BACKEND_URL'),
     env('FRONTEND_URL'),
     'https://www.google.com'
   ].filter(Boolean),

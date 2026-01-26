@@ -9,7 +9,7 @@ export default function Footer() {
   const [email, setEmail] = useState("")
   const [estado, setEstado] = useState({ tipo: "", mensaje: "" })
   const [enviando, setEnviando] = useState(false)
-  const BACKEND_URL = import.meta.env.BACKEND_URL
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
   const manejarSuscripcion = async (event) => {
     event.preventDefault()

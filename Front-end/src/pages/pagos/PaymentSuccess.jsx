@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import BlueButton from "../../components/buttons/blue-btn/BlueButton.jsx";
 
-const BACKEND_URL = import.meta.env.BACKEND_URL;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();

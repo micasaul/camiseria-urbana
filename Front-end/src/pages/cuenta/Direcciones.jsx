@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext"
 import { Link } from "react-router-dom"
 import BlueButton from "../../components/buttons/blue-btn/BlueButton"
 
-const API_URL = import.meta.env.BACKEND_URL
+const API_URL = import.meta.env.VITE_BACKEND_URL
 
 const Direcciones = () => {
   const { usuario, cargando } = useAuth()

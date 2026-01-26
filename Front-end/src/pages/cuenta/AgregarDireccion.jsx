@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom"
 import BlueButton from "../../components/buttons/blue-btn/BlueButton"
 import "./AgregarDireccion.css"
 
-const API_URL = import.meta.env.BACKEND_URL
+const API_URL = import.meta.env.VITE_BACKEND_URL
 
 const AgregarDireccion = () => {
   const { usuario } = useAuth()

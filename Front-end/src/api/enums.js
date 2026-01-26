@@ -1,4 +1,4 @@
-const BACKEND_URL = import.meta.env.BACKEND_URL;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export async function getProductoEnums() {
   const res = await fetch(`${BACKEND_URL}/api/productos/enums`);

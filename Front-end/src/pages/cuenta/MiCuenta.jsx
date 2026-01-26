@@ -8,7 +8,7 @@ import BlueButton from "../../components/buttons/blue-btn/BlueButton"
 
 import userIcon from "../../assets/1144811.png"
 import mapIcon from "../../assets/map-location-pin-icon-free.png"
-const API_URL = import.meta.env.BACKEND_URL
+const API_URL = import.meta.env.VITE_BACKEND_URL
 
 const MiCuenta = () => {
   const { usuario, cargando } = useAuth()

@@ -6,7 +6,7 @@ import { calcularCantidadTotal, formatearPrecio, ordenarSinStockAlFinal } from '
 import PageButton from '../../components/forms/page-button/page-button.jsx'
 import './admin.css'
 
-const BACKEND_URL = import.meta.env.BACKEND_URL
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function ProductosListar() {
   const navigate = useNavigate()

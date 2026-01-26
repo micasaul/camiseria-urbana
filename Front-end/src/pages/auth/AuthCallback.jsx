@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 
-const STRAPI_URL = import.meta.env.BACKEND_URL
+const STRAPI_URL = import.meta.env.VITE_BACKEND_URL
 
 function AuthCallback() {
   const navigate = useNavigate()
