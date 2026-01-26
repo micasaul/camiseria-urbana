@@ -96,7 +96,7 @@ export default {
             items: mpItems,
             external_reference: String(ventaId),
             metadata: { ventaId },
-            notification_url: `${process.env.BACKEND_URL}/api/pagos/webhook`,
+            notification_url: `${process.env.VITE_BACKEND_URL}/api/pagos/webhook`,
             back_urls: {
               success: `${process.env.FRONTEND_URL}/pago/success?ventaId=${ventaId}`,
               pending: `${process.env.FRONTEND_URL}/pago/pending?ventaId=${ventaId}`,
