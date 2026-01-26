@@ -126,7 +126,7 @@ export async function obtenerCarritoCompleto() {
     
 
     const res = await fetch(
-      `${BACKEND_URL}/api/carritos?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=detalle_carritos&populate[1]=detalle_carritos.variacion&populate[2]=detalle_carritos.variacion.producto`,
+      `${BACKEND_URL}/api/carritos?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=detalle_carritos&populate[1]=detalle_carritos.variacion&populate[2]=detalle_carritos.variacion.producto&populate[3]=detalle_carritos.variacion.producto.imagen`,
       {
         headers: {
           ...getAuthHeaders()

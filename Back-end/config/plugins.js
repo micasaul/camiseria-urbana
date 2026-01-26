@@ -1,4 +1,9 @@
 module.exports = ({ env }) => ({
+    upload: {
+        config: {
+            sizeOptimization: false,
+        },
+    },
     'users-permissions': { 
         config: {
             jwt: {

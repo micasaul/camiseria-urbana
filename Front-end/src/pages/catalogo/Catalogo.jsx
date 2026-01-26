@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { getProductosConFiltros } from '../../api/productos.js'
 import { getProductoEnums } from '../../api/enums.js'
 import { obtenerDescuentosActivos } from '../../api/promos.js'
+import { ordenarPorStock } from '../../utils/producto.js'
 import ColorSelector from '../../components/forms/color/ColorSelector.jsx'
 import ProductCard from '../../components/cards/product-card/ProductCard.jsx'
 import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
@@ -45,21 +46,6 @@ export default function Catalogo() {
   const [precioMaxReal, setPrecioMaxReal] = useState(0)
   const [descuentosMap, setDescuentosMap] = useState(new Map())
   const [descuentosLoaded, setDescuentosLoaded] = useState(false)
-
-  const ordenarPorStock = (items) => {
-    const conStock = []
-    const sinStock = []
-    items.forEach((producto) => {
-      const variaciones = producto?.variaciones ?? []
-      const tieneStock = variaciones.some((variacion) => Number(variacion?.stock ?? 0) > 0)
-      if (tieneStock) {
-        conStock.push(producto)
-      } else {
-        sinStock.push(producto)
-      }
-    })
-    return [...conStock, ...sinStock]
-  }
 
   useEffect(() => {
     let activo = true

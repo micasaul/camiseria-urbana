@@ -4,6 +4,7 @@ import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
 import { actualizarEstadoVenta, getVentaPorId } from '../../api/ventas.js'
 import './admin.css'
 
+const BACKEND_URL = import.meta.env.BACKEND_URL ?? 'http://localhost:1337'
 const ESTADOS_VENTA = ['En proceso', 'Enviado', 'Entregado']
 
 export default function DetalleVenta() {
@@ -129,9 +130,17 @@ export default function DetalleVenta() {
                 const variacionAttrs = variacion?.attributes ?? variacion ?? {}
                 const producto = variacionAttrs?.producto?.data ?? variacionAttrs?.producto ?? null
                 const productoAttrs = producto?.attributes ?? producto ?? {}
+                const img = productoAttrs?.imagen?.data ?? productoAttrs?.imagen ?? null
+                const imgAttrs = img?.attributes ?? img ?? {}
+                const imgPath = imgAttrs?.url ?? img?.url ?? '/assets/fallback.jpg'
+                const imagenUrl = imgPath.startsWith('http') ? imgPath : `${BACKEND_URL}${imgPath}`
                 return (
                   <div key={detalleItem.id ?? index} className="admin-venta-product">
-                    <span className="admin-venta-product-thumb" />
+                    <img
+                      src={imagenUrl}
+                      alt={productoAttrs?.nombre || 'Producto'}
+                      className="admin-venta-product-img"
+                    />
                     <div className="admin-venta-product-info">
                       <span className="admin-venta-product-name">{productoAttrs?.nombre || 'Producto'}</span>
                       <span className="admin-venta-product-variant">

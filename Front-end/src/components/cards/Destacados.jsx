@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"
+import { getProductosConFiltros } from "../../api/productos.js"
+import { ordenarPorStock } from "../../utils/producto.js"
 import ProductCard from "../cards/product-card/ProductCard.jsx"
 import "./Destacados.css"
-
-const BACKEND_URL = import.meta.env.BACKEND_URL ?? "http://localhost:1337"
 
 export default function Destacados() {
   const [productos, setProductos] = useState([])
@@ -10,11 +10,10 @@ export default function Destacados() {
 
   useEffect(() => {
     let activo = true
-    fetch(`${BACKEND_URL}/api/productos?pagination[pageSize]=4&sort=createdAt:desc`)
-      .then(res => res.json())
-      .then(json => {
+    getProductosConFiltros({ ordenarPor: "createdAt:desc" }, 1, 4)
+      .then((data) => {
         if (!activo) return
-        setProductos(json.data || [])
+        setProductos(ordenarPorStock(data.items))
       })
       .catch(error => {
         console.error("Error cargando productos:", error)
@@ -35,7 +34,7 @@ export default function Destacados() {
     <div className="destacados-container">
       <div className="destacados-grid">
         {productos.map(prod => (
-          <ProductCard key={prod.id} producto={prod} />
+          <ProductCard key={prod.documentId ?? prod.id} producto={prod} />
         ))}
       </div>
     </div>

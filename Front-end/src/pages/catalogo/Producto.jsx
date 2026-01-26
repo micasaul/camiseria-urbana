@@ -25,7 +25,6 @@ export default function Producto() {
   const { rol } = useAuth()
   const [producto, setProducto] = useState(null)
   const [cargando, setCargando] = useState(true)
-  const [imagenSeleccionada, setImagenSeleccionada] = useState(0)
   const [colorSeleccionado, setColorSeleccionado] = useState('')
   const [talleSeleccionado, setTalleSeleccionado] = useState('')
   const [cantidad, setCantidad] = useState(1)
@@ -129,11 +128,6 @@ export default function Producto() {
     return !variaciones.some((variacion) => Number(variacion?.stock ?? 0) > 0)
   }, [producto])
 
-  const imagenes = useMemo(() => {
-    if (!producto) return []
-    return [producto.imagen, producto.imagen, producto.imagen, producto.imagen]
-  }, [producto])
-
   const precioBase = Number(producto?.precio ?? 0)
   const precioFinal = descuento > 0 
     ? precioBase - (precioBase * descuento) / 100 
@@ -221,32 +215,16 @@ export default function Producto() {
     return <div className="producto-page">Producto no encontrado</div>
   }
 
-  const imagenUrl = imagenes[imagenSeleccionada]?.startsWith('http') 
-    ? imagenes[imagenSeleccionada] 
-    : `${BACKEND_URL}${imagenes[imagenSeleccionada] || '/assets/fallback.jpg'}`
+  const imagenUrl = producto.imagen?.startsWith('http')
+    ? producto.imagen
+    : `${BACKEND_URL}${producto.imagen || '/assets/fallback.jpg'}`
 
   return (
     <div className="producto-page">
       <div className="producto-container">
-        <div className="producto-imagenes">
-          <div className="producto-imagenes-pequenas">
-            {imagenes.slice(0, 3).map((img, index) => {
-              const imgUrl = img?.startsWith('http') ? img : `${BACKEND_URL}${img || '/assets/fallback.jpg'}`
-              return (
-                <button
-                  key={index}
-                  className={`producto-imagen-pequena ${imagenSeleccionada === index ? 'activa' : ''}`}
-                  onClick={() => setImagenSeleccionada(index)}
-                >
-                  <img src={imgUrl} alt={`${producto.nombre} ${index + 1}`} />
-                </button>
-              )
-            })}
-          </div>
-          <div className={`producto-imagen-grande${sinStockProducto ? ' agotado' : ''}`}>
-            <img src={imagenUrl} alt={producto.nombre} />
-            {sinStockProducto && <div className="producto-agotado">AGOTADO</div>}
-          </div>
+        <div className={`producto-imagen-wrap${sinStockProducto ? ' agotado' : ''}`}>
+          <img src={imagenUrl} alt={producto.nombre} className="producto-imagen" />
+          {sinStockProducto && <div className="producto-agotado">AGOTADO</div>}
         </div>
 
         <div className="producto-info">

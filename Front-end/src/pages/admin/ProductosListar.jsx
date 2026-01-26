@@ -6,6 +6,8 @@ import { calcularCantidadTotal, formatearPrecio, ordenarSinStockAlFinal } from '
 import PageButton from '../../components/forms/page-button/page-button.jsx'
 import './admin.css'
 
+const BACKEND_URL = import.meta.env.BACKEND_URL ?? 'http://localhost:1337'
+
 export default function ProductosListar() {
   const navigate = useNavigate()
   const [productos, setProductos] = useState([])
@@ -172,13 +174,20 @@ export default function ProductosListar() {
           !error &&
           filasOrdenadas.map((producto) => {
             const sinStock = producto.cantidadTotal <= 0
+            const imagenUrl = producto.imagen?.startsWith('http')
+              ? producto.imagen
+              : `${BACKEND_URL}${producto.imagen || '/assets/fallback.jpg'}`
             return (
             <div
               key={producto.id}
               className={`admin-table-row admin-table-products${sinStock ? ' admin-row-muted' : ''}`}
             >
               <span>
-                <span className="admin-product-thumb" />
+                <img
+                  src={imagenUrl}
+                  alt={producto.nombre || 'Producto'}
+                  className="admin-product-img"
+                />
               </span>
               <span>{producto.nombre || 'Sin nombre'}</span>
               <span>{producto.material || '—'}</span>

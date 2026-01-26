@@ -17,6 +17,27 @@ module.exports = {
    * run jobs, or perform some special logic.
    */
   async bootstrap() {
+    // Workaround Windows EBUSY on unlink: upload succeeds (201) but temp cleanup crashes Node.
+    process.on('uncaughtException', (err) => {
+      if (err?.code === 'EBUSY' && err?.syscall === 'unlink' && typeof err?.path === 'string') {
+        const isTemp = /[\\/]Temp[\\/]|[\\/]tmp[\\/]|\\AppData\\Local\\Temp\\/i.test(err.path);
+        if (isTemp) {
+          try {
+            strapi.log?.warn?.('Ignoring EBUSY on temp unlink (Windows):', err.path);
+          } catch (_) {
+            console.warn('Ignoring EBUSY on temp unlink (Windows):', err.path);
+          }
+          return;
+        }
+      }
+      try {
+        strapi.log?.error?.(err);
+      } catch (_) {
+        console.error(err);
+      }
+      process.exit(1);
+    });
+
     const promoCron = require('./extensions/promos/promo-cron');
     const newsletterCron = require('./extensions/newsletters/newsletter-cron');
 

@@ -89,7 +89,7 @@ export async function obtenerWishlistCompleta() {
     const userDocumentId = userData.documentId;
     
     const res = await fetch(
-      `${BACKEND_URL}/api/wishlists?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=producto`,
+      `${BACKEND_URL}/api/wishlists?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=producto&populate[1]=producto.imagen`,
       {
         headers: {
           ...getAuthHeaders()

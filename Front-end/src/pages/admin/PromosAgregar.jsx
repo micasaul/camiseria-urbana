@@ -185,7 +185,7 @@ export default function PromosAgregar() {
 
       const promoData = promoCreada?.data
       docId = promoData?.documentId ?? docId
-      promoIdActual = promoData?.id ?? promoIdActual
+      promoIdActual = promoData?.id ?? promoId
 
       if (!docId && !promoIdActual) {
         throw new Error('No se pudo obtener el identificador de la promo.')

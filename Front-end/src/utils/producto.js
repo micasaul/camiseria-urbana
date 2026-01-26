@@ -1,5 +1,5 @@
 /**
- * @param {Array<number>} valoraciones 
+ * @param {Array<number>}  
  * @returns {number} 
  */
 export function calcularPromedioValoraciones(valoraciones) {
@@ -80,4 +80,27 @@ export function obtenerStockDisponible(variaciones, colorSeleccionado, talleSele
 export function encontrarVariacion(variaciones, color, talle) {
   if (!variaciones || !color || !talle) return null
   return variaciones.find(v => v.color === color && v.talle === talle) ?? null
+}
+
+/**
+ * @param {Array<{ variaciones?: Array<{ stock?: number }>; nombre?: string }>} items
+ * @returns {Array}
+ */
+export function ordenarPorStock(items) {
+  const list = items ?? []
+  const conStock = []
+  const sinStock = []
+  for (const p of list) {
+    const vars = p?.variaciones ?? []
+    const algunaConStock = vars.some((v) => Number(v?.stock ?? 0) > 0)
+    const sinDatos = vars.length === 0
+    const agotado = !sinDatos && !algunaConStock
+    if (agotado) sinStock.push(p)
+    else conStock.push(p)
+  }
+  const porNombre = (a, b) =>
+    String(a?.nombre ?? '').localeCompare(String(b?.nombre ?? ''), 'es')
+  conStock.sort(porNombre)
+  sinStock.sort(porNombre)
+  return [...conStock, ...sinStock]
 }

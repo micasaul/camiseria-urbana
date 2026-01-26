@@ -62,6 +62,11 @@
       "relation": "oneToMany",
       "target": "api::resena.resena",
       "mappedBy": "producto"
+    },
+    "imagen": {
+      "type": "media",
+      "multiple": false,
+      "required": true
     }
   }
 }

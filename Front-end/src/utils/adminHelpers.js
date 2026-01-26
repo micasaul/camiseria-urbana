@@ -97,7 +97,10 @@ export const resetearFormularioProducto = ({
   setMensaje,
   setError,
   setProductoId,
-  setProductoDocumentId
+  setProductoDocumentId,
+  setImagenFile,
+  setImagenPreview,
+  setImagenId
 }) => {
   setNombre('')
   setDescripcion('')
@@ -110,6 +113,9 @@ export const resetearFormularioProducto = ({
   setError('')
   setProductoId(null)
   setProductoDocumentId(null)
+  if (setImagenFile) setImagenFile(null)
+  if (setImagenPreview) setImagenPreview('')
+  if (setImagenId) setImagenId(null)
 }
 
 export const resetearFormularioPromo = ({

@@ -127,17 +127,17 @@ const adjuntarResenas = async (items = []) => {
 };
 
 const adjuntarVariaciones = async (items = []) => {
-  const productosIds = items
-    .map((producto) => producto?.documentId ?? producto?.id)
+  const productDocumentIds = items
+    .map((producto) => producto?.documentId)
     .filter(Boolean);
 
-  if (!productosIds.length) {
+  if (!productDocumentIds.length) {
     return items;
   }
 
   const params = new URLSearchParams();
-  productosIds.forEach((id, index) => {
-    params.append(`filters[producto][documentId][$in][${index}]`, id);
+  productDocumentIds.forEach((documentId, index) => {
+    params.append(`filters[producto][documentId][$in][${index}]`, documentId);
   });
   params.append('populate[producto]', 'true');
   params.append('pagination[pageSize]', '1000');
@@ -161,9 +161,10 @@ const adjuntarVariaciones = async (items = []) => {
         producto?.id ??
         productoAttrs?.id;
       if (!productoId) return;
-      const lista = variacionesPorProducto.get(productoId) ?? [];
+      const key = String(productoId);
+      const lista = variacionesPorProducto.get(key) ?? [];
       lista.push(normalizarVariacion(variacion));
-      variacionesPorProducto.set(productoId, lista);
+      variacionesPorProducto.set(key, lista);
     });
 
     return items.map((producto) => {
@@ -185,6 +186,7 @@ export async function getProductos(page = 1, pageSize = 10) {
     params.append('populate[0]', 'variacions');
     params.append('populate[1]', 'promo_productos');
     params.append('populate[2]', 'promo_productos.promo');
+    params.append('populate[3]', 'imagen');
     params.append('pagination[page]', page);
     params.append('pagination[pageSize]', pageSize);
 
@@ -231,6 +233,25 @@ export async function getProductos(page = 1, pageSize = 10) {
       pagination: { page: 1, pageSize, pageCount: 1, total: 0 }
     };
   }
+}
+
+export async function subirImagen(file) {
+  const form = new FormData();
+  form.append('files', file, file.name);
+  const res = await fetch(`${BACKEND_URL}/api/upload`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: form
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? 'No se pudo subir la imagen.');
+  }
+  const data = await res.json();
+  const arr = Array.isArray(data) ? data : [data];
+  const first = arr[0];
+  if (!first?.id) throw new Error('Respuesta de upload inválida.');
+  return first;
 }
 
 export async function existeProductoPorNombre(nombre) {
@@ -286,7 +307,7 @@ export async function crearVariacion(payload) {
 
 export async function getProductoPorId(id) {
   const res = await fetch(
-    `${BACKEND_URL}/api/productos/${id}?populate[0]=variacions&populate[1]=marca&populate[2]=promo_productos&populate[3]=promo_productos.promo&populate[4]=wishlists`
+    `${BACKEND_URL}/api/productos/${id}?populate[0]=variacions&populate[1]=marca&populate[2]=promo_productos&populate[3]=promo_productos.promo&populate[4]=wishlists&populate[5]=imagen`
   );
   if (!res.ok) {
     const errorText = await res.text()
@@ -345,6 +366,7 @@ export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 
     params.append('populate[0]', 'variacions');
     params.append('populate[1]', 'promo_productos');
     params.append('populate[2]', 'promo_productos.promo');
+    params.append('populate[3]', 'imagen');
     params.append('pagination[page]', page);
     params.append('pagination[pageSize]', pageSize);
 
@@ -432,6 +454,7 @@ export async function buscarProductos(query, page = 1, pageSize = 12) {
     params.append('populate[0]', 'variacions');
     params.append('populate[1]', 'promo_productos');
     params.append('populate[2]', 'promo_productos.promo');
+    params.append('populate[3]', 'imagen');
     params.append('pagination[page]', page);
     params.append('pagination[pageSize]', pageSize);
     
