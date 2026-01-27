@@ -30,7 +30,7 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
         publicationState: 'live',
         filters: {
           estado: {
-            $ne: 'pendiente', // Excluir ventas pendientes
+            $ne: 'pendiente', 
           },
         },
         populate: {

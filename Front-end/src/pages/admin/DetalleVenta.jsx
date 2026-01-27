@@ -129,17 +129,14 @@ export default function DetalleVenta() {
                 const variacion = item?.variacion?.data ?? item?.variacion ?? null
                 const combo = item?.combo?.data ?? item?.combo ?? null
                 
-                // Determinar si es combo o producto
                 const esCombo = !!combo
                 const variacionAttrs = variacion?.attributes ?? variacion ?? {}
                 const comboAttrs = combo?.attributes ?? combo ?? {}
                 
-                // Obtener datos según el tipo
                 const nombre = esCombo 
                   ? (comboAttrs?.nombre || 'Combo')
                   : (variacionAttrs?.producto?.data?.attributes?.nombre ?? variacionAttrs?.producto?.attributes?.nombre ?? variacionAttrs?.producto?.nombre ?? 'Producto')
                 
-                // Obtener imagen
                 let imgPath = '/assets/fallback.jpg'
                 if (esCombo) {
                   const img = comboAttrs?.imagen?.data ?? comboAttrs?.imagen ?? null

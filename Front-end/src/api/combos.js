@@ -134,7 +134,6 @@ export async function getCombos(page = 1, pageSize = 10) {
       };
     });
 
-    // Adjuntar reseñas y valoraciones
     items = await adjuntarResenasCombos(items);
 
     return {
@@ -172,7 +171,6 @@ export async function getComboPorId(id) {
       [];
     const variaciones = Array.isArray(variacionesRaw) ? variacionesRaw : [];
     
-    // Obtener reseñas mediante consulta separada (igual que getProductoPorId)
     const comboDocumentId = item?.documentId ?? attrs?.documentId ?? item?.id ?? attrs?.id;
     const items = [{
       id: item.id ?? attrs?.id,

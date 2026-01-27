@@ -1,4 +1,3 @@
-// src/pages/mi-cuenta/DetalleCompra.jsx
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getVentasUsuario } from '../../api/ventas.js'
@@ -47,7 +46,6 @@ export default function DetalleCompra() {
 
   const attrs = venta.attributes ?? venta
   
-  // La dirección puede venir como: direccion.data.attributes o direccion.attributes o direccion directamente
   let direccion = {}
   if (attrs?.direccion) {
     if (attrs.direccion.data) {
@@ -59,7 +57,6 @@ export default function DetalleCompra() {
     }
   }
   
-  // Procesar detalle_ventas
   const detalleVentasRaw = attrs?.detalle_ventas?.data ?? attrs?.detalle_ventas ?? []
   const detalleVentas = Array.isArray(detalleVentasRaw) ? detalleVentasRaw.map(item => {
     const itemAttrs = item?.attributes ?? item
@@ -75,8 +72,7 @@ export default function DetalleCompra() {
     
     const descuento = Number(itemAttrs?.descuento ?? item?.descuento ?? 0)
     const precioUnitario = Number(itemAttrs?.precioUnitario ?? item?.precioUnitario ?? 0)
-    // Calcular precio original: precioUnitario = precioOriginal * (1 - descuento/100)
-    // precioOriginal = precioUnitario / (1 - descuento/100)
+
     const precioOriginal = descuento > 0 && descuento < 100 
       ? precioUnitario / (1 - descuento / 100) 
       : precioUnitario
@@ -104,7 +100,6 @@ export default function DetalleCompra() {
     }
   }) : []
   
-  // Calcular subtotal sumando todos los subtotales de los productos
   const subtotal = detalleVentas.reduce((sum, item) => {
     return sum + (Number(item.subtotal) || 0)
   }, 0)

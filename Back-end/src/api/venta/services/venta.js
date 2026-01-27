@@ -65,7 +65,6 @@ module.exports = createCoreService(
               return null;
             }
 
-            // Procesar productos (con variación)
             if (variacion) {
               const variacionId = variacion?.id;
               const variacionDocumentId = variacion?.documentId;
@@ -74,7 +73,6 @@ module.exports = createCoreService(
                 return null;
               }
 
-              // Verificar stock
               const variacionActual = await strapi.entityService.findOne(
                 /** @type {any} */ ('api::variacion.variacion'),
                 variacionId,
@@ -101,7 +99,6 @@ module.exports = createCoreService(
               };
             }
 
-            // Procesar combos
             if (combo) {
               const comboId = combo?.id;
               const comboDocumentId = combo?.documentId;
@@ -110,7 +107,6 @@ module.exports = createCoreService(
                 return null;
               }
 
-              // Verificar que el combo exista
               const comboActual = await strapi.entityService.findOne(
                 /** @type {any} */ ('api::combo.combo'),
                 comboId,
@@ -121,7 +117,6 @@ module.exports = createCoreService(
                 throw new errors.ValidationError(`Combo ${comboId} no encontrado`);
               }
 
-              // Los combos usan su precio directamente (sin descuentos)
               const precioUnitario = aNumero(comboActual.precio ?? 0);
               const descuento = 0;
               const subtotal = precioUnitario * cantidad;
@@ -151,7 +146,6 @@ module.exports = createCoreService(
         const usuarioId = carritoEntity?.users_permissions_user?.id;
         const nroSeguimiento = generarNroSeguimiento(usuario?.provincia);
 
-        // Preparar datos de la venta
         const ventaData = {
           fecha: new Date(),
           estado: 'pendiente',
@@ -207,7 +201,6 @@ module.exports = createCoreService(
               subtotal: item.subtotal,
             };
 
-            // Agregar relación según el tipo
             if (item.tipo === 'producto') {
               dataBase.variacion = {
                 connect: [{ documentId: item.variacionDocumentId }],
@@ -229,7 +222,6 @@ module.exports = createCoreService(
           })
         );
 
-        // Verificar stock solo para productos (las variaciones ya se verificaron antes)
         for (const item of itemsValidos) {
           if (item.tipo === 'producto') {
             const variacionActual = await strapi.entityService.findOne(
@@ -247,7 +239,6 @@ module.exports = createCoreService(
               throw new errors.ValidationError(`Stock insuficiente para la variación ${item.variacion}`);
             }
           }
-          // Para combos, no verificamos stock aquí ya que se verifica al agregar al carrito
         }
 
         for (const detalle of detalleCarritos) {
@@ -316,7 +307,6 @@ module.exports = createCoreService(
             const variacion = detalle?.variacion;
             const cantidad = aNumero(detalle?.cantidad);
 
-            // Solo restaurar stock para productos (variaciones)
             if (variacion && cantidad > 0) {
               const variacionId = variacion?.id;
 
@@ -347,7 +337,6 @@ module.exports = createCoreService(
                 }
               }
             }
-            // Para combos, no restauramos stock ya que no tienen variaciones con stock en detalle_venta
           }
         }
 
@@ -396,7 +385,6 @@ module.exports = createCoreService(
             cantidad: cantidad,
           };
 
-          // Agregar relación según el tipo
           if (variacion) {
             const variacionId = variacion?.id;
             const variacionDocumentId = variacion?.documentId;
@@ -440,7 +428,6 @@ module.exports = createCoreService(
           );
         }
 
-        // Eliminar venta
         await strapi.entityService.delete(
           /** @type {any} */ ('api::venta.venta'),
           venta.id,
@@ -496,7 +483,6 @@ module.exports = createCoreService(
 
         const ventaEntity = /** @type {any} */ (venta);
         
-        // Solo confirmar si está en estado pendiente
         if (ventaEntity.estado !== 'pendiente') {
           strapi.log.warn(`Venta ${ventaId} ya fue procesada, estado actual: ${ventaEntity.estado}`);
           return { venta: ventaEntity, yaProcesada: true };
@@ -516,7 +502,6 @@ module.exports = createCoreService(
             continue;
           }
 
-          // Solo actualizar stock para productos (variaciones)
           if (variacion) {
             const variacionId = variacion?.id;
 
@@ -556,7 +541,6 @@ module.exports = createCoreService(
               variacionesActualizadas.push(variacionActualizada.documentId);
             }
           }
-          // Para combos, no actualizamos stock aquí ya que no tienen variaciones con stock en detalle_venta
         }
 
         const ventaActualizada = await strapi.entityService.update(
@@ -613,8 +597,6 @@ module.exports = createCoreService(
 
         const ventaEntity = /** @type {any} */ (venta);
         
-        // Solo cancelar/eliminar ventas en estado pendiente
-        // Si está en "En proceso" significa que ya se pagó y no se puede cancelar
         if (ventaEntity.estado !== 'pendiente') {
           strapi.log.warn(`Venta ${ventaId} no puede ser cancelada, estado actual: ${ventaEntity.estado}`);
           return { venta: ventaEntity, yaProcesada: true };
@@ -624,10 +606,6 @@ module.exports = createCoreService(
           ventaEntity.detalle_ventas || []
         );
 
-        // No necesitamos restaurar stock porque en estado "pendiente" 
-        // el stock aún no se ha descontado (solo se descuenta en confirmarPago)
-
-        // Eliminar detalle_ventas primero (por las relaciones)
         for (const detalle of detalleVentas) {
           if (detalle?.id) {
             await strapi.entityService.delete(
@@ -638,7 +616,6 @@ module.exports = createCoreService(
           }
         }
 
-        // Eliminar la venta
         await strapi.entityService.delete(
           /** @type {any} */ ('api::venta.venta'),
           venta.id,

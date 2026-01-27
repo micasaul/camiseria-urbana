@@ -1,4 +1,3 @@
-// src/pages/mi-cuenta/MiCuenta.jsx
 import "./MiCuenta.css"
 import { useEffect, useState } from "react"
 import { useAuth } from "../../context/AuthContext"
@@ -27,7 +26,6 @@ const MiCuenta = () => {
         const token = localStorage.getItem("strapiToken")
         if (!token) throw new Error("No hay token de sesión")
 
-        // Obtener las ventas directamente desde el usuario con populate (más seguro y directo)
         const userWithVentas = await fetch(
           `${API_URL}/api/users/me?populate[0]=ventas&populate[1]=ventas.direccion&populate[2]=ventas.detalle_ventas&populate[3]=ventas.detalle_ventas.variacion&populate[4]=ventas.detalle_ventas.variacion.producto&populate[5]=ventas.detalle_ventas.combo&populate[6]=ventas.detalle_ventas.combo.imagen`,
           {
@@ -42,7 +40,6 @@ const MiCuenta = () => {
         const userData = await userWithVentas.json()
         const ventasRaw = userData?.ventas?.data ?? userData?.ventas ?? []
         
-        // Ordenar por fecha descendente (más reciente primero)
         const ventasOrdenadas = ventasRaw
           .map(item => {
             const attrs = item?.attributes ?? item
@@ -55,7 +52,7 @@ const MiCuenta = () => {
           .sort((a, b) => {
             const fechaA = a.fecha ? new Date(a.fecha).getTime() : 0
             const fechaB = b.fecha ? new Date(b.fecha).getTime() : 0
-            return fechaB - fechaA // Descendente
+            return fechaB - fechaA 
           })
         
         setVentas(ventasOrdenadas)
@@ -79,7 +76,6 @@ const MiCuenta = () => {
         const token = localStorage.getItem("strapiToken")
         if (!token) throw new Error("No hay token de sesión")
 
-        // Obtenemos las direcciones a través del usuario con populate
         const userWithDirecciones = await fetch(
           `${API_URL}/api/users/me?populate[0]=direccion_usuarios&populate[1]=direccion_usuarios.direccion`,  
           {
@@ -102,7 +98,6 @@ const MiCuenta = () => {
             return direccion ? { ...direccion, createdAt } : null
           })
           .filter(Boolean)
-          // Ordenamos por fecha de creación (más reciente primero)
           .sort((a, b) => {
             if (!a.createdAt || !b.createdAt) return 0
             return new Date(b.createdAt) - new Date(a.createdAt)

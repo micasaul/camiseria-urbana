@@ -7,6 +7,7 @@ import { agregarAWishlist, eliminarDeWishlist, estaEnWishlist } from '../../api/
 import { calcularPromedioValoraciones } from '../../utils/producto.js'
 import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
 import ReviewCard from '../../components/cards/review-card/ReviewCard.jsx'
+import Destacados from '../../components/cards/Destacados.jsx'
 import './Producto.css'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
@@ -303,6 +304,11 @@ export default function DetalleCombo() {
           </div>
         </div>
       )}
+
+      <div className="producto-resenas-section">
+        <h2 className="producto-resenas-titulo">Productos relacionados</h2>
+        <Destacados />
+      </div>
     </div>
   )
 }

@@ -28,7 +28,6 @@ const CrearResena = () => {
       try {
         const token = localStorage.getItem("strapiToken")
         
-        // Intentar primero como producto
         let res = await fetch(
           `${API_URL}/api/productos?filters[documentId][$eq]=${productoId}&populate=imagen`,
           {
@@ -60,7 +59,6 @@ const CrearResena = () => {
           }
         }
 
-        // Si no es producto, intentar como combo
         res = await fetch(
           `${API_URL}/api/combos?filters[documentId][$eq]=${productoId}&populate=imagen`,
           {
@@ -137,7 +135,6 @@ const CrearResena = () => {
       const token = localStorage.getItem("strapiToken")
       if (!token) throw new Error("No hay token de sesión")
 
-      // Obtener el id numérico del usuario
       const userRes = await fetch(`${API_URL}/api/users/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -148,7 +145,6 @@ const CrearResena = () => {
       const itemIdNum = item.id
       if (!itemIdNum) throw new Error("No se pudo obtener el ID del item")
 
-      // Preparar el payload según si es producto o combo
       const payload = {
         data: {
           valoracion: Number(formData.valoracion),
@@ -179,7 +175,6 @@ const CrearResena = () => {
         throw new Error("No se pudo crear la reseña")
       }
 
-      // Redirigir a la página correcta según el tipo
       if (esCombo) {
         navigate(`/combo/${item.documentId}`)
       } else {

@@ -14,6 +14,7 @@ import {
 } from '../../utils/producto.js'
 import ColorSelector from '../../components/forms/color/ColorSelector.jsx'
 import ReviewCard from '../../components/cards/review-card/ReviewCard.jsx'
+import ProductosMismaMarca from '../../components/cards/ProductosMismaMarca.jsx'
 import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import './Producto.css'
@@ -31,6 +32,7 @@ export default function Producto() {
   const [descuento, setDescuento] = useState(0)
   const [enWishlist, setEnWishlist] = useState(false)
   const [carritoError, setCarritoError] = useState('')
+  const [marcaId, setMarcaId] = useState(null)
 
   const obtenerErrorCarrito = () => {
     if (!colorSeleccionado && !talleSeleccionado) {
@@ -60,6 +62,10 @@ export default function Producto() {
         const productoId = item?.documentId ?? item?.id
         const descuentoProducto = descuentosMap.get(String(productoId)) ?? 0
         
+        const marca = attrs?.marca?.data ?? attrs?.marca
+        const marcaAttrs = marca?.attributes ?? marca
+        const marcaIdValue = marca?.documentId ?? marcaAttrs?.documentId ?? marca?.id ?? marcaAttrs?.id ?? null
+        
         setProducto({
           id: item.id ?? attrs?.id,
           documentId: item.documentId ?? attrs?.documentId ?? null,
@@ -86,6 +92,7 @@ export default function Producto() {
           valoraciones: item?.valoraciones ?? []
         })
         setDescuento(descuentoProducto)
+        setMarcaId(marcaIdValue)
       } catch (error) {
         console.error('Error al cargar producto:', error)
       } finally {
@@ -356,6 +363,16 @@ export default function Producto() {
               <ReviewCard key={resena.id ?? resena.documentId} resena={resena} />
             ))}
           </div>
+        </div>
+      )}
+
+      {marcaId && (
+        <div className="producto-resenas-section">
+          <h2 className="producto-resenas-titulo">Productos relacionados</h2>
+          <ProductosMismaMarca 
+            marcaId={marcaId} 
+            productoActualId={producto.documentId ?? producto.id}
+          />
         </div>
       )}
     </div>

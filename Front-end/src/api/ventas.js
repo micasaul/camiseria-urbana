@@ -57,7 +57,6 @@ export async function getVentasUsuario(page = 1, pageSize = 100) {
     throw new Error('No hay token de sesión');
   }
 
-  // Obtener las ventas directamente desde el usuario con populate (más seguro y directo)
   const userRes = await fetch(
     `${BACKEND_URL}/api/users/me?populate[0]=ventas&populate[1]=ventas.direccion&populate[2]=ventas.detalle_ventas&populate[3]=ventas.detalle_ventas.variacion&populate[4]=ventas.detalle_ventas.variacion.producto&populate[5]=ventas.detalle_ventas.combo&populate[6]=ventas.detalle_ventas.combo.imagen`,
     { headers: { Authorization: `Bearer ${token}` } }
@@ -70,7 +69,6 @@ export async function getVentasUsuario(page = 1, pageSize = 100) {
   const userData = await userRes.json();
   const ventasRaw = userData?.ventas?.data ?? userData?.ventas ?? [];
   
-  // Ordenar por fecha descendente (más reciente primero)
   const items = ventasRaw
     .map((item) => {
       const attrs = item?.attributes ?? item;
@@ -86,7 +84,6 @@ export async function getVentasUsuario(page = 1, pageSize = 100) {
       return fechaB - fechaA; // Descendente
     });
   
-  // Aplicar paginación manualmente
   const startIndex = (page - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const paginatedItems = items.slice(startIndex, endIndex);
