@@ -64,9 +64,15 @@ export default function DetalleCompra() {
   const detalleVentas = Array.isArray(detalleVentasRaw) ? detalleVentasRaw.map(item => {
     const itemAttrs = item?.attributes ?? item
     const variacionData = itemAttrs?.variacion?.data ?? itemAttrs?.variacion
+    const comboData = itemAttrs?.combo?.data ?? itemAttrs?.combo
+    const esCombo = !!comboData
+    
     const variacion = variacionData?.attributes ?? variacionData ?? {}
+    const combo = comboData?.attributes ?? comboData ?? {}
+    
     const productoData = variacion?.producto?.data ?? variacion?.producto
     const producto = productoData?.attributes ?? productoData ?? {}
+    
     const descuento = Number(itemAttrs?.descuento ?? item?.descuento ?? 0)
     const precioUnitario = Number(itemAttrs?.precioUnitario ?? item?.precioUnitario ?? 0)
     // Calcular precio original: precioUnitario = precioOriginal * (1 - descuento/100)
@@ -74,6 +80,7 @@ export default function DetalleCompra() {
     const precioOriginal = descuento > 0 && descuento < 100 
       ? precioUnitario / (1 - descuento / 100) 
       : precioUnitario
+    
     return {
       id: item?.id ?? itemAttrs?.id,
       cantidad: itemAttrs?.cantidad ?? item?.cantidad ?? 0,
@@ -81,13 +88,19 @@ export default function DetalleCompra() {
       precioOriginal,
       descuento,
       subtotal: itemAttrs?.subtotal ?? item?.subtotal ?? 0,
-      variacion: {
+      esCombo,
+      variacion: esCombo ? null : {
         producto: {
           id: producto?.id ?? productoData?.id,
           documentId: productoData?.documentId ?? producto?.documentId,
           nombre: producto?.nombre ?? "—"
         }
-      }
+      },
+      combo: esCombo ? {
+        id: combo?.id ?? comboData?.id,
+        documentId: comboData?.documentId ?? combo?.documentId,
+        nombre: combo?.nombre ?? "—"
+      } : null
     }
   }) : []
   
@@ -142,30 +155,46 @@ export default function DetalleCompra() {
                   <span>Subtotal</span>
                   <span>Acción</span>
                 </div>
-                {detalleVentas.map(item => (
-                  <div key={item.id} className="detalle-producto-row">
-                    <span>{item.variacion.producto.nombre}</span>
-                    <span>{item.cantidad}</span>
-                    <span>
-                      {item.descuento > 0 ? (
-                        <span style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                          <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '0.9rem' }}>
-                            ${item.precioOriginal.toFixed(2)}
+                {detalleVentas.map(item => {
+                  const nombre = item.esCombo 
+                    ? (item.combo?.nombre ?? 'Combo')
+                    : (item.variacion?.producto?.nombre ?? 'Producto')
+                  const itemId = item.esCombo
+                    ? (item.combo?.documentId ?? item.combo?.id)
+                    : (item.variacion?.producto?.documentId ?? item.variacion?.producto?.id)
+                  
+                  return (
+                    <div key={item.id} className="detalle-producto-row">
+                      <span>{nombre}</span>
+                      <span>{item.cantidad}</span>
+                      <span>
+                        {item.descuento > 0 ? (
+                          <span style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '0.9rem' }}>
+                              ${item.precioOriginal.toFixed(2)}
+                            </span>
+                            <span>${item.precioUnitario.toFixed(2)}</span>
                           </span>
-                          <span>${item.precioUnitario.toFixed(2)}</span>
-                        </span>
-                      ) : (
-                        `$${item.precioUnitario.toFixed(2)}`
-                      )}
-                    </span>
-                    <span>${item.subtotal.toFixed(2)}</span>
-                    <span>
-                      <Link to={`/cuenta/crear-resena/${item.variacion.producto.documentId ?? item.variacion.producto.id}`} className="detalle-resena-link">
-                        Agregar reseña
-                      </Link>
-                    </span>
-                  </div>
-                ))}
+                        ) : (
+                          `$${item.precioUnitario.toFixed(2)}`
+                        )}
+                      </span>
+                      <span>${item.subtotal.toFixed(2)}</span>
+                      <span>
+                        {itemId ? (
+                          <Link 
+                            to={`/cuenta/crear-resena/${itemId}`} 
+                            className="detalle-resena-link"
+                          >
+                            Agregar reseña
+                          </Link>
+                        ) : (
+                          <span>—</span>
+                        )}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
               
               <div className="detalle-totales">

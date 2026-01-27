@@ -7,7 +7,7 @@ const getAuthHeaders = () => {
 
 export async function getVentas(page = 1, pageSize = 10) {
   const res = await fetch(
-    `${BACKEND_URL}/api/ventas?pagination[page]=${page}&pagination[pageSize]=${pageSize}&sort=createdAt:desc&populate[0]=direccion&populate[1]=detalle_ventas&populate[2]=detalle_ventas.variacion&populate[3]=detalle_ventas.variacion.producto`,
+    `${BACKEND_URL}/api/ventas?pagination[page]=${page}&pagination[pageSize]=${pageSize}&sort=createdAt:desc&populate[0]=direccion&populate[1]=detalle_ventas&populate[2]=detalle_ventas.variacion&populate[3]=detalle_ventas.variacion.producto&populate[4]=detalle_ventas.combo&populate[5]=detalle_ventas.combo.imagen`,
     { headers: { ...getAuthHeaders() } }
   );
   if (!res.ok) {
@@ -30,7 +30,7 @@ export async function getVentas(page = 1, pageSize = 10) {
 
 export async function getVentasDashboard() {
   const res = await fetch(
-    `${BACKEND_URL}/api/ventas?populate[0]=users_permissions_user&populate[1]=detalle_ventas&populate[2]=detalle_ventas.variacion&populate[3]=detalle_ventas.variacion.producto`,
+    `${BACKEND_URL}/api/ventas?populate[0]=users_permissions_user&populate[1]=detalle_ventas&populate[2]=detalle_ventas.variacion&populate[3]=detalle_ventas.variacion.producto&populate[4]=detalle_ventas.combo&populate[5]=detalle_ventas.combo.imagen`,
     { headers: { ...getAuthHeaders() } }
   );
   if (!res.ok) {
@@ -42,7 +42,7 @@ export async function getVentasDashboard() {
 
 export async function getVentaPorId(id) {
   const res = await fetch(
-    `${BACKEND_URL}/api/ventas/${id}?populate[0]=users_permissions_user&populate[1]=detalle_ventas&populate[2]=detalle_ventas.variacion&populate[3]=detalle_ventas.variacion.producto&populate[4]=detalle_ventas.variacion.producto.imagen`,
+    `${BACKEND_URL}/api/ventas/${id}?populate[0]=users_permissions_user&populate[1]=detalle_ventas&populate[2]=detalle_ventas.variacion&populate[3]=detalle_ventas.variacion.producto&populate[4]=detalle_ventas.variacion.producto.imagen&populate[5]=detalle_ventas.combo&populate[6]=detalle_ventas.combo.imagen`,
     { headers: { ...getAuthHeaders() } }
   );
   if (!res.ok) {

@@ -5,6 +5,94 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+const normalizarResena = (resena) => {
+  const resenaAttrs = resena?.attributes ?? resena;
+  const userRaw = resenaAttrs?.users_permissions_user?.data ?? resenaAttrs?.users_permissions_user;
+  const userAttrs = userRaw?.attributes ?? userRaw;
+  return {
+    id: resena?.id ?? resenaAttrs?.id,
+    documentId: resena?.documentId ?? resenaAttrs?.documentId ?? null,
+    valoracion: Number(resenaAttrs?.valoracion ?? resena?.valoracion ?? 0),
+    comentario: resenaAttrs?.comentario ?? resena?.comentario ?? '',
+    users_permissions_user: {
+      id: userRaw?.id ?? userAttrs?.id,
+      documentId: userRaw?.documentId ?? userAttrs?.documentId ?? null,
+      username: userAttrs?.username ?? userRaw?.username ?? '',
+      email: userAttrs?.email ?? userRaw?.email ?? ''
+    }
+  };
+};
+
+const adjuntarResenasCombos = async (items = []) => {
+  const combosIds = items
+    .map((combo) => combo?.documentId ?? combo?.id)
+    .filter(Boolean);
+
+  if (!combosIds.length) {
+    return items;
+  }
+
+  const params = new URLSearchParams();
+  combosIds.forEach((id, index) => {
+    params.append(`filters[combo][documentId][$in][${index}]`, id);
+  });
+  params.append('populate[combo]', 'true');
+  params.append('populate[users_permissions_user]', 'true');
+  params.append('pagination[pageSize]', '1000');
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/resenas?${params.toString()}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      }
+    });
+    if (!res.ok) {
+      console.error('Error al obtener reseñas:', res.status, res.statusText);
+      return items;
+    }
+    const data = await res.json();
+    const resenasRaw = data?.data ?? [];
+    const resenasPorCombo = new Map();
+    const valoracionesPorCombo = new Map();
+
+    resenasRaw.forEach((resena) => {
+      const resenaAttrs = resena?.attributes ?? resena;
+      const combo = resenaAttrs?.combo?.data ?? resenaAttrs?.combo;
+      const comboAttrs = combo?.attributes ?? combo;
+      const comboId =
+        combo?.documentId ??
+        comboAttrs?.documentId ??
+        combo?.id ??
+        comboAttrs?.id;
+      if (!comboId) return;
+      
+      const resenaNormalizada = normalizarResena(resena);
+      const lista = resenasPorCombo.get(comboId) ?? [];
+      lista.push(resenaNormalizada);
+      resenasPorCombo.set(comboId, lista);
+      
+      const valoraciones = valoracionesPorCombo.get(comboId) ?? [];
+      valoraciones.push(resenaNormalizada.valoracion);
+      valoracionesPorCombo.set(comboId, valoraciones);
+    });
+
+    return items.map((combo) => {
+      const key = String(combo?.documentId ?? combo?.id ?? '');
+      const resenas = resenasPorCombo.get(key) ?? [];
+      const valoraciones = valoracionesPorCombo.get(key) ?? [];
+      return {
+        ...combo,
+        resenas: resenas,
+        valoraciones: valoraciones
+      };
+    });
+  } catch (error) {
+    console.error('Error al obtener reseñas:', error);
+    return items;
+  }
+};
+
 export async function getCombos(page = 1, pageSize = 10) {
   try {
     const params = new URLSearchParams();
@@ -46,6 +134,9 @@ export async function getCombos(page = 1, pageSize = 10) {
       };
     });
 
+    // Adjuntar reseñas y valoraciones
+    items = await adjuntarResenasCombos(items);
+
     return {
       items,
       pagination: data?.meta?.pagination ?? { page: 1, pageSize, pageCount: 1, total: items.length }
@@ -65,7 +156,6 @@ export async function getComboPorId(id) {
     params.append('populate[imagen]', 'true');
     params.append('populate[combos-variaciones]', 'true');
     params.append('populate[wishlists]', 'true');
-    params.append('populate[resenas][populate][0]', 'users_permissions_user');
 
     const res = await fetch(`${BACKEND_URL}/api/combos/${id}?${params.toString()}`);
     if (!res.ok) throw new Error('No se pudo obtener el combo.');
@@ -82,32 +172,35 @@ export async function getComboPorId(id) {
       [];
     const variaciones = Array.isArray(variacionesRaw) ? variacionesRaw : [];
     
-    const resenasRaw = attrs?.resenas?.data ?? attrs?.resenas ?? item?.resenas ?? [];
-    const resenas = Array.isArray(resenasRaw) ? resenasRaw : [];
+    // Obtener reseñas mediante consulta separada (igual que getProductoPorId)
+    const comboDocumentId = item?.documentId ?? attrs?.documentId ?? item?.id ?? attrs?.id;
+    const items = [{
+      id: item.id ?? attrs?.id,
+      documentId: comboDocumentId,
+      nombre: attrs?.nombre ?? '',
+      precio: attrs?.precio ?? 0,
+      imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
+      variaciones: variaciones.map(v => {
+        const vAttrs = v?.attributes ?? v;
+        return {
+          id: v.id ?? vAttrs?.id,
+          documentId: v.documentId ?? vAttrs?.documentId ?? null,
+          talle: vAttrs?.talle ?? v?.talle ?? '',
+          stock: Number(vAttrs?.stock ?? v?.stock ?? 0)
+        };
+      }),
+      wishlists: attrs?.wishlists?.data ?? attrs?.wishlists ?? []
+    }];
+    
+    const itemsConResenas = await adjuntarResenasCombos(items);
+    const comboConResenas = itemsConResenas[0] ?? items[0];
 
     return {
       ...data,
       data: {
+        ...comboConResenas,
         id: item.id ?? attrs?.id,
-        documentId: item.documentId ?? attrs?.documentId ?? null,
-        nombre: attrs?.nombre ?? '',
-        precio: attrs?.precio ?? 0,
-        imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
-        variaciones: variaciones.map(v => {
-          const vAttrs = v?.attributes ?? v;
-          return {
-            id: v.id ?? vAttrs?.id,
-            documentId: v.documentId ?? vAttrs?.documentId ?? null,
-            talle: vAttrs?.talle ?? v?.talle ?? '',
-            stock: Number(vAttrs?.stock ?? v?.stock ?? 0)
-          };
-        }),
-        wishlists: attrs?.wishlists?.data ?? attrs?.wishlists ?? [],
-        resenas: resenas,
-        valoraciones: resenas.map(r => {
-          const rAttrs = r?.attributes ?? r;
-          return Number(rAttrs?.valoracion ?? r?.valoracion ?? 0);
-        })
+        documentId: item.documentId ?? attrs?.documentId ?? null
       }
     };
   } catch (error) {

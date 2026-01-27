@@ -11,8 +11,9 @@ const CrearResena = () => {
   const { productoId } = useParams()
   const { usuario } = useAuth()
   const navigate = useNavigate()
-  const [producto, setProducto] = useState(null)
-  const [cargandoProducto, setCargandoProducto] = useState(true)
+  const [item, setItem] = useState(null)
+  const [esCombo, setEsCombo] = useState(false)
+  const [cargandoItem, setCargandoItem] = useState(true)
   const [formData, setFormData] = useState({
     valoracion: "",
     comentario: ""
@@ -23,45 +24,82 @@ const CrearResena = () => {
   useEffect(() => {
     if (!productoId) return
 
-    const fetchProducto = async () => {
+    const fetchItem = async () => {
       try {
         const token = localStorage.getItem("strapiToken")
-        const res = await fetch(
+        
+        // Intentar primero como producto
+        let res = await fetch(
           `${API_URL}/api/productos?filters[documentId][$eq]=${productoId}&populate=imagen`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {}
           }
         )
 
-        if (!res.ok) throw new Error("No se pudo obtener el producto")
+        if (res.ok) {
+          const data = await res.json()
+          const productos = data?.data ?? []
+          if (productos.length > 0) {
+            const prod = productos[0]
+            const attrs = prod?.attributes ?? prod
+            const imagenData = attrs?.imagen?.data ?? attrs?.imagen
+            const imagen = imagenData?.attributes ?? imagenData ?? {}
+            const imagenUrl = imagen?.url 
+              ? (imagen.url.startsWith('http') ? imagen.url : `${API_URL}${imagen.url}`)
+              : null
+
+            setItem({
+              id: prod?.id,
+              documentId: prod?.documentId,
+              nombre: attrs?.nombre ?? "—",
+              imagenUrl
+            })
+            setEsCombo(false)
+            setCargandoItem(false)
+            return
+          }
+        }
+
+        // Si no es producto, intentar como combo
+        res = await fetch(
+          `${API_URL}/api/combos?filters[documentId][$eq]=${productoId}&populate=imagen`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }
+        )
+
+        if (!res.ok) throw new Error("No se pudo obtener el item")
 
         const data = await res.json()
-        const productos = data?.data ?? []
-        if (productos.length > 0) {
-          const prod = productos[0]
-          const attrs = prod?.attributes ?? prod
+        const combos = data?.data ?? []
+        if (combos.length > 0) {
+          const combo = combos[0]
+          const attrs = combo?.attributes ?? combo
           const imagenData = attrs?.imagen?.data ?? attrs?.imagen
           const imagen = imagenData?.attributes ?? imagenData ?? {}
           const imagenUrl = imagen?.url 
             ? (imagen.url.startsWith('http') ? imagen.url : `${API_URL}${imagen.url}`)
             : null
 
-          setProducto({
-            id: prod?.id,
-            documentId: prod?.documentId,
+          setItem({
+            id: combo?.id,
+            documentId: combo?.documentId,
             nombre: attrs?.nombre ?? "—",
             imagenUrl
           })
+          setEsCombo(true)
+        } else {
+          throw new Error("No se encontró el item")
         }
       } catch (error) {
-        console.error("Error cargando producto:", error)
-        setError("No se pudo cargar el producto")
+        console.error("Error cargando item:", error)
+        setError("No se pudo cargar el item")
       } finally {
-        setCargandoProducto(false)
+        setCargandoItem(false)
       }
     }
 
-    fetchProducto()
+    fetchItem()
   }, [productoId])
 
   const handleChange = (e) => {
@@ -90,8 +128,8 @@ const CrearResena = () => {
         return
       }
 
-      if (!producto?.documentId) {
-        setError("No se pudo obtener el producto")
+      if (!item?.documentId) {
+        setError("No se pudo obtener el item")
         setCargando(false)
         return
       }
@@ -107,8 +145,24 @@ const CrearResena = () => {
       const userData = await userRes.json()
       const userId = userData?.id
 
-      const productoIdNum = producto.id
-      if (!productoIdNum) throw new Error("No se pudo obtener el ID del producto")
+      const itemIdNum = item.id
+      if (!itemIdNum) throw new Error("No se pudo obtener el ID del item")
+
+      // Preparar el payload según si es producto o combo
+      const payload = {
+        data: {
+          valoracion: Number(formData.valoracion),
+          comentario: formData.comentario.trim() || null,
+          fecha: new Date().toISOString().split('T')[0],
+          users_permissions_user: userId
+        }
+      }
+
+      if (esCombo) {
+        payload.data.combo = itemIdNum
+      } else {
+        payload.data.producto = itemIdNum
+      }
 
       const resenaRes = await fetch(`${API_URL}/api/resenas`, {
         method: "POST",
@@ -116,15 +170,7 @@ const CrearResena = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({
-          data: {
-            valoracion: Number(formData.valoracion),
-            comentario: formData.comentario.trim() || null,
-            fecha: new Date().toISOString().split('T')[0],
-            users_permissions_user: userId,
-            producto: productoIdNum
-          }
-        })
+        body: JSON.stringify(payload)
       })
 
       if (!resenaRes.ok) {
@@ -133,7 +179,12 @@ const CrearResena = () => {
         throw new Error("No se pudo crear la reseña")
       }
 
-      navigate(`/producto/${producto.documentId}`)
+      // Redirigir a la página correcta según el tipo
+      if (esCombo) {
+        navigate(`/combo/${item.documentId}`)
+      } else {
+        navigate(`/producto/${item.documentId}`)
+      }
     } catch (error) {
       console.error("Error al guardar reseña:", error)
       setError(error.message || "Error al guardar la reseña")
@@ -142,14 +193,14 @@ const CrearResena = () => {
     }
   }
 
-  if (cargandoProducto) {
-    return <div className="crear-resena-page"><p className="crear-resena-loading">Cargando producto...</p></div>
+  if (cargandoItem) {
+    return <div className="crear-resena-page"><p className="crear-resena-loading">Cargando {esCombo ? 'combo' : 'producto'}...</p></div>
   }
 
-  if (!producto) {
+  if (!item) {
     return (
       <div className="crear-resena-page">
-        <p className="crear-resena-error">No se pudo cargar el producto</p>
+        <p className="crear-resena-error">No se pudo cargar el {esCombo ? 'combo' : 'producto'}</p>
         <Link to="/mi-cuenta">
           <LinkButton>Volver a mi cuenta</LinkButton>
         </Link>
@@ -163,11 +214,11 @@ const CrearResena = () => {
         <h1>Agregar reseña</h1>
 
         <div className="crear-resena-producto">
-          {producto.imagenUrl && (
-            <img src={producto.imagenUrl} alt={producto.nombre} className="crear-resena-imagen" />
+          {item.imagenUrl && (
+            <img src={item.imagenUrl} alt={item.nombre} className="crear-resena-imagen" />
           )}
           <div className="crear-resena-producto-info">
-            <h2>{producto.nombre}</h2>
+            <h2>{item.nombre}</h2>
           </div>
         </div>
 
@@ -192,12 +243,12 @@ const CrearResena = () => {
 
           <div className="form-group">
             <label htmlFor="comentario">Comentario</label>
-            <textarea
+              <textarea
               id="comentario"
               name="comentario"
               value={formData.comentario}
               onChange={handleChange}
-              placeholder="Escribí tu comentario sobre el producto..."
+              placeholder={`Escribí tu comentario sobre el ${esCombo ? 'combo' : 'producto'}...`}
               rows="6"
             />
           </div>
@@ -208,7 +259,7 @@ const CrearResena = () => {
             <BlueButton type="submit" disabled={cargando}>
               {cargando ? "Guardando..." : "Guardar reseña"}
             </BlueButton>
-            <Link to={`/producto/${producto.documentId}`}>
+            <Link to={esCombo ? `/combo/${item.documentId}` : `/producto/${item.documentId}`}>
               <LinkButton>Cancelar</LinkButton>
             </Link>
           </div>

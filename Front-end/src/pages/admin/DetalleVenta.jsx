@@ -127,29 +127,54 @@ export default function DetalleVenta() {
               {detalleItems.map((detalleItem, index) => {
                 const item = detalleItem?.attributes ?? detalleItem
                 const variacion = item?.variacion?.data ?? item?.variacion ?? null
+                const combo = item?.combo?.data ?? item?.combo ?? null
+                
+                // Determinar si es combo o producto
+                const esCombo = !!combo
                 const variacionAttrs = variacion?.attributes ?? variacion ?? {}
-                const producto = variacionAttrs?.producto?.data ?? variacionAttrs?.producto ?? null
-                const productoAttrs = producto?.attributes ?? producto ?? {}
-                const img = productoAttrs?.imagen?.data ?? productoAttrs?.imagen ?? null
-                const imgAttrs = img?.attributes ?? img ?? {}
-                const imgPath = imgAttrs?.url ?? img?.url ?? '/assets/fallback.jpg'
+                const comboAttrs = combo?.attributes ?? combo ?? {}
+                
+                // Obtener datos según el tipo
+                const nombre = esCombo 
+                  ? (comboAttrs?.nombre || 'Combo')
+                  : (variacionAttrs?.producto?.data?.attributes?.nombre ?? variacionAttrs?.producto?.attributes?.nombre ?? variacionAttrs?.producto?.nombre ?? 'Producto')
+                
+                // Obtener imagen
+                let imgPath = '/assets/fallback.jpg'
+                if (esCombo) {
+                  const img = comboAttrs?.imagen?.data ?? comboAttrs?.imagen ?? null
+                  const imgAttrs = img?.attributes ?? img ?? {}
+                  imgPath = imgAttrs?.url ?? img?.url ?? '/assets/fallback.jpg'
+                } else {
+                  const producto = variacionAttrs?.producto?.data ?? variacionAttrs?.producto ?? null
+                  const productoAttrs = producto?.attributes ?? producto ?? {}
+                  const img = productoAttrs?.imagen?.data ?? productoAttrs?.imagen ?? null
+                  const imgAttrs = img?.attributes ?? img ?? {}
+                  imgPath = imgAttrs?.url ?? img?.url ?? '/assets/fallback.jpg'
+                }
                 const imagenUrl = imgPath.startsWith('http') ? imgPath : `${BACKEND_URL}${imgPath}`
+                
                 const descuento = Number(item?.descuento ?? 0)
                 const precioUnitario = Number(item?.precioUnitario ?? 0)
                 const precioOriginal = descuento > 0 && descuento < 100 
                   ? precioUnitario / (1 - descuento / 100) 
                   : precioUnitario
+                
                 return (
                   <div key={detalleItem.id ?? index} className="admin-venta-product">
                     <img
                       src={imagenUrl}
-                      alt={productoAttrs?.nombre || 'Producto'}
+                      alt={nombre}
                       className="admin-venta-product-img"
                     />
                     <div className="admin-venta-product-info">
-                      <span className="admin-venta-product-name">{productoAttrs?.nombre || 'Producto'}</span>
+                      <span className="admin-venta-product-name">{nombre}</span>
                       <span className="admin-venta-product-variant">
-                        Talle: {variacionAttrs?.talle || '—'} - Color: {variacionAttrs?.color || '—'}
+                        {esCombo ? (
+                          <>Combo</>
+                        ) : (
+                          <>Talle: {variacionAttrs?.talle || '—'} - Color: {variacionAttrs?.color || '—'}</>
+                        )}
                       </span>
                       <span className="admin-venta-product-qty">Cantidad: {item?.cantidad ?? 0}</span>
                     </div>

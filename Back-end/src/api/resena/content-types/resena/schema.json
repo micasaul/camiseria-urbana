@@ -23,6 +23,12 @@
       "target": "api::producto.producto",
       "inversedBy": "resenas"
     },
+    "combo": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::combo.combo",
+      "inversedBy": "resenas"
+    },
     "valoracion": {
       "type": "decimal",
       "required": true
