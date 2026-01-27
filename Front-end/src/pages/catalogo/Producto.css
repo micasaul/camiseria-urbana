@@ -145,6 +145,12 @@
   color: #172A3A;
 }
 
+.producto-descuento {
+  font-size: 18px;
+  font-weight: 600;
+  color: #f4acb7;
+}
+
 .producto-descripcion {
   font-size: 16px;
   line-height: 1.6;
@@ -263,6 +269,13 @@
 .producto-stock {
   font-size: 14px;
   color: #6b7280;
+}
+
+.producto-ultimas-unidades {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f4acb7;
+  margin-bottom: 4px;
 }
 
 .producto-error {

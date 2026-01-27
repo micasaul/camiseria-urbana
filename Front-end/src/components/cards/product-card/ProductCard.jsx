@@ -38,6 +38,7 @@ export default function ProductCard({ producto, descuento = 0, to = null }) {
             <>
               <span className="product-card-price-original">${precioBase.toFixed(2)}</span>
               <span className="product-card-price">${precioFinal.toFixed(2)}</span>
+              <span className="product-card-descuento">-{descuentoNum}%</span>
             </>
           ) : (
             <span className="product-card-price">${precioBase.toFixed(2)}</span>

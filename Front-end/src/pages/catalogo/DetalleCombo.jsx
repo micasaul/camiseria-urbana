@@ -286,6 +286,9 @@ export default function DetalleCombo() {
               >
                 {sinStockCombo ? 'Sin stock' : 'Agregar al carrito'}
               </BlueButton>
+              {stockDisponible > 0 && stockDisponible < 5 && talleSeleccionado && (
+                <span className="producto-ultimas-unidades">¡Ultimas unidades!</span>
+              )}
               {carritoError && (
                 <span className="producto-error">{carritoError}</span>
               )}

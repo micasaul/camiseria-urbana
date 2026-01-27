@@ -170,7 +170,16 @@ export default {
               populate: {
                 variacion: {
                   populate: {
-                    producto: true,
+                    producto: {
+                      populate: {
+                        imagen: true,
+                      },
+                    },
+                  },
+                },
+                combo: {
+                  populate: {
+                    imagen: true,
                   },
                 },
               },
@@ -207,16 +216,106 @@ export default {
           const usuario = ventaEntity.users_permissions_user;
           if (usuario?.email) {
             try {
+              const backendUrl = strapi.config.get('server.url');
+              const detalleVentas = /** @type {any[]} */ (ventaEntity.detalle_ventas || []);
+              
+              let productosHtml = '';
+              let subtotal = 0;
+              
+              for (const detalle of detalleVentas) {
+                const cantidad = Number(detalle?.cantidad ?? 0);
+                const precioUnitario = Number(detalle?.precioUnitario ?? 0);
+                const subtotalItem = Number(detalle?.subtotal ?? 0);
+                subtotal += subtotalItem;
+                
+                let nombre = 'Producto';
+                let imagenUrl = '';
+                
+                if (detalle?.variacion?.producto) {
+                  const producto = detalle.variacion.producto;
+                  nombre = producto.nombre || 'Producto';
+                  const imagen = producto.imagen;
+                  if (imagen) {
+                    if (typeof imagen === 'string') {
+                      imagenUrl = imagen.startsWith('http') ? imagen : `${backendUrl}${imagen}`;
+                    } else if (imagen?.url) {
+                      imagenUrl = imagen.url.startsWith('http') ? imagen.url : `${backendUrl}${imagen.url}`;
+                    } else if (imagen?.data?.attributes?.url) {
+                      const url = imagen.data.attributes.url;
+                      imagenUrl = url.startsWith('http') ? url : `${backendUrl}${url}`;
+                    }
+                  }
+                } else if (detalle?.combo) {
+                  const combo = detalle.combo;
+                  nombre = combo.nombre || 'Combo';
+                  const imagen = combo.imagen;
+                  if (imagen) {
+                    if (typeof imagen === 'string') {
+                      imagenUrl = imagen.startsWith('http') ? imagen : `${backendUrl}${imagen}`;
+                    } else if (imagen?.url) {
+                      imagenUrl = imagen.url.startsWith('http') ? imagen.url : `${backendUrl}${imagen.url}`;
+                    } else if (imagen?.data?.attributes?.url) {
+                      const url = imagen.data.attributes.url;
+                      imagenUrl = url.startsWith('http') ? url : `${backendUrl}${url}`;
+                    }
+                  }
+                }
+                
+                productosHtml += `
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px; vertical-align: middle;">
+                      ${imagenUrl ? `<img src="${imagenUrl}" alt="${nombre}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;" />` : ''}
+                    </td>
+                    <td style="padding: 12px; vertical-align: middle;">
+                      <strong>${nombre}</strong>
+                    </td>
+                    <td style="padding: 12px; vertical-align: middle; text-align: center;">
+                      ${cantidad}
+                    </td>
+                  </tr>
+                `;
+              }
+              
+              const envio = Number(ventaEntity.envio ?? 0);
+              const total = Number(ventaEntity.total ?? 0);
+              
               await strapi.plugins.email.services.email.send({
                 to: usuario.email,
                 subject: "Confirmación de compra - Camisería Urbana",
                 text: `Hola ${usuario.email}, Agradecemos tu compra! Te va a llegar en unos días, te dejamos información para estar al día: Orden: ${ventaId}, Número de seguimiento: ${ventaEntity.nroSeguimiento}`,
                 html: `
-                  <h2>Hola ${usuario.email},</h2>
-                  <p>Agradecemos tu compra! Te va a llegar en unos días, te dejamos información para estar al día:</p>
-                  <p><strong>Orden:</strong> ${ventaId}</p>
-                  <p><strong>Número de seguimiento:</strong> ${ventaEntity.nroSeguimiento}</p>
-                  <p>Gracias por confiar en nosotros.</p>
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #172A3A;">Hola ${usuario.email},</h2>
+                    <p>Agradecemos tu compra! Te va a llegar en unos días, te dejamos información para estar al día:</p>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                      <p><strong>Orden:</strong> ${ventaId}</p>
+                      <p><strong>Número de seguimiento:</strong> ${ventaEntity.nroSeguimiento}</p>
+                    </div>
+                    
+                    <h3 style="color: #172A3A; margin-top: 30px; margin-bottom: 15px;">Productos comprados:</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                      <thead>
+                        <tr style="background-color: #f5f5f5; border-bottom: 2px solid #e5e7eb;">
+                          <th style="padding: 12px; text-align: left;">Imagen</th>
+                          <th style="padding: 12px; text-align: left;">Producto</th>
+                          <th style="padding: 12px; text-align: center;">Cantidad</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${productosHtml}
+                      </tbody>
+                    </table>
+                    
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+                      <p style="margin: 8px 0;"><strong>Subtotal:</strong> $${subtotal.toFixed(2)}</p>
+                      <p style="margin: 8px 0;"><strong>Envío:</strong> $${envio.toFixed(2)}</p>
+                      <p style="margin: 8px 0; font-size: 18px; font-weight: bold; color: #172A3A;"><strong>Total:</strong> $${total.toFixed(2)}</p>
+                    </div>
+                    
+                    <p style="margin-top: 30px;">Gracias por confiar en nosotros.</p>
+                    <p>Camisería Urbana.</p>
+                  </div>
                 `,
               });
             } catch (emailError) {

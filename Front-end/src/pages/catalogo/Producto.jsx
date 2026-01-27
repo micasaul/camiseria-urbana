@@ -272,6 +272,7 @@ export default function Producto() {
               <>
                 <span className="producto-precio-original">${precioBase.toFixed(2)}</span>
                 <span className="producto-precio-final">${precioFinal.toFixed(2)}</span>
+                <span className="producto-descuento">-{descuento}%</span>
               </>
             ) : (
               <span className="producto-precio-final">${precioBase.toFixed(2)}</span>
@@ -347,6 +348,9 @@ export default function Producto() {
               >
                 {sinStockProducto ? 'Sin stock' : 'Agregar al carrito'}
               </BlueButton>
+              {stockDisponible > 0 && stockDisponible < 5 && colorSeleccionado && talleSeleccionado && (
+                <span className="producto-ultimas-unidades">¡Ultimas unidades!</span>
+              )}
               {carritoError && (
                 <span className="producto-error">{carritoError}</span>
               )}
