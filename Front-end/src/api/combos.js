@@ -122,6 +122,8 @@ export async function getCombos(page = 1, pageSize = 10) {
         nombre: attrs?.nombre ?? '',
         precio: attrs?.precio ?? 0,
         imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
+        createdAt: attrs?.createdAt ?? item?.createdAt ?? null,
+        publishedAt: attrs?.publishedAt ?? item?.publishedAt ?? null,
         variaciones: variaciones.map(v => {
           const vAttrs = v?.attributes ?? v;
           return {

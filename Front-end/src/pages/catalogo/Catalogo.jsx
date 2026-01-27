@@ -27,21 +27,24 @@ export default function Catalogo() {
     precioMax: '',
     colores: [],
     talles: [],
+    marca: '',
     ordenarPor: ''
   })
   
-  const [ordenarPorPendiente, setOrdenarPorPendiente] = useState('')
+  const [ordenarPor, setOrdenarPor] = useState('')
   const [materialPendiente, setMaterialPendiente] = useState('')
   const [precioMinPendiente, setPrecioMinPendiente] = useState('')
   const [precioMaxPendiente, setPrecioMaxPendiente] = useState('')
   const [coloresPendientes, setColoresPendientes] = useState([])
   const [tallesPendientes, setTallesPendientes] = useState([])
+  const [marcaPendiente, setMarcaPendiente] = useState('')
   const [errorPrecioMin, setErrorPrecioMin] = useState('')
   const [errorPrecioMax, setErrorPrecioMax] = useState('')
   
   const [materiales, setMateriales] = useState([])
   const [talles, setTalles] = useState([])
   const [colores, setColores] = useState([])
+  const [marcas, setMarcas] = useState([])
   const [precioMinReal, setPrecioMinReal] = useState(0)
   const [precioMaxReal, setPrecioMaxReal] = useState(0)
   const [descuentosMap, setDescuentosMap] = useState(new Map())
@@ -61,6 +64,25 @@ export default function Catalogo() {
         setMateriales([])
         setTalles([])
         setColores([])
+      })
+
+    const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+    fetch(`${VITE_BACKEND_URL}/api/marcas?pagination[pageSize]=1000`)
+      .then(res => res.json())
+      .then(data => {
+        if (!activo) return
+        const marcasList = (data.data || []).map(item => {
+          const attrs = item?.attributes ?? item
+          return {
+            id: item.documentId ?? attrs?.documentId ?? item.id ?? attrs?.id,
+            nombre: attrs?.nombre ?? item?.nombre ?? ''
+          }
+        })
+        setMarcas(marcasList)
+      })
+      .catch(() => {
+        if (!activo) return
+        setMarcas([])
       })
 
     return () => { activo = false }
@@ -131,15 +153,59 @@ export default function Catalogo() {
       ...(filtrosAplicados.precioMax && { precioMax: Number(filtrosAplicados.precioMax) }),
       ...(filtrosAplicados.colores.length > 0 && { colores: filtrosAplicados.colores }),
       ...(filtrosAplicados.talles.length > 0 && { talles: filtrosAplicados.talles }),
-      ...(filtrosAplicados.ordenarPor && { ordenarPor: filtrosAplicados.ordenarPor }),
+      ...(filtrosAplicados.marca && { marca: filtrosAplicados.marca }),
+      ...(ordenarPor && { ordenarPor: ordenarPor }),
       ...(ofertasFromUrl && idsOfertas.length > 0 && { ids: idsOfertas })
     }
 
-    getProductosConFiltros(filtros, 1, 1000)
+    const filtrosSinMarca = { ...filtros }
+    const marcaFiltro = filtrosSinMarca.marca
+    delete filtrosSinMarca.marca
+
+    const obtenerProductos = async () => {
+      let productosIds = null
+      
+      if (marcaFiltro) {
+        const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+        const marcaUrl = `${VITE_BACKEND_URL}/api/marcas/${marcaFiltro}?populate[productos][populate][0]=variacions&populate[productos][populate][1]=promo_productos&populate[productos][populate][2]=promo_productos.promo&populate[productos][populate][3]=imagen`
+        
+        try {
+          const marcaRes = await fetch(marcaUrl)
+          if (marcaRes.ok) {
+            const marcaData = await marcaRes.json()
+            const productos = marcaData?.data?.productos ?? marcaData?.data?.attributes?.productos?.data ?? []
+            productosIds = productos.map(item => {
+              return item?.documentId ?? item?.attributes?.documentId ?? item?.id ?? item?.attributes?.id
+            }).filter(Boolean)
+          } else {
+            const todosRes = await fetch(`${VITE_BACKEND_URL}/api/productos?populate[0]=variacions&populate[1]=marca&populate[2]=promo_productos&populate[3]=promo_productos.promo&populate[4]=imagen&pagination[pageSize]=1000`)
+            const todosData = await todosRes.json()
+            const productosFiltrados = (todosData.data || []).filter(item => {
+              const attrs = item?.attributes ?? item
+              const marca = attrs?.marca?.data ?? attrs?.marca
+              if (!marca) return false
+              const marcaDocId = marca?.documentId ?? marca?.attributes?.documentId ?? marca?.id ?? marca?.attributes?.id
+              return String(marcaDocId) === String(marcaFiltro)
+            })
+            productosIds = productosFiltrados.map(item => item?.documentId ?? item?.attributes?.documentId).filter(Boolean)
+          }
+        } catch (error) {
+          console.error('Error obteniendo productos por marca:', error)
+        }
+      }
+      
+      const filtrosFinales = productosIds && productosIds.length > 0
+        ? { ...filtrosSinMarca, ids: productosIds }
+        : filtrosSinMarca
+      
+      return getProductosConFiltros(filtrosFinales, 1, 1000)
+    }
+
+    obtenerProductos()
       .then((data) => {
         if (!activo) return
         
-        const items = data.items ?? []
+        let items = data.items ?? []
         
         const productosProcesados = items.map((producto) => {
           const variacionesRaw = producto?.variaciones ?? producto?.variacions?.data ?? producto?.variacions ?? []
@@ -153,20 +219,46 @@ export default function Catalogo() {
           const cantidadTotal = calcularCantidadTotal(variacionesNormalizadas)
           const tieneStock = cantidadTotal > 0
 
-          const img = typeof producto.imagen === 'string' ? producto.imagen : ''
-          const tieneFoto = img.length > 0 && img !== '/assets/fallback.jpg' && !img.includes('fallback') && img !== 'null'
-
-          let prioridad = 4
-          if (tieneStock && tieneFoto) prioridad = 1
-          else if (tieneStock && !tieneFoto) prioridad = 2
-          else if (!tieneStock && tieneFoto) prioridad = 3
-          else if (!tieneStock && !tieneFoto) prioridad = 4
+          const prioridad = tieneStock ? 1 : 2
 
           return { ...producto, cantidadTotal, prioridad, nombre: producto.nombre || '' }
         })
 
         productosProcesados.sort((a, b) => {
           if (a.prioridad !== b.prioridad) return a.prioridad - b.prioridad
+          
+          const ordenarPorValue = ordenarPor || ''
+          
+          if (ordenarPorValue === 'precio:desc') {
+            const precioA = Number(a.precio ?? 0)
+            const precioB = Number(b.precio ?? 0)
+            if (precioA !== precioB) return precioB - precioA
+          } else if (ordenarPorValue === 'precio:asc') {
+            const precioA = Number(a.precio ?? 0)
+            const precioB = Number(b.precio ?? 0)
+            if (precioA !== precioB) return precioA - precioB
+          } else if (ordenarPorValue === 'createdAt:desc') {
+            const fechaA = a.createdAt || a.publishedAt
+            const fechaB = b.createdAt || b.publishedAt
+            if (!fechaA && !fechaB) return 0
+            if (!fechaA) return 1
+            if (!fechaB) return -1
+            const timeA = new Date(fechaA).getTime()
+            const timeB = new Date(fechaB).getTime()
+              if (isNaN(timeA) || isNaN(timeB)) return 0
+              return timeB - timeA
+          } else if (ordenarPorValue === 'createdAt:asc') {
+            const fechaA = a.createdAt || a.publishedAt
+            const fechaB = b.createdAt || b.publishedAt
+            if (!fechaA && !fechaB) return 0
+            if (!fechaA) return 1
+            if (!fechaB) return -1
+            const timeA = new Date(fechaA).getTime()
+            const timeB = new Date(fechaB).getTime()
+            if (isNaN(timeA) || isNaN(timeB)) return 0
+            return timeA - timeB
+          }
+          
           return a.nombre.localeCompare(b.nombre, 'es')
         })
         
@@ -189,7 +281,7 @@ export default function Catalogo() {
       })
 
     return () => { activo = false }
-  }, [filtrosAplicados, ofertasFromUrl, descuentosLoaded, descuentosMap])
+  }, [filtrosAplicados, ofertasFromUrl, descuentosLoaded, descuentosMap, ordenarPor])
 
   const productosEnPantalla = useMemo(() => {
     const inicio = (paginacion.page - 1) * ITEMS_POR_PAGINA;
@@ -245,15 +337,16 @@ export default function Catalogo() {
         precioMax: precioMaxPendiente,
         colores: coloresPendientes,
         talles: tallesPendientes,
-        ordenarPor: ordenarPorPendiente
+        marca: marcaPendiente,
+        ordenarPor: ordenarPor
       })
     }
   }
 
   const limpiarFiltros = () => {
-    setOrdenarPorPendiente(''); setMaterialPendiente(''); setPrecioMinPendiente(''); setPrecioMaxPendiente('');
-    setColoresPendientes([]); setTallesPendientes([]); setErrorPrecioMin(''); setErrorPrecioMax('');
-    setFiltrosAplicados({ material: '', precioMin: '', precioMax: '', colores: [], talles: [], ordenarPor: '' })
+    setOrdenarPor(''); setMaterialPendiente(''); setPrecioMinPendiente(''); setPrecioMaxPendiente('');
+    setColoresPendientes([]); setTallesPendientes([]); setMarcaPendiente(''); setErrorPrecioMin(''); setErrorPrecioMax('');
+    setFiltrosAplicados({ material: '', precioMin: '', precioMax: '', colores: [], talles: [], marca: '', ordenarPor: '' })
   }
 
   const cambiarPagina = (nuevaPagina) => {
@@ -261,7 +354,7 @@ export default function Catalogo() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const hayFiltrosActivos = filtrosAplicados.material || filtrosAplicados.precioMin || filtrosAplicados.precioMax || filtrosAplicados.colores.length > 0 || filtrosAplicados.talles.length > 0 || filtrosAplicados.ordenarPor
+  const hayFiltrosActivos = filtrosAplicados.material || filtrosAplicados.precioMin || filtrosAplicados.precioMax || filtrosAplicados.colores.length > 0 || filtrosAplicados.talles.length > 0 || filtrosAplicados.marca || filtrosAplicados.ordenarPor
 
   return (
     <div className="catalogo-page">
@@ -274,17 +367,6 @@ export default function Catalogo() {
                 Limpiar
               </button>
             )}
-          </div>
-
-          <div className="catalogo-filter-group">
-            <label className="catalogo-filter-label">Ordenar por</label>
-            <select className="catalogo-filter-select" value={ordenarPorPendiente} onChange={(e) => setOrdenarPorPendiente(e.target.value)}>
-              <option value="">Sin ordenar</option>
-              <option value="precio:desc">Precio: Mayor a menor</option>
-              <option value="precio:asc">Precio: Menor a mayor</option>
-              <option value="nombre:asc">Nombre: A-Z</option>
-              <option value="nombre:desc">Nombre: Z-A</option>
-            </select>
           </div>
 
           <div className="catalogo-filter-group">
@@ -336,6 +418,16 @@ export default function Catalogo() {
             </div>
           </div>
 
+          <div className="catalogo-filter-group">
+            <label className="catalogo-filter-label">Marca</label>
+            <select className="catalogo-filter-select" value={marcaPendiente} onChange={(e) => setMarcaPendiente(e.target.value)}>
+              <option value="">Todas las marcas</option>
+              {marcas.map((marca) => (
+                <option key={marca.id} value={marca.id}>{marca.nombre}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="catalogo-filter-apply">
             <BlueButton width="100%" height="40px" onClick={aplicarFiltros}>Aplicar</BlueButton>
           </div>
@@ -350,6 +442,19 @@ export default function Catalogo() {
             </div>
           ) : (
             <>
+              <div className="catalogo-sort">
+                <select 
+                  className="catalogo-sort-select" 
+                  value={ordenarPor} 
+                  onChange={(e) => setOrdenarPor(e.target.value)}
+                >
+                  <option value="">Ordenar por</option>
+                  <option value="precio:desc">Precio: Mayor a menor</option>
+                  <option value="precio:asc">Precio: Menor a mayor</option>
+                  <option value="createdAt:desc">Fecha: Más recientes</option>
+                  <option value="createdAt:asc">Fecha: Más antiguos</option>
+                </select>
+              </div>
               <div className="catalogo-grid">
                 {productosEnPantalla.map((producto) => {
                   const productoKey = String(producto.documentId ?? producto.id)

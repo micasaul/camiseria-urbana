@@ -27,6 +27,43 @@
   text-align: left;
 }
 
+.combo-sort {
+  display: flex;
+  justify-content: flex-end;
+  width: 830px;
+  margin-bottom: 10px;
+}
+
+.combo-sort-select {
+  background: none;
+  border: none;
+  color: #f4acb7;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 20px 4px 0;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23f4acb7' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right center;
+  transition: color 0.2s ease;
+}
+
+.combo-sort-select:hover {
+  color: #e89ba8;
+}
+
+.combo-sort-select:focus {
+  outline: none;
+}
+
+.combo-sort-select option {
+  background: white;
+  color: #172A3A;
+}
+
 .combo-loading,
 .combo-empty {
   display: flex;
@@ -64,6 +101,10 @@
   .combo-title {
     width: 630px; /* 3 * 200px + 2 * 10px */
   }
+  
+  .combo-sort {
+    width: 630px;
+  }
 }
 
 @media (max-width: 900px) {
@@ -74,6 +115,10 @@
   .combo-title {
     width: 430px; /* 2 * 200px + 1 * 10px */
   }
+  
+  .combo-sort {
+    width: 430px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -82,6 +127,10 @@
   }
   
   .combo-title {
+    width: 100%;
+  }
+  
+  .combo-sort {
     width: 100%;
   }
   

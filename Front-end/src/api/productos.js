@@ -218,7 +218,9 @@ export async function getProductos(page = 1, pageSize = 10) {
         precio: attrs?.precio ?? 0,
         imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
         promo_productos: promoProductos,
-        variaciones: normalizarVariaciones(variaciones)
+        variaciones: normalizarVariaciones(variaciones),
+        createdAt: attrs?.createdAt ?? item?.createdAt ?? null,
+        publishedAt: attrs?.publishedAt ?? item?.publishedAt ?? null
       };
     });
     items = await adjuntarVariaciones(items);
@@ -364,9 +366,10 @@ export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 
   try {
     const params = new URLSearchParams();
     params.append('populate[0]', 'variacions');
-    params.append('populate[1]', 'promo_productos');
-    params.append('populate[2]', 'promo_productos.promo');
-    params.append('populate[3]', 'imagen');
+    params.append('populate[1]', 'marca');
+    params.append('populate[2]', 'promo_productos');
+    params.append('populate[3]', 'promo_productos.promo');
+    params.append('populate[4]', 'imagen');
     params.append('pagination[page]', page);
     params.append('pagination[pageSize]', pageSize);
 
@@ -423,6 +426,12 @@ export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 
       const promoProductosRaw = attrs?.promo_productos?.data ?? attrs?.promo_productos ?? item?.promo_productos ?? [];
       const promoProductos = Array.isArray(promoProductosRaw) ? promoProductosRaw : [];
       
+      const marcaRaw = attrs?.marca?.data ?? attrs?.marca ?? item?.marca ?? null;
+      const marca = marcaRaw ? {
+        id: marcaRaw.id ?? marcaRaw.attributes?.id ?? marcaRaw.data?.id ?? null,
+        documentId: marcaRaw.documentId ?? marcaRaw.attributes?.documentId ?? marcaRaw.data?.documentId ?? null
+      } : null;
+      
       return {
         id: item.id ?? attrs?.id,
         documentId: item.documentId ?? attrs?.documentId ?? null,
@@ -431,7 +440,10 @@ export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 
         precio: attrs?.precio ?? 0,
         imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
         promo_productos: promoProductos,
-        variaciones: normalizarVariaciones(variaciones)
+        variaciones: normalizarVariaciones(variaciones),
+        marca: marca,
+        createdAt: attrs?.createdAt ?? item?.createdAt ?? null,
+        publishedAt: attrs?.publishedAt ?? item?.publishedAt ?? null
       };
     });
     items = await adjuntarVariaciones(items);

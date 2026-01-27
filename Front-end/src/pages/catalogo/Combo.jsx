@@ -10,6 +10,7 @@ export default function Combo() {
   const [combos, setCombos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [paginacion, setPaginacion] = useState({ page: 1, pageCount: 1, total: 0 })
+  const [ordenarPor, setOrdenarPor] = useState('')
 
   useEffect(() => {
     let activo = true
@@ -20,10 +21,46 @@ export default function Combo() {
         if (!activo) return
 
         const items = data.items ?? []
-        const combosAdaptados = items.map(combo => ({
+        let combosAdaptados = items.map(combo => ({
           ...combo,
           variaciones: [{ stock: 1 }] 
         }))
+        
+        if (ordenarPor) {
+          combosAdaptados.sort((a, b) => {
+            if (ordenarPor === 'precio:desc') {
+              const precioA = Number(a.precio ?? 0)
+              const precioB = Number(b.precio ?? 0)
+              if (precioA !== precioB) return precioB - precioA
+            } else if (ordenarPor === 'precio:asc') {
+              const precioA = Number(a.precio ?? 0)
+              const precioB = Number(b.precio ?? 0)
+              if (precioA !== precioB) return precioA - precioB
+            } else if (ordenarPor === 'createdAt:desc') {
+              const fechaA = a.createdAt || a.publishedAt
+              const fechaB = b.createdAt || b.publishedAt
+              if (!fechaA && !fechaB) return 0
+              if (!fechaA) return 1
+              if (!fechaB) return -1
+              const timeA = new Date(fechaA).getTime()
+              const timeB = new Date(fechaB).getTime()
+              if (isNaN(timeA) || isNaN(timeB)) return 0
+              return timeB - timeA
+            } else if (ordenarPor === 'createdAt:asc') {
+              const fechaA = a.createdAt || a.publishedAt
+              const fechaB = b.createdAt || b.publishedAt
+              if (!fechaA && !fechaB) return 0
+              if (!fechaA) return 1
+              if (!fechaB) return -1
+              const timeA = new Date(fechaA).getTime()
+              const timeB = new Date(fechaB).getTime()
+              if (isNaN(timeA) || isNaN(timeB)) return 0
+              return timeA - timeB
+            }
+            return 0
+          })
+        }
+        
         setCombos(combosAdaptados)
         const totalItems = combosAdaptados.length
         setPaginacion({
@@ -43,7 +80,7 @@ export default function Combo() {
       })
 
     return () => { activo = false }
-  }, [])
+  }, [ordenarPor])
 
   const combosEnPantalla = combos.slice(
     (paginacion.page - 1) * ITEMS_POR_PAGINA,
@@ -68,6 +105,19 @@ export default function Combo() {
             </div>
           ) : (
             <>
+              <div className="combo-sort">
+                <select 
+                  className="combo-sort-select" 
+                  value={ordenarPor} 
+                  onChange={(e) => setOrdenarPor(e.target.value)}
+                >
+                  <option value="">Ordenar por</option>
+                  <option value="precio:desc">Precio: Mayor a menor</option>
+                  <option value="precio:asc">Precio: Menor a mayor</option>
+                  <option value="createdAt:desc">Fecha: Más recientes</option>
+                  <option value="createdAt:asc">Fecha: Más antiguos</option>
+                </select>
+              </div>
               <div className="combo-grid">
                 {combosEnPantalla.map((combo) => {
                   const comboKey = String(combo.documentId ?? combo.id)
