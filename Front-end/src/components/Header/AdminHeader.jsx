@@ -25,6 +25,14 @@ export default function AdminHeader() {
       ]
     },
     {
+      id: 'combos',
+      label: 'Combos',
+      children: [
+        { id: 'combos-agregar', label: 'Agregar', to: '/admin/combos/agregar' },
+        { id: 'combos-listar', label: 'Listar', to: '/admin/combos/listar' }
+      ]
+    },
+    {
       id: 'promos',
       label: 'Promos',
       children: [

@@ -15,6 +15,9 @@ export default function AdminButton({ items }) {
     if (activePath.startsWith('/admin/productos')) {
       return 'productos'
     }
+    if (activePath.startsWith('/admin/combos')) {
+      return 'combos'
+    }
     if (activePath.startsWith('/admin/promos')) {
       return 'promos'
     }
@@ -30,6 +33,10 @@ export default function AdminButton({ items }) {
   useEffect(() => {
     if (activePath.startsWith('/admin/productos')) {
       setSelectedGroup('productos')
+      return
+    }
+    if (activePath.startsWith('/admin/combos')) {
+      setSelectedGroup('combos')
       return
     }
     if (activePath.startsWith('/admin/promos')) {

@@ -2,6 +2,8 @@ import { Route } from 'react-router-dom'
 import AdminPanel from '../pages/admin/AdminPanel'
 import AdminProductosAgregar from '../pages/admin/ProductosAgregar'
 import AdminProductosListar from '../pages/admin/ProductosListar'
+import AdminCombosAgregar from '../pages/admin/CombosAgregar'
+import AdminCombosListar from '../pages/admin/CombosListar'
 import AdminPromosAgregar from '../pages/admin/PromosAgregar'
 import AdminPromosListar from '../pages/admin/PromosListar'
 import AdminVentas from '../pages/admin/Ventas'
@@ -14,6 +16,9 @@ export default function AdminRoutes() {
       <Route path="productos/agregar" element={<AdminProductosAgregar />} />
       <Route path="productos/editar/:id" element={<AdminProductosAgregar />} />
       <Route path="productos/listar" element={<AdminProductosListar />} />
+      <Route path="combos/agregar" element={<AdminCombosAgregar />} />
+      <Route path="combos/editar/:id" element={<AdminCombosAgregar />} />
+      <Route path="combos/listar" element={<AdminCombosListar />} />
       <Route path="promos/agregar" element={<AdminPromosAgregar />} />
       <Route path="promos/editar/:id" element={<AdminPromosAgregar />} />
       <Route path="promos/listar" element={<AdminPromosListar />} />
