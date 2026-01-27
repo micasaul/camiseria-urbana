@@ -22,7 +22,6 @@
       "enum": [
         "pendiente",
         "En proceso",
-        "cancelado",
         "Enviado",
         "Entregado"
       ]

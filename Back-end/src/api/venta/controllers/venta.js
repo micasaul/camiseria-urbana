@@ -28,6 +28,11 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
         pageSize,
         sort: { createdAt: 'desc' },
         publicationState: 'live',
+        filters: {
+          estado: {
+            $ne: 'pendiente', // Excluir ventas pendientes
+          },
+        },
         populate: {
           users_permissions_user: true,
           direccion: true,

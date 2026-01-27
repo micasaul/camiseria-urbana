@@ -1,7 +1,7 @@
 // src/pages/mi-cuenta/DetalleCompra.jsx
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getVentas } from '../../api/ventas.js'
+import { getVentasUsuario } from '../../api/ventas.js'
 import { formatearFecha } from '../../utils/adminHelpers.js'
 import LinkButton from '../../components/buttons/link-btn/LinkButton.jsx'
 import './DetalleCompra.css'
@@ -17,7 +17,7 @@ export default function DetalleCompra() {
     setCargando(true)
     setError('')
 
-    getVentas(1, 100)
+    getVentasUsuario(1, 100)
       .then((data) => {
         if (!activo) return
         const ventaEncontrada = data.items.find(v => 

@@ -25,24 +25,43 @@ const MiCuenta = () => {
       setCargandoVentas(true)
       try {
         const token = localStorage.getItem("strapiToken")
+        if (!token) throw new Error("No hay token de sesión")
 
-        const res = await fetch(
-          `${API_URL}/api/ventas?filters[users_permissions_user][id][$eq]=${usuario.id}&sort=fecha:desc`,
+        // Obtener las ventas directamente desde el usuario con populate (más seguro y directo)
+        const userWithVentas = await fetch(
+          `${API_URL}/api/users/me?populate[0]=ventas&populate[1]=ventas.direccion&populate[2]=ventas.detalle_ventas&populate[3]=ventas.detalle_ventas.variacion&populate[4]=ventas.detalle_ventas.variacion.producto&populate[5]=ventas.detalle_ventas.combo&populate[6]=ventas.detalle_ventas.combo.imagen`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
+            headers: { Authorization: `Bearer ${token}` }
           }
         )
 
-        if (!res.ok) {
-          throw new Error("Error al obtener ventas")
+        if (!userWithVentas.ok) {
+          throw new Error("No se pudieron obtener las ventas")
         }
 
-        const data = await res.json()
-        setVentas(data.data)
+        const userData = await userWithVentas.json()
+        const ventasRaw = userData?.ventas?.data ?? userData?.ventas ?? []
+        
+        // Ordenar por fecha descendente (más reciente primero)
+        const ventasOrdenadas = ventasRaw
+          .map(item => {
+            const attrs = item?.attributes ?? item
+            return {
+              ...attrs,
+              id: item?.id ?? attrs?.id,
+              documentId: item?.documentId ?? attrs?.documentId ?? null
+            }
+          })
+          .sort((a, b) => {
+            const fechaA = a.fecha ? new Date(a.fecha).getTime() : 0
+            const fechaB = b.fecha ? new Date(b.fecha).getTime() : 0
+            return fechaB - fechaA // Descendente
+          })
+        
+        setVentas(ventasOrdenadas)
       } catch (error) {
         console.error("Error ventas:", error)
+        setVentas([])
       } finally {
         setCargandoVentas(false)
       }
@@ -165,37 +184,40 @@ const MiCuenta = () => {
           <p>No tenés pedidos todavía</p>
         )}
 
-        {!cargandoVentas &&
-          ventas.map((venta) => {
-            const fecha = venta.fecha
-            const total = venta.total
-            const estado = venta.estado
-            const nroSeguimiento = venta.nroSeguimiento
+        {!cargandoVentas && ventas.length > 0 && (
+          <div className={`ventas-container ${ventas.length >= 2 ? 'ventas-scroll' : ''}`}>
+            {ventas.map((venta) => {
+              const fecha = venta.fecha
+              const total = venta.total
+              const estado = venta.estado
+              const nroSeguimiento = venta.nroSeguimiento
 
-            return (
-              <div key={venta.id} className="venta">
-                <p>
-                  <strong>Orden:</strong> #{venta.documentId}
-                </p>
-                <p>
-                  <strong>Fecha:</strong>{" "}
-                  {fecha ? new Date(fecha).toLocaleDateString() : "—"}
-                </p>
-                <p>
-                  <strong>Estado:</strong> {estado ?? "Sin estado"}
-                </p>
-                <p>
-                  <strong>Número de seguimiento:</strong> {nroSeguimiento ?? "—"}
-                </p>
-                <p>
-                  <strong>Total:</strong> ${total != null ? total : 0}
-                </p>
-                <Link to={`/cuenta/detalle-compra/${venta.documentId ?? venta.attributes?.documentId ?? venta.id}`}>
-                  <LinkButton>Más detalles</LinkButton>
-                </Link>
-              </div>
-            )
-          })}
+              return (
+                <div key={venta.id} className="venta">
+                  <p>
+                    <strong>Orden:</strong> #{venta.documentId}
+                  </p>
+                  <p>
+                    <strong>Fecha:</strong>{" "}
+                    {fecha ? new Date(fecha).toLocaleDateString() : "—"}
+                  </p>
+                  <p>
+                    <strong>Estado:</strong> {estado ?? "Sin estado"}
+                  </p>
+                  <p>
+                    <strong>Número de seguimiento:</strong> {nroSeguimiento ?? "—"}
+                  </p>
+                  <p>
+                    <strong>Total:</strong> ${total != null ? total : 0}
+                  </p>
+                  <Link to={`/cuenta/detalle-compra/${venta.documentId ?? venta.attributes?.documentId ?? venta.id}`}>
+                    <LinkButton>Más detalles</LinkButton>
+                  </Link>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </section>
     </div>
   )

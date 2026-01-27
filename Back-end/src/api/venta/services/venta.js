@@ -593,37 +593,62 @@ module.exports = createCoreService(
         throw new errors.ValidationError('ventaId requerido');
       }
 
-      const ventas = await strapi.entityService.findMany(
-        /** @type {any} */ ('api::venta.venta'),
-        /** @type {any} */ ({
-          filters: { documentId: String(ventaId) },
-          limit: 1,
-        })
-      );
-      const venta = ventas[0];
+      const resultado = await strapi.db.transaction(async ({ trx }) => {
+        const ventas = await strapi.entityService.findMany(
+          /** @type {any} */ ('api::venta.venta'),
+          /** @type {any} */ ({
+            filters: { documentId: String(ventaId) },
+            limit: 1,
+            populate: {
+              detalle_ventas: true,
+            },
+            transaction: trx,
+          })
+        );
+        const venta = ventas[0];
 
-      if (!venta) {
-        throw new errors.NotFoundError('Venta no encontrada');
-      }
+        if (!venta) {
+          throw new errors.NotFoundError('Venta no encontrada');
+        }
 
-      const ventaEntity = /** @type {any} */ (venta);
-      
-      if (ventaEntity.estado !== 'pendiente') {
-        strapi.log.warn(`Venta ${ventaId} ya fue procesada, estado actual: ${ventaEntity.estado}`);
-        return { venta: ventaEntity, yaProcesada: true };
-      }
+        const ventaEntity = /** @type {any} */ (venta);
+        
+        // Solo cancelar/eliminar ventas en estado pendiente
+        // Si está en "En proceso" significa que ya se pagó y no se puede cancelar
+        if (ventaEntity.estado !== 'pendiente') {
+          strapi.log.warn(`Venta ${ventaId} no puede ser cancelada, estado actual: ${ventaEntity.estado}`);
+          return { venta: ventaEntity, yaProcesada: true };
+        }
 
-      const ventaActualizada = await strapi.entityService.update(
-        /** @type {any} */ ('api::venta.venta'),
-        venta.id,
-        /** @type {any} */ ({
-          data: {
-            estado: 'cancelado',
-          },
-        })
-      );
+        const detalleVentas = /** @type {any[]} */ (
+          ventaEntity.detalle_ventas || []
+        );
 
-      return { venta: ventaActualizada };
+        // No necesitamos restaurar stock porque en estado "pendiente" 
+        // el stock aún no se ha descontado (solo se descuenta en confirmarPago)
+
+        // Eliminar detalle_ventas primero (por las relaciones)
+        for (const detalle of detalleVentas) {
+          if (detalle?.id) {
+            await strapi.entityService.delete(
+              /** @type {any} */ ('api::detalle-venta.detalle-venta'),
+              detalle.id,
+              /** @type {any} */ ({ transaction: trx })
+            );
+          }
+        }
+
+        // Eliminar la venta
+        await strapi.entityService.delete(
+          /** @type {any} */ ('api::venta.venta'),
+          venta.id,
+          /** @type {any} */ ({ transaction: trx })
+        );
+
+        return { eliminada: true, ventaId };
+      });
+
+      return resultado;
     },
   })
 );

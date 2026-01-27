@@ -67,6 +67,42 @@
   gap: 1.5rem;
 }
 
+/* CONTENEDOR DE VENTAS */
+.ventas-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* SCROLL VERTICAL CUANDO HAY 2+ PEDIDOS */
+.ventas-container.ventas-scroll {
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ventas-container.ventas-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ventas-container.ventas-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.ventas-container.ventas-scroll::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+
+.ventas-container.ventas-scroll::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db;
+}
+
 /* CARDS */
 .perfil-card,
 .direcciones-card,
