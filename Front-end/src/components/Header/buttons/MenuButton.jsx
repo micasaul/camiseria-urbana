@@ -67,6 +67,9 @@ export default function MenuButton({ isOpen, onClick, onClose, productLinks, ofe
                 ))}
               </div>
             )}
+            <Link to="/combo" className="side-panel-link" onClick={onClose}>
+              Combos
+            </Link>
             {ofertasActivas ? (
               <Link to="/catalogo?ofertas=1" className="side-panel-link" onClick={onClose}>
                 Ofertas

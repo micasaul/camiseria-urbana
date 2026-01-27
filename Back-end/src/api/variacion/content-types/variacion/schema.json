@@ -55,12 +55,6 @@
       "target": "api::producto.producto",
       "inversedBy": "variacions"
     },
-    "compra_proveedor": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::compra-proveedor.compra-proveedor",
-      "inversedBy": "variacions"
-    },
     "detalle_carritos": {
       "type": "relation",
       "relation": "oneToMany",

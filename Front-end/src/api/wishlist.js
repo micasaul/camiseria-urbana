@@ -5,7 +5,7 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-export async function agregarAWishlist(productoDocumentId) {
+export async function agregarAWishlist(productoDocumentId, comboDocumentId = null) {
   try {
     const userRes = await fetch(`${BACKEND_URL}/api/users/me`, {
       headers: {
@@ -20,18 +20,26 @@ export async function agregarAWishlist(productoDocumentId) {
     const userData = await userRes.json();
     const userDocumentId = userData.documentId;
     
+    const body = {
+      data: {
+        users_permissions_user: userDocumentId
+      }
+    };
+    
+    if (productoDocumentId) {
+      body.data.producto = productoDocumentId;
+    }
+    if (comboDocumentId) {
+      body.data.combo = comboDocumentId;
+    }
+    
     const res = await fetch(`${BACKEND_URL}/api/wishlists`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...getAuthHeaders()
       },
-      body: JSON.stringify({
-        data: {
-          users_permissions_user: userDocumentId,
-          producto: productoDocumentId
-        }
-      })
+      body: JSON.stringify(body)
     });
 
     if (!res.ok) {
@@ -89,7 +97,7 @@ export async function obtenerWishlistCompleta() {
     const userDocumentId = userData.documentId;
     
     const res = await fetch(
-      `${BACKEND_URL}/api/wishlists?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=producto&populate[1]=producto.imagen`,
+      `${BACKEND_URL}/api/wishlists?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=producto&populate[1]=producto.imagen&populate[2]=combo&populate[3]=combo.imagen`,
       {
         headers: {
           ...getAuthHeaders()
@@ -108,15 +116,21 @@ export async function obtenerWishlistCompleta() {
       const wishlistAttrs = wishlist?.attributes ?? wishlist;
       const producto = wishlistAttrs?.producto?.data ?? wishlistAttrs?.producto;
       const productoAttrs = producto?.attributes ?? producto;
+      const combo = wishlistAttrs?.combo?.data ?? wishlistAttrs?.combo;
+      const comboAttrs = combo?.attributes ?? combo;
+      
+      // Determinar si es producto o combo
+      const esCombo = !!combo;
+      const item = esCombo ? comboAttrs : productoAttrs;
       
       let imagenUrl = '/assets/fallback.jpg'
-      if (productoAttrs?.imagen) {
-        if (productoAttrs.imagen?.data?.attributes?.url) {
-          imagenUrl = productoAttrs.imagen.data.attributes.url
-        } else if (productoAttrs.imagen?.url) {
-          imagenUrl = productoAttrs.imagen.url
-        } else if (typeof productoAttrs.imagen === 'string') {
-          imagenUrl = productoAttrs.imagen
+      if (item?.imagen) {
+        if (item.imagen?.data?.attributes?.url) {
+          imagenUrl = item.imagen.data.attributes.url
+        } else if (item.imagen?.url) {
+          imagenUrl = item.imagen.url
+        } else if (typeof item.imagen === 'string') {
+          imagenUrl = item.imagen
         }
       }
       
@@ -124,16 +138,20 @@ export async function obtenerWishlistCompleta() {
         imagenUrl = `${BACKEND_URL}${imagenUrl}`
       }
       
-      const precioBase = Number(productoAttrs?.precio ?? 0)
-      const productoId = producto?.documentId ?? productoAttrs?.documentId ?? producto?.id ?? productoAttrs?.id
+      const precioBase = Number(item?.precio ?? 0)
+      const itemId = esCombo 
+        ? (combo?.documentId ?? comboAttrs?.documentId ?? combo?.id ?? comboAttrs?.id)
+        : (producto?.documentId ?? productoAttrs?.documentId ?? producto?.id ?? productoAttrs?.id)
 
       return {
         id: wishlist.id ?? wishlistAttrs?.id,
         documentId: wishlist.documentId ?? wishlistAttrs?.documentId ?? wishlist.id ?? wishlistAttrs?.id,
-        productoDocumentId: productoId ?? null,
-        productoId: productoId ?? null,
+        productoDocumentId: esCombo ? null : (itemId ?? null),
+        productoId: esCombo ? null : (itemId ?? null),
+        comboDocumentId: esCombo ? (itemId ?? null) : null,
+        comboId: esCombo ? (itemId ?? null) : null,
         imageSrc: imagenUrl,
-        name: productoAttrs?.nombre ?? '',
+        name: item?.nombre ?? '',
         priceValue: precioBase,
         price: `$${precioBase.toFixed(2)}`
       };
@@ -146,9 +164,10 @@ export async function obtenerWishlistCompleta() {
 
 /**
  * @param {string} 
+ * @param {string} 
  * @returns {Promise<string|false>} 
  */
-export async function estaEnWishlist(productoDocumentId) {
+export async function estaEnWishlist(productoDocumentId, comboDocumentId = null) {
   try {
     const userRes = await fetch(`${BACKEND_URL}/api/users/me`, {
       headers: {
@@ -163,14 +182,19 @@ export async function estaEnWishlist(productoDocumentId) {
     const userData = await userRes.json();
     const userDocumentId = userData.documentId;
     
-    const res = await fetch(
-      `${BACKEND_URL}/api/wishlists?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&filters[producto][documentId][$eq]=${productoDocumentId}`,
-      {
-        headers: {
-          ...getAuthHeaders()
-        }
+    let url = `${BACKEND_URL}/api/wishlists?filters[users_permissions_user][documentId][$eq]=${userDocumentId}`;
+    if (productoDocumentId) {
+      url += `&filters[producto][documentId][$eq]=${productoDocumentId}`;
+    }
+    if (comboDocumentId) {
+      url += `&filters[combo][documentId][$eq]=${comboDocumentId}`;
+    }
+    
+    const res = await fetch(url, {
+      headers: {
+        ...getAuthHeaders()
       }
-    );
+    });
 
     if (!res.ok) {
       return false;

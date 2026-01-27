@@ -22,6 +22,12 @@
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
       "inversedBy": "wishlists"
+    },
+    "combo": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::combo.combo",
+      "inversedBy": "wishlists"
     }
   }
 }

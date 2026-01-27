@@ -45,6 +45,12 @@
       "relation": "manyToOne",
       "target": "api::variacion.variacion",
       "inversedBy": "detalle_ventas"
+    },
+    "combo": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::combo.combo",
+      "inversedBy": "detalle_ventas"
     }
   }
 }

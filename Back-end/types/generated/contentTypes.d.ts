@@ -466,44 +466,78 @@ export interface ApiCarritoCarrito extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiCompraProveedorCompraProveedor
+export interface ApiComboVariacionComboVariacion
   extends Struct.CollectionTypeSchema {
-  collectionName: 'compra_proveedores';
+  collectionName: 'combos_variaciones';
   info: {
-    displayName: 'CompraProveedor';
-    pluralName: 'compra-proveedores';
-    singularName: 'compra-proveedor';
+    displayName: 'ComboVariacion';
+    pluralName: 'combos-variaciones';
+    singularName: 'combo-variacion';
   };
   options: {
     draftAndPublish: true;
   };
   attributes: {
+    combo: Schema.Attribute.Relation<'manyToOne', 'api::combo.combo'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
-      'api::compra-proveedor.compra-proveedor'
+      'api::combo-variacion.combo-variacion'
     > &
       Schema.Attribute.Private;
-    proveedor: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
-    total: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      >;
+    stock: Schema.Attribute.Integer & Schema.Attribute.Required;
+    talle: Schema.Attribute.Enumeration<
+      ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+    > &
+      Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    variacions: Schema.Attribute.Relation<
+  };
+}
+
+export interface ApiComboCombo extends Struct.CollectionTypeSchema {
+  collectionName: 'combos';
+  info: {
+    displayName: 'Combo';
+    pluralName: 'combos';
+    singularName: 'combo';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    combo_variacions: Schema.Attribute.Relation<
       'oneToMany',
-      'api::variacion.variacion'
+      'api::combo-variacion.combo-variacion'
     >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    detalle_carritos: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::detalle-carrito.detalle-carrito'
+    >;
+    detalle_ventas: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::detalle-venta.detalle-venta'
+    >;
+    imagen: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::combo.combo'> &
+      Schema.Attribute.Private;
+    nombre: Schema.Attribute.String & Schema.Attribute.Required;
+    precio: Schema.Attribute.Integer & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    resenas: Schema.Attribute.Relation<'oneToMany', 'api::resena.resena'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    wishlists: Schema.Attribute.Relation<'oneToMany', 'api::wishlist.wishlist'>;
   };
 }
 
@@ -529,6 +563,7 @@ export interface ApiDetalleCarritoDetalleCarrito
       > &
       Schema.Attribute.DefaultTo<1>;
     carrito: Schema.Attribute.Relation<'manyToOne', 'api::carrito.carrito'>;
+    combo: Schema.Attribute.Relation<'manyToOne', 'api::combo.combo'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -570,6 +605,7 @@ export interface ApiDetalleVentaDetalleVenta
         number
       > &
       Schema.Attribute.DefaultTo<1>;
+    combo: Schema.Attribute.Relation<'manyToOne', 'api::combo.combo'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -942,10 +978,6 @@ export interface ApiVariacionVariacion extends Struct.CollectionTypeSchema {
       ]
     > &
       Schema.Attribute.Required;
-    compra_proveedor: Schema.Attribute.Relation<
-      'manyToOne',
-      'api::compra-proveedor.compra-proveedor'
-    >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1049,6 +1081,7 @@ export interface ApiWishlistWishlist extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    combo: Schema.Attribute.Relation<'manyToOne', 'api::combo.combo'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1592,7 +1625,8 @@ declare module '@strapi/strapi' {
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::carrito.carrito': ApiCarritoCarrito;
-      'api::compra-proveedor.compra-proveedor': ApiCompraProveedorCompraProveedor;
+      'api::combo-variacion.combo-variacion': ApiComboVariacionComboVariacion;
+      'api::combo.combo': ApiComboCombo;
       'api::detalle-carrito.detalle-carrito': ApiDetalleCarritoDetalleCarrito;
       'api::detalle-venta.detalle-venta': ApiDetalleVentaDetalleVenta;
       'api::direccion-usuario.direccion-usuario': ApiDireccionUsuarioDireccionUsuario;

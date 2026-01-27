@@ -3,7 +3,7 @@ import './product-card.css'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
-export default function ProductCard({ producto, descuento = 0 }) {
+export default function ProductCard({ producto, descuento = 0, to = null }) {
   const imagenUrl = producto.imagen?.startsWith('http') 
     ? producto.imagen 
     : `${BACKEND_URL}${producto.imagen || '/assets/fallback.jpg'}`
@@ -19,9 +19,10 @@ export default function ProductCard({ producto, descuento = 0 }) {
   const tieneDescuento = descuentoNum > 0
 
   const productoId = producto.documentId ?? producto.id
+  const linkTo = to ?? (productoId ? `/producto/${productoId}` : null)
   
-  return (
-    <Link to={`/producto/${productoId}`} className="product-card">
+  const cardContent = (
+    <>
       <div className={`product-card-image-container${sinStock ? ' agotado' : ''}`}>
         <img 
           src={imagenUrl} 
@@ -43,6 +44,20 @@ export default function ProductCard({ producto, descuento = 0 }) {
           )}
         </div>
       </div>
-    </Link>
+    </>
+  )
+  
+  if (linkTo) {
+    return (
+      <Link to={linkTo} className="product-card">
+        {cardContent}
+      </Link>
+    )
+  }
+  
+  return (
+    <div className="product-card">
+      {cardContent}
+    </div>
   )
 }

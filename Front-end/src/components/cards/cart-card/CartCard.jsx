@@ -48,8 +48,8 @@ export default function CartCard({
       <div className="cart-card-details">
         <span className="cart-card-name">{name}</span>
         <div className="cart-card-variant">
-          <span>Talle: {size ?? '-'}</span>
-          <span>Color: {color ?? '-'}</span>
+          {size !== null && <span>Talle: {size ?? '-'}</span>}
+          {color !== null && <span>Color: {color ?? '-'}</span>}
         </div>
         <div className="cart-card-footer">
           <span className="cart-card-price">

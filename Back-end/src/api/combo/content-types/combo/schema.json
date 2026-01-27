@@ -1,0 +1,62 @@
+{
+  "kind": "collectionType",
+  "collectionName": "combos",
+  "info": {
+    "singularName": "combo",
+    "pluralName": "combos",
+    "displayName": "Combo"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nombre": {
+      "type": "string",
+      "required": true
+    },
+    "precio": {
+      "type": "integer",
+      "required": true
+    },
+    "imagen": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "resenas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::resena.resena"
+    },
+    "wishlists": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::wishlist.wishlist",
+      "mappedBy": "combo"
+    },
+    "detalle_ventas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::detalle-venta.detalle-venta",
+      "mappedBy": "combo"
+    },
+    "detalle_carritos": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::detalle-carrito.detalle-carrito",
+      "mappedBy": "combo"
+    },
+    "combos-variaciones": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::combo-variacion.combo-variacion",
+      "mappedBy": "combo"
+    }
+  }
+}

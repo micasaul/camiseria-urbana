@@ -28,6 +28,12 @@
       "relation": "manyToOne",
       "target": "api::variacion.variacion",
       "inversedBy": "detalle_carritos"
+    },
+    "combo": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::combo.combo",
+      "inversedBy": "detalle_carritos"
     }
   }
 }

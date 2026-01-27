@@ -126,7 +126,7 @@ export async function obtenerCarritoCompleto() {
     
 
     const res = await fetch(
-      `${BACKEND_URL}/api/carritos?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=detalle_carritos&populate[1]=detalle_carritos.variacion&populate[2]=detalle_carritos.variacion.producto&populate[3]=detalle_carritos.variacion.producto.imagen`,
+      `${BACKEND_URL}/api/carritos?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=detalle_carritos&populate[1]=detalle_carritos.variacion&populate[2]=detalle_carritos.variacion.producto&populate[3]=detalle_carritos.variacion.producto.imagen&populate[4]=detalle_carritos.combo&populate[5]=detalle_carritos.combo.imagen`,
       {
         headers: {
           ...getAuthHeaders()
@@ -155,15 +155,20 @@ export async function obtenerCarritoCompleto() {
       const variacionAttrs = variacion?.attributes ?? variacion;
       const producto = variacionAttrs?.producto?.data ?? variacionAttrs?.producto;
       const productoAttrs = producto?.attributes ?? producto;
+      const combo = detalleAttrs?.combo?.data ?? detalleAttrs?.combo;
+      const comboAttrs = combo?.attributes ?? combo;
+      
+      const esCombo = !!combo;
+      const item = esCombo ? comboAttrs : productoAttrs;
       
       let imagenUrl = '/assets/fallback.jpg'
-      if (productoAttrs?.imagen) {
-        if (productoAttrs.imagen?.data?.attributes?.url) {
-          imagenUrl = productoAttrs.imagen.data.attributes.url
-        } else if (productoAttrs.imagen?.url) {
-          imagenUrl = productoAttrs.imagen.url
-        } else if (typeof productoAttrs.imagen === 'string') {
-          imagenUrl = productoAttrs.imagen
+      if (item?.imagen) {
+        if (item.imagen?.data?.attributes?.url) {
+          imagenUrl = item.imagen.data.attributes.url
+        } else if (item.imagen?.url) {
+          imagenUrl = item.imagen.url
+        } else if (typeof item.imagen === 'string') {
+          imagenUrl = item.imagen
         }
       }
       
@@ -171,21 +176,24 @@ export async function obtenerCarritoCompleto() {
         imagenUrl = `${BACKEND_URL}${imagenUrl}`
       }
 
-      const precioBase = Number(productoAttrs?.precio ?? 0)
-      const productoId = producto?.documentId ?? productoAttrs?.documentId ?? producto?.id ?? productoAttrs?.id
+      const precioBase = Number(item?.precio ?? 0)
+      const itemId = esCombo 
+        ? (combo?.documentId ?? comboAttrs?.documentId ?? combo?.id ?? comboAttrs?.id)
+        : (producto?.documentId ?? productoAttrs?.documentId ?? producto?.id ?? productoAttrs?.id)
       
       return {
         id: detalle.id ?? detalleAttrs?.id,
         documentId: detalle.documentId ?? detalleAttrs?.documentId ?? detalle.id ?? detalleAttrs?.id,
-        productoId: productoId ?? null,
+        productoId: esCombo ? null : (itemId ?? null),
+        comboId: esCombo ? (itemId ?? null) : null,
         imageSrc: imagenUrl,
-        name: productoAttrs?.nombre ?? '',
-        size: variacionAttrs?.talle ?? '',
-        color: variacionAttrs?.color ?? '',
+        name: item?.nombre ?? '',
+        size: esCombo ? null : (variacionAttrs?.talle ?? ''), // Los combos no tienen talle guardado en detalle_carrito
+        color: esCombo ? null : (variacionAttrs?.color ?? ''),
         priceValue: precioBase,
         price: `$${precioBase.toFixed(2)}`,
         quantity: detalleAttrs?.cantidad ?? 1,
-        stock: variacionAttrs?.stock ?? 0
+        stock: esCombo ? 999 : (variacionAttrs?.stock ?? 0) // Los combos no tienen stock por variación en el detalle
       };
     });
   } catch (error) {
@@ -289,5 +297,43 @@ export async function eliminarDetalleCarrito(detalleDocumentId) {
   } catch (error) {
     console.error('Error al eliminar detalle del carrito:', error)
     throw error
+  }
+}
+
+/**
+ * @param {string} 
+ * @param {string} 
+ * @param {number} 
+ * @returns {Promise<Object>}
+ */
+export async function agregarComboAlCarrito(carritoDocumentId, comboDocumentId, cantidad) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/detalles-carritos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({
+        data: {
+          cantidad: cantidad,
+          carrito: carritoDocumentId,
+          combo: comboDocumentId
+        }
+      })
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('Error response:', errorText);
+      throw new Error('No se pudo agregar el combo al carrito.');
+    }
+
+    window.dispatchEvent(new CustomEvent('cart:updated'));
+
+    return res.json();
+  } catch (error) {
+    console.error('Error al agregar combo al carrito:', error);
+    throw error;
   }
 }

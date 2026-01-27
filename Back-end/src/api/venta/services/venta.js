@@ -32,6 +32,7 @@ module.exports = createCoreService(
                       producto: true,
                     },
                   },
+                  combo: true,
                 },
               },
               users_permissions_user: true,
@@ -57,38 +58,86 @@ module.exports = createCoreService(
         const itemsVenta = await Promise.all(
           detalleCarritos.map(async (detalle) => {
             const variacion = detalle?.variacion;
-            const variacionId = variacion?.id;
-            const variacionDocumentId = variacion?.documentId;
+            const combo = detalle?.combo;
             const cantidad = aNumero(detalle?.cantidad);
 
-            if (!variacionId || !variacionDocumentId || cantidad <= 0) {
+            if (cantidad <= 0) {
               return null;
             }
 
-            // Verificar stock
-            const variacionActual = await strapi.entityService.findOne(
-              /** @type {any} */ ('api::variacion.variacion'),
-              variacionId,
-              /** @type {any} */ ({ transaction: trx })
-            );
+            // Procesar productos (con variación)
+            if (variacion) {
+              const variacionId = variacion?.id;
+              const variacionDocumentId = variacion?.documentId;
 
-            if (!variacionActual || aNumero(variacionActual.stock) < cantidad) {
-              throw new errors.ValidationError(`Stock insuficiente para la variación ${variacionId}`);
+              if (!variacionId || !variacionDocumentId) {
+                return null;
+              }
+
+              // Verificar stock
+              const variacionActual = await strapi.entityService.findOne(
+                /** @type {any} */ ('api::variacion.variacion'),
+                variacionId,
+                /** @type {any} */ ({ transaction: trx })
+              );
+
+              if (!variacionActual || aNumero(variacionActual.stock) < cantidad) {
+                throw new errors.ValidationError(`Stock insuficiente para la variación ${variacionId}`);
+              }
+
+              const precio = await pricingService.getPrecioFinal(variacionId);
+              const precioUnitario = aNumero(precio?.precioFinal);
+              const descuento = aNumero(precio?.descuento);
+              const subtotal = precioUnitario * cantidad;
+
+              return {
+                tipo: 'producto',
+                variacion: variacionId,
+                variacionDocumentId,
+                cantidad,
+                precioUnitario,
+                descuento,
+                subtotal,
+              };
             }
 
-            const precio = await pricingService.getPrecioFinal(variacionId);
-            const precioUnitario = aNumero(precio?.precioFinal);
-            const descuento = aNumero(precio?.descuento);
-            const subtotal = precioUnitario * cantidad;
+            // Procesar combos
+            if (combo) {
+              const comboId = combo?.id;
+              const comboDocumentId = combo?.documentId;
 
-            return {
-              variacion: variacionId,
-              variacionDocumentId,
-              cantidad,
-              precioUnitario,
-              descuento,
-              subtotal,
-            };
+              if (!comboId || !comboDocumentId) {
+                return null;
+              }
+
+              // Verificar que el combo exista
+              const comboActual = await strapi.entityService.findOne(
+                /** @type {any} */ ('api::combo.combo'),
+                comboId,
+                /** @type {any} */ ({ transaction: trx })
+              );
+
+              if (!comboActual) {
+                throw new errors.ValidationError(`Combo ${comboId} no encontrado`);
+              }
+
+              // Los combos usan su precio directamente (sin descuentos)
+              const precioUnitario = aNumero(comboActual.precio ?? 0);
+              const descuento = 0;
+              const subtotal = precioUnitario * cantidad;
+
+              return {
+                tipo: 'combo',
+                combo: comboId,
+                comboDocumentId,
+                cantidad,
+                precioUnitario,
+                descuento,
+                subtotal,
+              };
+            }
+
+            return null;
           })
         );
 
@@ -147,44 +196,58 @@ module.exports = createCoreService(
         );
 
         const items = await Promise.all(
-          itemsValidos.map((item) =>
-            strapi.entityService.create(
+          itemsValidos.map((item) => {
+            const dataBase = {
+              venta: {
+                connect: [{ documentId: venta.documentId }],
+              },
+              cantidad: item.cantidad,
+              precioUnitario: item.precioUnitario,
+              descuento: item.descuento,
+              subtotal: item.subtotal,
+            };
+
+            // Agregar relación según el tipo
+            if (item.tipo === 'producto') {
+              dataBase.variacion = {
+                connect: [{ documentId: item.variacionDocumentId }],
+              };
+            } else if (item.tipo === 'combo') {
+              dataBase.combo = {
+                connect: [{ documentId: item.comboDocumentId }],
+              };
+            }
+
+            return strapi.entityService.create(
               /** @type {any} */ ('api::detalle-venta.detalle-venta'),
               /** @type {any} */ ({
-                data: {
-                  venta: {
-                    connect: [{ documentId: venta.documentId }],
-                  },
-                  variacion: {
-                    connect: [{ documentId: item.variacionDocumentId }],
-                  },
-                  cantidad: item.cantidad,
-                  precioUnitario: item.precioUnitario,
-                  descuento: item.descuento,
-                  subtotal: item.subtotal,
-                },
+                data: dataBase,
                 status: 'published',
                 transaction: trx,
               })
-            )
-          )
+            );
+          })
         );
 
+        // Verificar stock solo para productos (las variaciones ya se verificaron antes)
         for (const item of itemsValidos) {
-          const variacionActual = await strapi.entityService.findOne(
-            /** @type {any} */ ('api::variacion.variacion'),
-            item.variacion,
-            /** @type {any} */ ({ transaction: trx })
-          );
+          if (item.tipo === 'producto') {
+            const variacionActual = await strapi.entityService.findOne(
+              /** @type {any} */ ('api::variacion.variacion'),
+              item.variacion,
+              /** @type {any} */ ({ transaction: trx })
+            );
 
-          if (!variacionActual) {
-            throw new errors.ValidationError(`Variación ${item.variacion} no encontrada`);
-          }
+            if (!variacionActual) {
+              throw new errors.ValidationError(`Variación ${item.variacion} no encontrada`);
+            }
 
-          const stockActual = aNumero(variacionActual.stock);
-          if (stockActual < item.cantidad) {
-            throw new errors.ValidationError(`Stock insuficiente para la variación ${item.variacion}`);
+            const stockActual = aNumero(variacionActual.stock);
+            if (stockActual < item.cantidad) {
+              throw new errors.ValidationError(`Stock insuficiente para la variación ${item.variacion}`);
+            }
           }
+          // Para combos, no verificamos stock aquí ya que se verifica al agregar al carrito
         }
 
         for (const detalle of detalleCarritos) {
@@ -226,6 +289,7 @@ module.exports = createCoreService(
               detalle_ventas: {
                 populate: {
                   variacion: true,
+                  combo: true,
                 },
               },
               users_permissions_user: true,
@@ -250,35 +314,40 @@ module.exports = createCoreService(
         if (ventaEntity.estado === 'En proceso') {
           for (const detalle of detalleVentas) {
             const variacion = detalle?.variacion;
-            const variacionId = variacion?.id;
             const cantidad = aNumero(detalle?.cantidad);
 
-            if (!variacionId || cantidad <= 0) {
-              continue;
-            }
+            // Solo restaurar stock para productos (variaciones)
+            if (variacion && cantidad > 0) {
+              const variacionId = variacion?.id;
 
-            const variacionActual = await strapi.entityService.findOne(
-              /** @type {any} */ ('api::variacion.variacion'),
-              variacionId,
-              /** @type {any} */ ({ transaction: trx })
-            );
+              if (!variacionId) {
+                continue;
+              }
 
-            if (variacionActual) {
-              const variacionActualizada = await strapi.entityService.update(
+              const variacionActual = await strapi.entityService.findOne(
                 /** @type {any} */ ('api::variacion.variacion'),
                 variacionId,
-                /** @type {any} */ ({
-                  data: {
-                    stock: aNumero(variacionActual.stock) + cantidad,
-                  },
-                  transaction: trx,
-                })
+                /** @type {any} */ ({ transaction: trx })
               );
 
-              if (variacionActualizada?.documentId) {
-                variacionesRestauradas.push(variacionActualizada.documentId);
+              if (variacionActual) {
+                const variacionActualizada = await strapi.entityService.update(
+                  /** @type {any} */ ('api::variacion.variacion'),
+                  variacionId,
+                  /** @type {any} */ ({
+                    data: {
+                      stock: aNumero(variacionActual.stock) + cantidad,
+                    },
+                    transaction: trx,
+                  })
+                );
+
+                if (variacionActualizada?.documentId) {
+                  variacionesRestauradas.push(variacionActualizada.documentId);
+                }
               }
             }
+            // Para combos, no restauramos stock ya que no tienen variaciones con stock en detalle_venta
           }
         }
 
@@ -313,26 +382,51 @@ module.exports = createCoreService(
 
         for (const detalle of detalleVentas) {
           const variacion = detalle?.variacion;
-          const variacionId = variacion?.id;
-          const variacionDocumentId = variacion?.documentId;
+          const combo = detalle?.combo;
           const cantidad = aNumero(detalle?.cantidad);
 
-          if (!variacionId || !variacionDocumentId || cantidad <= 0) {
+          if (cantidad <= 0) {
+            continue;
+          }
+
+          const dataBase = {
+            carrito: {
+              connect: [{ documentId: carrito.documentId }],
+            },
+            cantidad: cantidad,
+          };
+
+          // Agregar relación según el tipo
+          if (variacion) {
+            const variacionId = variacion?.id;
+            const variacionDocumentId = variacion?.documentId;
+
+            if (!variacionId || !variacionDocumentId) {
+              continue;
+            }
+
+            dataBase.variacion = {
+              connect: [{ documentId: variacionDocumentId }],
+            };
+          } else if (combo) {
+            const comboId = combo?.id;
+            const comboDocumentId = combo?.documentId;
+
+            if (!comboId || !comboDocumentId) {
+              continue;
+            }
+
+            dataBase.combo = {
+              connect: [{ documentId: comboDocumentId }],
+            };
+          } else {
             continue;
           }
 
           await strapi.entityService.create(
             /** @type {any} */ ('api::detalle-carrito.detalle-carrito'),
             /** @type {any} */ ({
-              data: {
-                carrito: {
-                  connect: [{ documentId: carrito.documentId }],
-                },
-                variacion: {
-                  connect: [{ documentId: variacionDocumentId }],
-                },
-                cantidad: cantidad,
-              },
+              data: dataBase,
               transaction: trx,
             })
           );
@@ -387,6 +481,7 @@ module.exports = createCoreService(
               detalle_ventas: {
                 populate: {
                   variacion: true,
+                  combo: true,
                 },
               },
             },
@@ -414,44 +509,54 @@ module.exports = createCoreService(
         const variacionesActualizadas = [];
         for (const detalle of detalleVentas) {
           const variacion = detalle?.variacion;
-          const variacionId = variacion?.id;
+          const combo = detalle?.combo;
           const cantidad = aNumero(detalle?.cantidad);
 
-          if (!variacionId || cantidad <= 0) {
+          if (cantidad <= 0) {
             continue;
           }
 
-          const variacionActual = await strapi.entityService.findOne(
-            /** @type {any} */ ('api::variacion.variacion'),
-            variacionId,
-            /** @type {any} */ ({ transaction: trx })
-          );
+          // Solo actualizar stock para productos (variaciones)
+          if (variacion) {
+            const variacionId = variacion?.id;
 
-          if (!variacionActual) {
-            continue;
+            if (!variacionId) {
+              continue;
+            }
+
+            const variacionActual = await strapi.entityService.findOne(
+              /** @type {any} */ ('api::variacion.variacion'),
+              variacionId,
+              /** @type {any} */ ({ transaction: trx })
+            );
+
+            if (!variacionActual) {
+              continue;
+            }
+
+            const stockActual = aNumero(variacionActual.stock);
+            const nuevoStock = stockActual - cantidad;
+
+            if (nuevoStock < 0) {
+              throw new errors.ValidationError(`Stock insuficiente para la variación ${variacionId}`);
+            }
+
+            const variacionActualizada = await strapi.entityService.update(
+              /** @type {any} */ ('api::variacion.variacion'),
+              variacionId,
+              /** @type {any} */ ({
+                data: {
+                  stock: nuevoStock,
+                },
+                transaction: trx,
+              })
+            );
+
+            if (variacionActualizada?.documentId) {
+              variacionesActualizadas.push(variacionActualizada.documentId);
+            }
           }
-
-          const stockActual = aNumero(variacionActual.stock);
-          const nuevoStock = stockActual - cantidad;
-
-          if (nuevoStock < 0) {
-            throw new errors.ValidationError(`Stock insuficiente para la variación ${variacionId}`);
-          }
-
-          const variacionActualizada = await strapi.entityService.update(
-            /** @type {any} */ ('api::variacion.variacion'),
-            variacionId,
-            /** @type {any} */ ({
-              data: {
-                stock: nuevoStock,
-              },
-              transaction: trx,
-            })
-          );
-
-          if (variacionActualizada?.documentId) {
-            variacionesActualizadas.push(variacionActualizada.documentId);
-          }
+          // Para combos, no actualizamos stock aquí ya que no tienen variaciones con stock en detalle_venta
         }
 
         const ventaActualizada = await strapi.entityService.update(
