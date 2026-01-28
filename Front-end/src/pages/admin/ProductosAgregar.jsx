@@ -8,8 +8,7 @@ import {
   existeProductoPorNombre,
   getProductoPorId,
   actualizarProducto,
-  actualizarVariacion,
-  subirImagen
+  actualizarVariacion
 } from '../../api/productos.js'
 import { getProductoEnums } from '../../api/enums.js'
 import { crearMarca, getMarcas } from '../../api/marcas.js'
@@ -41,9 +40,6 @@ export default function ProductosAgregar() {
   const [productoId, setProductoId] = useState(null)
   const [productoDocumentId, setProductoDocumentId] = useState(null)
   const [cargandoProducto, setCargandoProducto] = useState(false)
-  const [imagenFile, setImagenFile] = useState(null)
-  const [imagenPreview, setImagenPreview] = useState('')
-  const [imagenId, setImagenId] = useState(null)
   const { id } = useParams()
 
   useEffect(() => {
@@ -110,7 +106,6 @@ export default function ProductosAgregar() {
   }
 
   const resetearFormulario = () => {
-    if (imagenPreview?.startsWith('blob:')) URL.revokeObjectURL(imagenPreview)
     resetearFormularioProducto({
       setNombre,
       setDescripcion,
@@ -122,28 +117,10 @@ export default function ProductosAgregar() {
       setMensaje,
       setError,
       setProductoId,
-      setProductoDocumentId,
-      setImagenFile,
-      setImagenPreview,
-      setImagenId
+      setProductoDocumentId
     })
   }
 
-  const handleImagenChange = (e) => {
-    const file = e.target.files?.[0]
-    if (imagenPreview?.startsWith('blob:')) URL.revokeObjectURL(imagenPreview)
-    if (!file) {
-      setImagenFile(null)
-      setImagenPreview('')
-      setImagenId(null)
-      e.target.value = ''
-      return
-    }
-    setImagenFile(file)
-    setImagenPreview(URL.createObjectURL(file))
-    setImagenId(null)
-    e.target.value = ''
-  }
   useEffect(() => {
     if (!id) return
     let activo = true
@@ -164,14 +141,6 @@ export default function ProductosAgregar() {
         const marcaId = marcaData?.id ?? marcaData?.documentId ?? ''
         if (marcaId) {
           setMarcaSeleccionada(String(marcaId))
-        }
-
-        const img = attrs?.imagen?.data ?? attrs?.imagen ?? null
-        const imgAttrs = img?.attributes ?? img ?? {}
-        const imgUrl = imgAttrs?.url ?? img?.url
-        if (imgUrl) {
-          setImagenPreview(imgUrl.startsWith('http') ? imgUrl : `${BACKEND_URL}${imgUrl}`)
-          setImagenId(img?.id ?? imgAttrs?.id ?? null)
         }
 
         const variacionesRaw =
@@ -236,12 +205,6 @@ export default function ProductosAgregar() {
     }
     const precioNumero = Number(precio)
 
-    const tieneImagen = Boolean(imagenFile || (id && imagenId != null))
-    if (!tieneImagen) {
-      setError('La imagen del producto es obligatoria.')
-      return
-    }
-
     let marcaRelacion = null
     const marcaSeleccion = marcaSeleccionada
 
@@ -277,24 +240,13 @@ export default function ProductosAgregar() {
       return
     }
 
-    let imagenPayload = undefined
-    if (imagenFile) {
-      const uploaded = await subirImagen(imagenFile)
-      imagenPayload = uploaded.id
-    } else if (id && imagenId != null) {
-      imagenPayload = imagenId
-    } else if (id && !imagenFile && imagenId == null) {
-      imagenPayload = null
-    }
-
     const payloadProducto = {
       data: {
         nombre: nombreNormalizado,
         descripcion,
         material,
         precio: precioNumero,
-        ...(marcaRelacion ? { marca: marcaRelacion } : {}),
-        ...(imagenPayload !== undefined && { imagen: imagenPayload })
+        ...(marcaRelacion ? { marca: marcaRelacion } : {})
       }
     }
 
@@ -452,49 +404,6 @@ export default function ProductosAgregar() {
               value={precio}
               onChange={(event) => setPrecio(event.target.value)}
             />
-          </div>
-        </div>
-
-        <div className="admin-product-media">
-          <div className="admin-media-box">
-            <p className="admin-media-title">Imagen</p>
-            <p className="admin-media-hint">Se sube a la Media Library y se asocia por ID al producto.</p>
-            {imagenPreview ? (
-              <div className="admin-media-preview-wrap">
-                <img src={imagenPreview} alt="Vista previa" className="admin-media-preview" />
-                <div className="admin-media-actions">
-                  <label className="admin-media-upload">
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/jpg,image/webp"
-                      onChange={handleImagenChange}
-                    />
-                    <span>Cambiar</span>
-                  </label>
-                  <button
-                    type="button"
-                    className="admin-media-quitar"
-                    onClick={() => {
-                      if (imagenPreview?.startsWith('blob:')) URL.revokeObjectURL(imagenPreview)
-                      setImagenFile(null)
-                      setImagenPreview('')
-                      setImagenId(null)
-                    }}
-                  >
-                    Quitar
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <label className="admin-media-upload">
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={handleImagenChange}
-                />
-                <span>Seleccionar archivo</span>
-              </label>
-            )}
           </div>
         </div>
 

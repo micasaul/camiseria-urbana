@@ -73,7 +73,6 @@ export default function Producto() {
           descripcion: attrs?.descripcion ?? '',
           precio: attrs?.precio ?? 0,
           material: attrs?.material ?? '',
-          imagen: attrs?.imagen?.data?.attributes?.url ?? attrs?.imagen?.url ?? '/assets/fallback.jpg',
           variaciones: (
             attrs?.variaciones?.data ??
             attrs?.variaciones ??
@@ -222,9 +221,7 @@ export default function Producto() {
     return <div className="producto-page">Producto no encontrado</div>
   }
 
-  const imagenUrl = producto.imagen?.startsWith('http')
-    ? producto.imagen
-    : `${BACKEND_URL}${producto.imagen || '/assets/fallback.jpg'}`
+  const imagenUrl = `${BACKEND_URL}/assets/fallback.jpg`
 
   return (
     <div className="producto-page">

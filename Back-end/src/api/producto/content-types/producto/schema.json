@@ -63,10 +63,9 @@
       "target": "api::resena.resena",
       "mappedBy": "producto"
     },
-    "imagen": {
-      "type": "media",
-      "multiple": false,
-      "required": false
+    "inactivo": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

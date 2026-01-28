@@ -556,8 +556,13 @@ button.white-btn.admin-white-action:hover {
 }
 
 .admin-table-products {
-  grid-template-columns: 70px minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-columns: 70px minmax(0, 1.1fr) minmax(0, 0.7fr) minmax(0, 0.8fr) minmax(0, 0.65fr) minmax(0, 1.1fr) minmax(0, 1.2fr);
   align-items: center;
+}
+
+.admin-table-header.admin-table-products,
+.admin-table-row.admin-table-products {
+  padding-left: 5px;
 }
 
 .admin-table-promos {

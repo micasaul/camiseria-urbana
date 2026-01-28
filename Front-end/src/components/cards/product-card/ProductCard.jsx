@@ -3,10 +3,10 @@ import './product-card.css'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
+const FALLBACK_IMAGEN = '/assets/fallback.jpg'
+
 export default function ProductCard({ producto, descuento = 0, to = null }) {
-  const imagenUrl = producto.imagen?.startsWith('http') 
-    ? producto.imagen 
-    : `${BACKEND_URL}${producto.imagen || '/assets/fallback.jpg'}`
+  const imagenUrl = `${BACKEND_URL}${FALLBACK_IMAGEN}`
 
   const variaciones = producto?.variaciones ?? []
   const sinStock = !variaciones.some((variacion) => Number(variacion?.stock ?? 0) > 0)

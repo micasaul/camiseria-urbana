@@ -96,14 +96,12 @@ export async function obtenerWishlistCompleta() {
     const userData = await userRes.json();
     const userDocumentId = userData.documentId;
     
-    const res = await fetch(
-      `${BACKEND_URL}/api/wishlists?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=producto&populate[1]=producto.imagen&populate[2]=combo&populate[3]=combo.imagen`,
-      {
-        headers: {
-          ...getAuthHeaders()
-        }
+    const url = `${BACKEND_URL}/api/wishlists?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=producto&populate[1]=combo&populate[2]=combo.imagen`
+    const res = await fetch(url, {
+      headers: {
+        ...getAuthHeaders()
       }
-    );
+    });
 
     if (!res.ok) {
       throw new Error('No se pudo obtener la wishlist.');
@@ -111,20 +109,20 @@ export async function obtenerWishlistCompleta() {
 
     const data = await res.json();
     const wishlists = data?.data ?? [];
-    
-    return wishlists.map((wishlist) => {
+
+    const mapped = wishlists.map((wishlist) => {
       const wishlistAttrs = wishlist?.attributes ?? wishlist;
       const producto = wishlistAttrs?.producto?.data ?? wishlistAttrs?.producto;
       const productoAttrs = producto?.attributes ?? producto;
       const combo = wishlistAttrs?.combo?.data ?? wishlistAttrs?.combo;
       const comboAttrs = combo?.attributes ?? combo;
-      
-      // Determinar si es producto o combo
+
       const esCombo = !!combo;
       const item = esCombo ? comboAttrs : productoAttrs;
-      
+      const isProductoInactivo = !esCombo && productoAttrs?.inactivo === true;
+
       let imagenUrl = '/assets/fallback.jpg'
-      if (item?.imagen) {
+      if (esCombo && item?.imagen) {
         if (item.imagen?.data?.attributes?.url) {
           imagenUrl = item.imagen.data.attributes.url
         } else if (item.imagen?.url) {
@@ -133,13 +131,12 @@ export async function obtenerWishlistCompleta() {
           imagenUrl = item.imagen
         }
       }
-      
       if (!imagenUrl.startsWith('http')) {
         imagenUrl = `${BACKEND_URL}${imagenUrl}`
       }
-      
+
       const precioBase = Number(item?.precio ?? 0)
-      const itemId = esCombo 
+      const itemId = esCombo
         ? (combo?.documentId ?? comboAttrs?.documentId ?? combo?.id ?? comboAttrs?.id)
         : (producto?.documentId ?? productoAttrs?.documentId ?? producto?.id ?? productoAttrs?.id)
 
@@ -153,9 +150,16 @@ export async function obtenerWishlistCompleta() {
         imageSrc: imagenUrl,
         name: item?.nombre ?? '',
         priceValue: precioBase,
-        price: `$${precioBase.toFixed(2)}`
+        price: `$${precioBase.toFixed(2)}`,
+        isProductoInactivo
       };
     });
+
+    const toRemove = mapped.filter((m) => m.isProductoInactivo);
+    const valid = mapped.filter((m) => !m.isProductoInactivo);
+    await Promise.all(toRemove.map((m) => eliminarDeWishlist(m.documentId)));
+
+    return valid.map(({ isProductoInactivo, ...rest }) => rest);
   } catch (error) {
     console.error('Error al obtener wishlist completa:', error);
     return [];

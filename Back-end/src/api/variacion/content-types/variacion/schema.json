@@ -66,6 +66,16 @@
       "relation": "oneToMany",
       "target": "api::detalle-venta.detalle-venta",
       "mappedBy": "variacion"
+    },
+    "imagen": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
     }
   }
 }

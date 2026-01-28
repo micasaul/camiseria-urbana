@@ -40,12 +40,12 @@ export default function ProductosMismaMarca({ marcaId, productoActualId }) {
       return () => { activo = false }
     }
 
-    const marcaUrl = `${import.meta.env.VITE_BACKEND_URL}/api/marcas/${marcaId}?populate[productos][populate][0]=variacions&populate[productos][populate][1]=promo_productos&populate[productos][populate][2]=promo_productos.promo&populate[productos][populate][3]=imagen`
+    const marcaUrl = `${import.meta.env.VITE_BACKEND_URL}/api/marcas/${marcaId}?populate[productos][populate][0]=variacions&populate[productos][populate][1]=promo_productos&populate[productos][populate][2]=promo_productos.promo`
     
     fetch(marcaUrl)
       .then(async res => {
         if (!res.ok) {
-          return fetch(`${import.meta.env.VITE_BACKEND_URL}/api/productos?populate[0]=variacions&populate[1]=marca&populate[2]=promo_productos&populate[3]=promo_productos.promo&populate[4]=imagen&pagination[pageSize]=1000`)
+          return fetch(`${import.meta.env.VITE_BACKEND_URL}/api/productos?populate[0]=variacions&populate[1]=marca&populate[2]=promo_productos&populate[3]=promo_productos.promo&filters[$or][0][inactivo][$eq]=false&filters[$or][1][inactivo][$null]=true&pagination[pageSize]=1000`)
             .then(res2 => res2.json())
             .then(data => ({ esFallback: true, data }))
         }

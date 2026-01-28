@@ -126,7 +126,7 @@ export async function obtenerCarritoCompleto() {
     
 
     const res = await fetch(
-      `${BACKEND_URL}/api/carritos?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=detalle_carritos&populate[1]=detalle_carritos.variacion&populate[2]=detalle_carritos.variacion.producto&populate[3]=detalle_carritos.variacion.producto.imagen&populate[4]=detalle_carritos.combo&populate[5]=detalle_carritos.combo.imagen`,
+      `${BACKEND_URL}/api/carritos?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=detalle_carritos&populate[1]=detalle_carritos.variacion&populate[2]=detalle_carritos.variacion.producto&populate[3]=detalle_carritos.combo&populate[4]=detalle_carritos.combo.imagen`,
       {
         headers: {
           ...getAuthHeaders()
@@ -148,8 +148,8 @@ export async function obtenerCarritoCompleto() {
     const carrito = carritos[0];
     const carritoAttrs = carrito?.attributes ?? carrito;
     const detalles = carritoAttrs?.detalle_carritos?.data ?? carritoAttrs?.detalle_carritos ?? [];
-    
-    return detalles.map((detalle) => {
+
+    const mapped = detalles.map((detalle) => {
       const detalleAttrs = detalle?.attributes ?? detalle;
       const variacion = detalleAttrs?.variacion?.data ?? detalleAttrs?.variacion;
       const variacionAttrs = variacion?.attributes ?? variacion;
@@ -157,12 +157,13 @@ export async function obtenerCarritoCompleto() {
       const productoAttrs = producto?.attributes ?? producto;
       const combo = detalleAttrs?.combo?.data ?? detalleAttrs?.combo;
       const comboAttrs = combo?.attributes ?? combo;
-      
+
       const esCombo = !!combo;
       const item = esCombo ? comboAttrs : productoAttrs;
-      
+      const isProductoInactivo = !esCombo && productoAttrs?.inactivo === true;
+
       let imagenUrl = '/assets/fallback.jpg'
-      if (item?.imagen) {
+      if (esCombo && item?.imagen) {
         if (item.imagen?.data?.attributes?.url) {
           imagenUrl = item.imagen.data.attributes.url
         } else if (item.imagen?.url) {
@@ -171,16 +172,15 @@ export async function obtenerCarritoCompleto() {
           imagenUrl = item.imagen
         }
       }
-      
       if (!imagenUrl.startsWith('http')) {
         imagenUrl = `${BACKEND_URL}${imagenUrl}`
       }
 
       const precioBase = Number(item?.precio ?? 0)
-      const itemId = esCombo 
+      const itemId = esCombo
         ? (combo?.documentId ?? comboAttrs?.documentId ?? combo?.id ?? comboAttrs?.id)
         : (producto?.documentId ?? productoAttrs?.documentId ?? producto?.id ?? productoAttrs?.id)
-      
+
       return {
         id: detalle.id ?? detalleAttrs?.id,
         documentId: detalle.documentId ?? detalleAttrs?.documentId ?? detalle.id ?? detalleAttrs?.id,
@@ -188,14 +188,21 @@ export async function obtenerCarritoCompleto() {
         comboId: esCombo ? (itemId ?? null) : null,
         imageSrc: imagenUrl,
         name: item?.nombre ?? '',
-        size: esCombo ? null : (variacionAttrs?.talle ?? ''), // Los combos no tienen talle guardado en detalle_carrito
+        size: esCombo ? null : (variacionAttrs?.talle ?? ''),
         color: esCombo ? null : (variacionAttrs?.color ?? ''),
         priceValue: precioBase,
         price: `$${precioBase.toFixed(2)}`,
         quantity: detalleAttrs?.cantidad ?? 1,
-        stock: esCombo ? 999 : (variacionAttrs?.stock ?? 0) // Los combos no tienen stock por variación en el detalle
+        stock: esCombo ? 999 : (variacionAttrs?.stock ?? 0),
+        isProductoInactivo
       };
     });
+
+    const toRemove = mapped.filter((m) => m.isProductoInactivo);
+    const valid = mapped.filter((m) => !m.isProductoInactivo);
+    await Promise.all(toRemove.map((m) => eliminarDetalleCarrito(m.documentId)));
+
+    return valid.map(({ isProductoInactivo, ...rest }) => rest);
   } catch (error) {
     console.error('Error al obtener carrito completo:', error);
     return [];

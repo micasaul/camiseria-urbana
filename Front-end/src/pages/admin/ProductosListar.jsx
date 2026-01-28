@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getProductos, actualizarVariacion } from '../../api/productos.js'
+import { getProductos, actualizarVariacion, actualizarProducto } from '../../api/productos.js'
 import { COLOR_HEX_MAP } from '../../utils/colorMap.js'
 import { calcularCantidadTotal, formatearPrecio } from '../../utils/adminHelpers.js'
 import PageButton from '../../components/forms/page-button/page-button.jsx'
@@ -86,37 +86,25 @@ export default function ProductosListar() {
 
   const filasOrdenadas = useMemo(() => {
     
-    const conStockYFoto = []
-    const conStockSinFoto = []
-    const sinStockConFoto = []
-    const sinStockSinFoto = []
+    const conStock = []
+    const sinStock = []
     
     for (const producto of filas) {
       const tieneStock = producto.cantidadTotal > 0
-      const tieneFoto = producto.imagen && 
-                        producto.imagen !== '/assets/fallback.jpg' && 
-                        !producto.imagen.includes('fallback')
-      
-      if (tieneStock && tieneFoto) {
-        conStockYFoto.push(producto)
-      } else if (tieneStock && !tieneFoto) {
-        conStockSinFoto.push(producto)
-      } else if (!tieneStock && tieneFoto) {
-        sinStockConFoto.push(producto)
+      if (tieneStock) {
+        conStock.push(producto)
       } else {
-        sinStockSinFoto.push(producto)
+        sinStock.push(producto)
       }
     }
     
     const porNombre = (a, b) =>
       String(a?.nombre ?? '').localeCompare(String(b?.nombre ?? ''), 'es')
     
-    conStockYFoto.sort(porNombre)
-    conStockSinFoto.sort(porNombre)
-    sinStockConFoto.sort(porNombre)
-    sinStockSinFoto.sort(porNombre)
+    conStock.sort(porNombre)
+    sinStock.sort(porNombre)
     
-    return [...conStockYFoto, ...conStockSinFoto, ...sinStockConFoto, ...sinStockSinFoto]
+    return [...conStock, ...sinStock]
   }, [filas])
 
   const handleEditar = (producto) => {
@@ -152,6 +140,32 @@ export default function ProductosListar() {
       )
     } catch {
       setError('No se pudo eliminar el stock.')
+    }
+  }
+
+  const handleToggleInactivo = async (producto) => {
+    try {
+      const productoId = producto.documentId ?? producto.id
+      if (!productoId) {
+        setError('No se pudo identificar el producto.')
+        return
+      }
+      
+      const nuevoEstado = !producto.inactivo
+      
+      await actualizarProducto(productoId, {
+        data: { inactivo: nuevoEstado }
+      })
+
+      setProductos((prev) =>
+        prev.map((item) =>
+          item.id === producto.id
+            ? { ...item, inactivo: nuevoEstado }
+            : item
+        )
+      )
+    } catch {
+      setError('No se pudo cambiar el estado del producto.')
     }
   }
 
@@ -207,9 +221,7 @@ export default function ProductosListar() {
           !error &&
           filasOrdenadas.map((producto) => {
             const sinStock = producto.cantidadTotal <= 0
-            const imagenUrl = producto.imagen?.startsWith('http')
-              ? producto.imagen
-              : `${BACKEND_URL}${producto.imagen || '/assets/fallback.jpg'}`
+            const imagenUrl = `${BACKEND_URL}/assets/fallback.jpg`
             return (
             <div
               key={producto.id}
@@ -249,6 +261,13 @@ export default function ProductosListar() {
                   onClick={() => handleEliminarStock(producto)}
                 >
                   Eliminar stock
+                </button>
+                <button
+                  className={`admin-action-btn ${producto.inactivo ? 'admin-action-active' : 'admin-action-delete'}`}
+                  type="button"
+                  onClick={() => handleToggleInactivo(producto)}
+                >
+                  {producto.inactivo ? 'Activar' : 'Inactivo'}
                 </button>
               </span>
             </div>

@@ -186,7 +186,6 @@ export async function getProductos(page = 1, pageSize = 10) {
     params.append('populate[0]', 'variacions');
     params.append('populate[1]', 'promo_productos');
     params.append('populate[2]', 'promo_productos.promo');
-    params.append('populate[3]', 'imagen');
     params.append('pagination[page]', page);
     params.append('pagination[pageSize]', pageSize);
 
@@ -216,7 +215,7 @@ export async function getProductos(page = 1, pageSize = 10) {
         nombre: attrs?.nombre ?? '',
         material: attrs?.material ?? '',
         precio: attrs?.precio ?? 0,
-        imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
+        inactivo: attrs?.inactivo ?? false,
         promo_productos: promoProductos,
         variaciones: normalizarVariaciones(variaciones),
         createdAt: attrs?.createdAt ?? item?.createdAt ?? null,
@@ -309,7 +308,7 @@ export async function crearVariacion(payload) {
 
 export async function getProductoPorId(id) {
   const res = await fetch(
-    `${BACKEND_URL}/api/productos/${id}?populate[0]=variacions&populate[1]=marca&populate[2]=promo_productos&populate[3]=promo_productos.promo&populate[4]=wishlists&populate[5]=imagen`
+    `${BACKEND_URL}/api/productos/${id}?populate[0]=variacions&populate[1]=marca&populate[2]=promo_productos&populate[3]=promo_productos.promo&populate[4]=wishlists`
   );
   if (!res.ok) {
     const errorText = await res.text()
@@ -369,9 +368,12 @@ export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 
     params.append('populate[1]', 'marca');
     params.append('populate[2]', 'promo_productos');
     params.append('populate[3]', 'promo_productos.promo');
-    params.append('populate[4]', 'imagen');
     params.append('pagination[page]', page);
     params.append('pagination[pageSize]', pageSize);
+
+    // Mostrar solo inactivo false o null (ocultar inactivo true)
+    params.append('filters[$or][0][inactivo][$eq]', 'false');
+    params.append('filters[$or][1][inactivo][$null]', 'true');
 
     if (filtros.material) {
       params.append('filters[material][$eq]', filtros.material);
@@ -438,7 +440,6 @@ export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 
         nombre: attrs?.nombre ?? '',
         material: attrs?.material ?? '',
         precio: attrs?.precio ?? 0,
-        imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
         promo_productos: promoProductos,
         variaciones: normalizarVariaciones(variaciones),
         marca: marca,
@@ -466,10 +467,13 @@ export async function buscarProductos(query, page = 1, pageSize = 12) {
     params.append('populate[0]', 'variacions');
     params.append('populate[1]', 'promo_productos');
     params.append('populate[2]', 'promo_productos.promo');
-    params.append('populate[3]', 'imagen');
     params.append('pagination[page]', page);
     params.append('pagination[pageSize]', pageSize);
-    
+
+    // Mostrar solo inactivo false o null (ocultar inactivo true)
+    params.append('filters[$or][0][inactivo][$eq]', 'false');
+    params.append('filters[$or][1][inactivo][$null]', 'true');
+
     if (query && query.trim()) {
       params.append('filters[nombre][$containsi]', query.trim());
     }
@@ -500,7 +504,6 @@ export async function buscarProductos(query, page = 1, pageSize = 12) {
         nombre: attrs?.nombre ?? '',
         material: attrs?.material ?? '',
         precio: attrs?.precio ?? 0,
-        imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
         promo_productos: promoProductos,
         variaciones: normalizarVariaciones(variaciones)
       };

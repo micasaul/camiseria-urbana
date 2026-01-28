@@ -29,7 +29,7 @@ const CrearResena = () => {
         const token = localStorage.getItem("strapiToken")
         
         let res = await fetch(
-          `${API_URL}/api/productos?filters[documentId][$eq]=${productoId}&populate=imagen`,
+          `${API_URL}/api/productos?filters[documentId][$eq]=${productoId}`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {}
           }
