@@ -126,7 +126,7 @@ export async function obtenerCarritoCompleto() {
     
 
     const res = await fetch(
-      `${BACKEND_URL}/api/carritos?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=detalle_carritos&populate[1]=detalle_carritos.variacion&populate[2]=detalle_carritos.variacion.producto&populate[3]=detalle_carritos.combo&populate[4]=detalle_carritos.combo.imagen`,
+      `${BACKEND_URL}/api/carritos?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=detalle_carritos&populate[1]=detalle_carritos.variacion&populate[2]=detalle_carritos.variacion.imagen&populate[3]=detalle_carritos.variacion.producto&populate[4]=detalle_carritos.combo&populate[5]=detalle_carritos.combo.imagen`,
       {
         headers: {
           ...getAuthHeaders()
@@ -149,7 +149,7 @@ export async function obtenerCarritoCompleto() {
     const carritoAttrs = carrito?.attributes ?? carrito;
     const detalles = carritoAttrs?.detalle_carritos?.data ?? carritoAttrs?.detalle_carritos ?? [];
 
-    const mapped = detalles.map((detalle) => {
+    const mapped = await Promise.all(detalles.map(async (detalle) => {
       const detalleAttrs = detalle?.attributes ?? detalle;
       const variacion = detalleAttrs?.variacion?.data ?? detalleAttrs?.variacion;
       const variacionAttrs = variacion?.attributes ?? variacion;
@@ -170,6 +170,41 @@ export async function obtenerCarritoCompleto() {
           imagenUrl = item.imagen.url
         } else if (typeof item.imagen === 'string') {
           imagenUrl = item.imagen
+        }
+      } else if (!esCombo && variacionAttrs) {
+        const imagenRaw = variacionAttrs?.imagen
+        if (imagenRaw) {
+          const data = imagenRaw?.data ?? imagenRaw
+          const attrs = data?.attributes ?? data ?? {}
+          const url = attrs?.url ?? data?.url ?? imagenRaw?.url
+          if (url) {
+            imagenUrl = url.startsWith('http') ? url : `${BACKEND_URL}${url}`
+          } else {
+            const variacionDocId = variacion?.documentId ?? variacionAttrs?.documentId ?? variacion?.id ?? variacionAttrs?.id
+            if (variacionDocId) {
+              try {
+                const variacionRes = await fetch(`${BACKEND_URL}/api/variaciones/${variacionDocId}?populate=imagen`, {
+                  headers: { ...getAuthHeaders() }
+                })
+                if (variacionRes.ok) {
+                  const variacionData = await variacionRes.json()
+                  const variacionItem = variacionData?.data ?? variacionData
+                  const variacionItemAttrs = variacionItem?.attributes ?? variacionItem
+                  const imagenRaw2 = variacionItemAttrs?.imagen
+                  if (imagenRaw2) {
+                    const data2 = imagenRaw2?.data ?? imagenRaw2
+                    const attrs2 = data2?.attributes ?? data2 ?? {}
+                    const url2 = attrs2?.url ?? data2?.url ?? imagenRaw2?.url
+                    if (url2) {
+                      imagenUrl = url2.startsWith('http') ? url2 : `${BACKEND_URL}${url2}`
+                    }
+                  }
+                }
+              } catch (error) {
+                console.error('Error obteniendo imagen de variación:', error)
+              }
+            }
+          }
         }
       }
       if (!imagenUrl.startsWith('http')) {
@@ -196,7 +231,7 @@ export async function obtenerCarritoCompleto() {
         stock: esCombo ? 999 : (variacionAttrs?.stock ?? 0),
         isProductoInactivo
       };
-    });
+    }));
 
     const toRemove = mapped.filter((m) => m.isProductoInactivo);
     const valid = mapped.filter((m) => !m.isProductoInactivo);

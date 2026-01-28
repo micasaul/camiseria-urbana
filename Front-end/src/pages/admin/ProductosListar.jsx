@@ -53,17 +53,28 @@ export default function ProductosListar() {
           : variacionesRaw?.data ?? []
         const variacionesNormalizadas = variacionesLista.map((variacion) => {
           const attrs = variacion?.attributes ?? variacion
+          let imagen = variacion?.imagen ?? null
+          if (!imagen && attrs?.imagen) {
+            const img = attrs.imagen?.data ?? attrs.imagen
+            const imgAttrs = img?.attributes ?? img ?? {}
+            const url = imgAttrs?.url ?? img?.url ?? attrs.imagen?.url
+            if (url) {
+              imagen = url.startsWith('http') ? url : `${BACKEND_URL}${url}`
+            }
+          }
           return {
             id: variacion?.id ?? attrs?.id,
             documentId: variacion?.documentId ?? attrs?.documentId ?? null,
             color: attrs?.color ?? variacion?.color ?? '',
+            talle: attrs?.talle ?? variacion?.talle ?? '',
             stock: Number(
               attrs?.stock ??
               variacion?.stock ??
               attrs?.cantidad ??
               variacion?.cantidad ??
               0
-            )
+            ),
+            imagen
           }
         })
         const coloresDisponibles = Array.from(
@@ -221,7 +232,10 @@ export default function ProductosListar() {
           !error &&
           filasOrdenadas.map((producto) => {
             const sinStock = producto.cantidadTotal <= 0
-            const imagenUrl = `${BACKEND_URL}/assets/fallback.jpg`
+            const variacionesConImagen = (producto?.variaciones ?? []).filter((v) => v?.imagen)
+            const imagenUrl = variacionesConImagen.length > 0
+              ? variacionesConImagen[0].imagen
+              : `${BACKEND_URL}/assets/fallback.jpg`
             return (
             <div
               key={producto.id}

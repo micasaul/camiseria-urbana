@@ -69,24 +69,12 @@ export default function Producto() {
         setProducto({
           id: item.id ?? attrs?.id,
           documentId: item.documentId ?? attrs?.documentId ?? null,
-          nombre: attrs?.nombre ?? '',
-          descripcion: attrs?.descripcion ?? '',
-          precio: attrs?.precio ?? 0,
-          material: attrs?.material ?? '',
-          variaciones: (
-            attrs?.variaciones?.data ??
-            attrs?.variaciones ??
-            attrs?.variacions?.data ??
-            attrs?.variacions ??
-            []
-          ).map(v => ({
-            id: v.id ?? v.attributes?.id,
-            documentId: v.documentId ?? v.attributes?.documentId ?? null,
-            color: v.attributes?.color ?? v.color ?? '',
-            talle: v.attributes?.talle ?? v.talle ?? '',
-            stock: Number(v.attributes?.stock ?? v.stock ?? 0)
-          })),
-          wishlists: attrs?.wishlists?.data ?? attrs?.wishlists ?? [],
+          nombre: attrs?.nombre ?? item?.nombre ?? '',
+          descripcion: attrs?.descripcion ?? item?.descripcion ?? '',
+          precio: attrs?.precio ?? item?.precio ?? 0,
+          material: attrs?.material ?? item?.material ?? '',
+          variaciones: item?.variaciones ?? [],
+          wishlists: attrs?.wishlists?.data ?? attrs?.wishlists ?? item?.wishlists ?? [],
           resenas: item?.resenas ?? [],
           valoraciones: item?.valoraciones ?? []
         })
@@ -133,6 +121,29 @@ export default function Producto() {
     if (!variaciones.length) return true
     return !variaciones.some((variacion) => Number(variacion?.stock ?? 0) > 0)
   }, [producto])
+
+  const imagenUrl = useMemo(() => {
+    const vars = producto?.variaciones ?? []
+    
+    if (colorSeleccionado && talleSeleccionado) {
+      const v = encontrarVariacion(vars, colorSeleccionado, talleSeleccionado)
+      if (v?.imagen) return v.imagen
+    }
+    
+    if (colorSeleccionado) {
+      const variacionesColor = vars.filter((v) => v?.color === colorSeleccionado && v?.imagen)
+      if (variacionesColor.length > 0) return variacionesColor[0].imagen
+    }
+    
+    if (talleSeleccionado) {
+      const variacionesTalle = vars.filter((v) => v?.talle === talleSeleccionado && v?.imagen)
+      if (variacionesTalle.length > 0) return variacionesTalle[0].imagen
+    }
+    
+    const conImg = vars.filter((variacion) => variacion?.imagen)
+    if (conImg.length) return conImg[0].imagen
+    return `${BACKEND_URL}/assets/fallback.jpg`
+  }, [producto?.variaciones, colorSeleccionado, talleSeleccionado])
 
   const precioBase = Number(producto?.precio ?? 0)
   const precioFinal = descuento > 0 
@@ -220,8 +231,6 @@ export default function Producto() {
   if (!producto) {
     return <div className="producto-page">Producto no encontrado</div>
   }
-
-  const imagenUrl = `${BACKEND_URL}/assets/fallback.jpg`
 
   return (
     <div className="producto-page">

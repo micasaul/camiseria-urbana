@@ -168,7 +168,7 @@ export default function Catalogo() {
       
       if (marcaFiltro) {
         const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL
-        const marcaUrl = `${VITE_BACKEND_URL}/api/marcas/${marcaFiltro}?populate[productos][populate][0]=variacions&populate[productos][populate][1]=promo_productos&populate[productos][populate][2]=promo_productos.promo`
+        const marcaUrl = `${VITE_BACKEND_URL}/api/marcas/${marcaFiltro}?populate[productos][populate][0]=variacions&populate[productos][populate][1]=variacions.imagen&populate[productos][populate][2]=promo_productos&populate[productos][populate][3]=promo_productos.promo`
         
         try {
           const marcaRes = await fetch(marcaUrl)
@@ -179,7 +179,7 @@ export default function Catalogo() {
               return item?.documentId ?? item?.attributes?.documentId ?? item?.id ?? item?.attributes?.id
             }).filter(Boolean)
           } else {
-            const todosRes = await fetch(`${VITE_BACKEND_URL}/api/productos?populate[0]=variacions&populate[1]=marca&populate[2]=promo_productos&populate[3]=promo_productos.promo&filters[$or][0][inactivo][$eq]=false&filters[$or][1][inactivo][$null]=true&pagination[pageSize]=1000`)
+            const todosRes = await fetch(`${VITE_BACKEND_URL}/api/productos?populate[0]=variacions&populate[1]=variacions.imagen&populate[2]=marca&populate[3]=promo_productos&populate[4]=promo_productos.promo&filters[$or][0][inactivo][$eq]=false&filters[$or][1][inactivo][$null]=true&pagination[pageSize]=1000`)
             const todosData = await todosRes.json()
             const productosFiltrados = (todosData.data || []).filter(item => {
               const attrs = item?.attributes ?? item

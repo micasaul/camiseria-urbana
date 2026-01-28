@@ -6,6 +6,30 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+const urlImagenVariacion = (imagenRaw) => {
+  if (!imagenRaw) {
+    console.log('urlImagenVariacion - imagenRaw es null/undefined');
+    return null;
+  }
+  
+  console.log('urlImagenVariacion - imagenRaw recibido:', imagenRaw);
+  
+  const data = imagenRaw?.data ?? imagenRaw;
+  const attrs = data?.attributes ?? data ?? {};
+  const url = attrs?.url ?? data?.url ?? imagenRaw?.url;
+  
+  console.log('urlImagenVariacion - Estructura parseada:', { data, attrs, url });
+  
+  if (!url) {
+    console.log('urlImagenVariacion - No se encontró URL:', { imagenRaw, data, attrs });
+    return null;
+  }
+  
+  const finalUrl = url.startsWith('http') ? url : `${BACKEND_URL}${url}`;
+  console.log('urlImagenVariacion - URL final:', finalUrl);
+  return finalUrl;
+};
+
 const normalizarVariacion = (variacion) => {
   const variacionAttrs = variacion?.attributes ?? variacion;
   const stockRaw =
@@ -15,12 +39,23 @@ const normalizarVariacion = (variacion) => {
     variacion?.cantidad ??
     0;
   const stockNumber = Number(stockRaw);
+  const imagenRaw = variacionAttrs?.imagen ?? variacion?.imagen;
+  const imagenUrl = urlImagenVariacion(imagenRaw);
+  
+  if (imagenRaw && !imagenUrl) {
+    console.log('normalizarVariacion - Imagen raw pero no se pudo parsear:', {
+      variacionId: variacion?.id ?? variacionAttrs?.id,
+      imagenRaw: imagenRaw
+    });
+  }
+  
   return {
     id: variacion?.id ?? variacionAttrs?.id,
     documentId: variacion?.documentId ?? variacionAttrs?.documentId ?? null,
     color: variacionAttrs?.color ?? variacion?.color ?? '',
     talle: variacionAttrs?.talle ?? variacion?.talle ?? '',
-    stock: Number.isNaN(stockNumber) ? 0 : stockNumber
+    stock: Number.isNaN(stockNumber) ? 0 : stockNumber,
+    imagen: imagenUrl
   };
 };
 
@@ -140,15 +175,28 @@ const adjuntarVariaciones = async (items = []) => {
     params.append(`filters[producto][documentId][$in][${index}]`, documentId);
   });
   params.append('populate[producto]', 'true');
+  params.append('populate', 'imagen');
   params.append('pagination[pageSize]', '1000');
 
   try {
-    const res = await fetch(`${BACKEND_URL}/api/variaciones?${params.toString()}`);
+    const url = `${BACKEND_URL}/api/variaciones?${params.toString()}`;
+    console.log('adjuntarVariaciones - URL:', url);
+    const res = await fetch(url);
     if (!res.ok) {
+      console.error('adjuntarVariaciones - Error en fetch:', res.status, res.statusText);
       return items;
     }
     const data = await res.json();
     const variacionesRaw = data?.data ?? [];
+    console.log('adjuntarVariaciones - Variaciones recibidas:', variacionesRaw.length);
+    
+    if (variacionesRaw.length > 0) {
+      console.log('adjuntarVariaciones - Primera variación raw:', variacionesRaw[0]);
+      const primera = variacionesRaw[0];
+      const attrs = primera?.attributes ?? primera;
+      console.log('adjuntarVariaciones - Primera variación imagen raw:', attrs?.imagen);
+    }
+    
     const variacionesPorProducto = new Map();
 
     variacionesRaw.forEach((variacion) => {
@@ -163,15 +211,48 @@ const adjuntarVariaciones = async (items = []) => {
       if (!productoId) return;
       const key = String(productoId);
       const lista = variacionesPorProducto.get(key) ?? [];
-      lista.push(normalizarVariacion(variacion));
+      const variacionNormalizada = normalizarVariacion(variacion);
+      console.log('adjuntarVariaciones - Variación normalizada:', {
+        id: variacionNormalizada.id,
+        color: variacionNormalizada.color,
+        talle: variacionNormalizada.talle,
+        tieneImagen: !!variacionNormalizada.imagen,
+        imagen: variacionNormalizada.imagen
+      });
+      lista.push(variacionNormalizada);
       variacionesPorProducto.set(key, lista);
     });
 
     return items.map((producto) => {
       const key = String(producto?.documentId ?? producto?.id ?? '');
+      const variacionesNuevas = variacionesPorProducto.get(key);
+      const variacionesExistentes = producto?.variaciones ?? [];
+      
+      const variacionesFinales = variacionesNuevas && variacionesNuevas.length > 0
+        ? variacionesNuevas
+        : variacionesExistentes;
+      
+      if (variacionesFinales.length > 0) {
+        const conImagen = variacionesFinales.filter(v => v?.imagen);
+        if (conImagen.length === 0) {
+          console.log('adjuntarVariaciones - Producto sin imágenes en variaciones:', {
+            productoId: key,
+            nombre: producto?.nombre,
+            totalVariaciones: variacionesFinales.length,
+            variaciones: variacionesFinales.map(v => ({
+              id: v?.id,
+              color: v?.color,
+              talle: v?.talle,
+              tieneImagen: !!v?.imagen,
+              imagen: v?.imagen
+            }))
+          });
+        }
+      }
+      
       return {
         ...producto,
-        variaciones: variacionesPorProducto.get(key) ?? producto?.variaciones ?? []
+        variaciones: variacionesFinales
       };
     });
   } catch (error) {
@@ -318,12 +399,46 @@ export async function getProductoPorId(id) {
   const data = await res.json();
   
   const item = data?.data ?? data;
-  const items = [item];
-  const itemsConResenas = await adjuntarResenas(items);
+  const attrs = item?.attributes ?? item;
+  
+  const variacionesRaw =
+    attrs?.variaciones?.data ??
+    attrs?.variaciones ??
+    attrs?.variacions?.data ??
+    attrs?.variacions ??
+    item?.variaciones ??
+    item?.variacions ??
+    [];
+  const variaciones = Array.isArray(variacionesRaw) ? variacionesRaw : [];
+  const promoProductosRaw = attrs?.promo_productos?.data ?? attrs?.promo_productos ?? item?.promo_productos ?? [];
+  const promoProductos = Array.isArray(promoProductosRaw) ? promoProductosRaw : [];
+  
+  const marcaRaw = attrs?.marca?.data ?? attrs?.marca ?? item?.marca ?? null;
+  const marca = marcaRaw ? {
+    id: marcaRaw.id ?? marcaRaw.attributes?.id ?? marcaRaw.data?.id ?? null,
+    documentId: marcaRaw.documentId ?? marcaRaw.attributes?.documentId ?? marcaRaw.data?.documentId ?? null
+  } : null;
+  
+  const productoNormalizado = {
+    id: item.id ?? attrs?.id,
+    documentId: item.documentId ?? attrs?.documentId ?? null,
+    nombre: attrs?.nombre ?? '',
+    material: attrs?.material ?? '',
+    precio: attrs?.precio ?? 0,
+    promo_productos: promoProductos,
+    variaciones: normalizarVariaciones(variaciones),
+    marca: marca,
+    createdAt: attrs?.createdAt ?? item?.createdAt ?? null,
+    publishedAt: attrs?.publishedAt ?? item?.publishedAt ?? null
+  };
+  
+  const items = [productoNormalizado];
+  const itemsConVariaciones = await adjuntarVariaciones(items);
+  const itemsConResenas = await adjuntarResenas(itemsConVariaciones);
   
   return {
     ...data,
-    data: itemsConResenas[0] ?? item
+    data: itemsConResenas[0] ?? productoNormalizado
   };
 }
 
@@ -371,7 +486,6 @@ export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 
     params.append('pagination[page]', page);
     params.append('pagination[pageSize]', pageSize);
 
-    // Mostrar solo inactivo false o null (ocultar inactivo true)
     params.append('filters[$or][0][inactivo][$eq]', 'false');
     params.append('filters[$or][1][inactivo][$null]', 'true');
 
@@ -470,7 +584,6 @@ export async function buscarProductos(query, page = 1, pageSize = 12) {
     params.append('pagination[page]', page);
     params.append('pagination[pageSize]', pageSize);
 
-    // Mostrar solo inactivo false o null (ocultar inactivo true)
     params.append('filters[$or][0][inactivo][$eq]', 'false');
     params.append('filters[$or][1][inactivo][$null]', 'true');
 

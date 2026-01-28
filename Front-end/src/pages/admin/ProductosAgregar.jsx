@@ -8,8 +8,14 @@ import {
   existeProductoPorNombre,
   getProductoPorId,
   actualizarProducto,
-  actualizarVariacion
+  actualizarVariacion,
+  subirImagen
 } from '../../api/productos.js'
+
+const getAuthHeaders = () => {
+  const token = window.localStorage.getItem('strapiToken')
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
 import { getProductoEnums } from '../../api/enums.js'
 import { crearMarca, getMarcas } from '../../api/marcas.js'
 import { resetearFormularioProducto, validarPrecio } from '../../utils/adminHelpers.js'
@@ -40,6 +46,7 @@ export default function ProductosAgregar() {
   const [productoId, setProductoId] = useState(null)
   const [productoDocumentId, setProductoDocumentId] = useState(null)
   const [cargandoProducto, setCargandoProducto] = useState(false)
+  const [imagenesVariaciones, setImagenesVariaciones] = useState({})
   const { id } = useParams()
 
   useEffect(() => {
@@ -93,8 +100,46 @@ export default function ProductosAgregar() {
   const agregarVariacion = () => {
     setVariaciones((prev) => [
       ...prev,
-      { id: prev.length + 1, talle: '', color: '', cantidad: '' }
+      { id: prev.length + 1, talle: '', color: '', cantidad: '', backendId: null, backendDocumentId: null }
     ])
+  }
+
+  const handleImagenVariacionChange = (index, e) => {
+    const file = e.target.files?.[0]
+    const current = imagenesVariaciones[index]
+    if (current?.preview?.startsWith('blob:')) {
+      URL.revokeObjectURL(current.preview)
+    }
+    if (!file) {
+      setImagenesVariaciones((prev) => {
+        const nuevo = { ...prev }
+        delete nuevo[index]
+        return nuevo
+      })
+      e.target.value = ''
+      return
+    }
+    setImagenesVariaciones((prev) => ({
+      ...prev,
+      [index]: {
+        file,
+        preview: URL.createObjectURL(file),
+        id: null
+      }
+    }))
+    e.target.value = ''
+  }
+
+  const eliminarImagenVariacion = (index) => {
+    const current = imagenesVariaciones[index]
+    if (current?.preview?.startsWith('blob:')) {
+      URL.revokeObjectURL(current.preview)
+    }
+    setImagenesVariaciones((prev) => {
+      const nuevo = { ...prev }
+      delete nuevo[index]
+      return nuevo
+    })
   }
 
   const actualizarVariacion = (index, cambios) => {
@@ -106,6 +151,12 @@ export default function ProductosAgregar() {
   }
 
   const resetearFormulario = () => {
+    Object.values(imagenesVariaciones).forEach((img) => {
+      if (img?.preview?.startsWith('blob:')) {
+        URL.revokeObjectURL(img.preview)
+      }
+    })
+    setImagenesVariaciones({})
     resetearFormularioProducto({
       setNombre,
       setDescripcion,
@@ -130,8 +181,9 @@ export default function ProductosAgregar() {
         if (!activo) return
         const item = data?.data ?? data
         const attrs = item?.attributes ?? item
+        const productoDocId = item?.documentId ?? attrs?.documentId ?? null
         setProductoId(item?.id ?? attrs?.id ?? null)
-        setProductoDocumentId(item?.documentId ?? attrs?.documentId ?? null)
+        setProductoDocumentId(productoDocId)
         setNombre(attrs?.nombre ?? '')
         setDescripcion(attrs?.descripcion ?? '')
         setMaterial(attrs?.material ?? '')
@@ -143,23 +195,101 @@ export default function ProductosAgregar() {
           setMarcaSeleccionada(String(marcaId))
         }
 
-        const variacionesRaw =
-          attrs?.variacions?.data ??
-          attrs?.variacions ??
-          item?.variacions ??
-          []
-        const listaVariaciones = (Array.isArray(variacionesRaw) ? variacionesRaw : []).map((variacion, index) => {
-          const variacionAttrs = variacion?.attributes ?? variacion
+        const variacionesNormalizadas = item?.variaciones ?? []
+        const listaVariaciones = variacionesNormalizadas.map((variacion, index) => {
           return {
             id: index + 1,
-            talle: variacionAttrs?.talle ?? '',
-            color: variacionAttrs?.color ?? '',
-            cantidad: String(variacionAttrs?.stock ?? ''),
-            backendId: variacion?.id ?? variacionAttrs?.id ?? null,
-            backendDocumentId: variacion?.documentId ?? variacionAttrs?.documentId ?? null
+            talle: variacion?.talle ?? '',
+            color: variacion?.color ?? '',
+            cantidad: String(variacion?.stock ?? ''),
+            backendId: variacion?.id ?? null,
+            backendDocumentId: variacion?.documentId ?? null
           }
         })
         setVariaciones(listaVariaciones.length ? listaVariaciones : [{ id: 1, talle: '', color: '', cantidad: '', backendId: null, backendDocumentId: null }])
+        
+        const imagenesNuevas = {}
+        if (variacionesNormalizadas.length > 0 && productoDocId) {
+          fetch(
+            `${BACKEND_URL}/api/variaciones?filters[producto][documentId][$eq]=${productoDocId}&populate=imagen`,
+            { headers: { ...getAuthHeaders() } }
+          )
+            .then((variacionesRes) => {
+              if (!variacionesRes.ok) {
+                const imagenesFallback = {}
+                variacionesNormalizadas.forEach((variacion, idx) => {
+                  if (variacion?.imagen) {
+                    imagenesFallback[idx] = {
+                      file: null,
+                      preview: variacion.imagen,
+                      id: null
+                    }
+                  }
+                })
+                if (activo) setImagenesVariaciones(imagenesFallback)
+                return
+              }
+              return variacionesRes.json()
+            })
+            .then((variacionesData) => {
+              if (!variacionesData || !activo) return
+              const variacionesConImagen = variacionesData?.data ?? []
+              const imagenesConId = {}
+              
+              variacionesNormalizadas.forEach((variacionNormalizada, index) => {
+                if (variacionNormalizada?.imagen) {
+                  const variacionRaw = variacionesConImagen.find(
+                    (v) => {
+                      const vDocId = v?.documentId ?? v?.attributes?.documentId ?? v?.id ?? v?.attributes?.id
+                      return String(vDocId) === String(variacionNormalizada.documentId)
+                    }
+                  )
+                  const img = variacionRaw?.attributes?.imagen?.data ?? variacionRaw?.attributes?.imagen ?? null
+                  const imagenId = img?.id ?? null
+                  
+                  imagenesConId[index] = {
+                    file: null,
+                    preview: variacionNormalizada.imagen,
+                    id: imagenId
+                  }
+                }
+              })
+              if (activo) setImagenesVariaciones(imagenesConId)
+            })
+            .catch((error) => {
+              console.error('Error obteniendo IDs de imágenes:', error)
+              const imagenesFallback = {}
+              variacionesNormalizadas.forEach((variacion, idx) => {
+                if (variacion?.imagen) {
+                  imagenesFallback[idx] = {
+                    file: null,
+                    preview: variacion.imagen,
+                    id: null
+                  }
+                }
+              })
+              if (activo) setImagenesVariaciones(imagenesFallback)
+            })
+        } else {
+          const variacionesRaw = attrs?.variacions?.data ?? attrs?.variacions ?? item?.variacions ?? []
+          variacionesRaw.forEach((variacionRaw, index) => {
+            const variacionAttrs = variacionRaw?.attributes ?? variacionRaw
+            const img = variacionAttrs?.imagen?.data ?? variacionAttrs?.imagen ?? null
+            if (img) {
+              const imgAttrs = img?.attributes ?? img ?? {}
+              const imgUrl = imgAttrs?.url ?? img?.url
+              const imagenId = img?.id ?? imgAttrs?.id ?? null
+              if (imgUrl) {
+                imagenesNuevas[index] = {
+                  file: null,
+                  preview: imgUrl.startsWith('http') ? imgUrl : `${BACKEND_URL}${imgUrl}`,
+                  id: imagenId
+                }
+              }
+            }
+          })
+          setImagenesVariaciones(imagenesNuevas)
+        }
       })
       .catch(() => {
         if (!activo) return
@@ -276,13 +406,28 @@ export default function ProductosAgregar() {
           ? prodId
           : null
 
-      for (const variacion of variacionesValidas) {
+      for (let i = 0; i < variacionesValidas.length; i++) {
+        const variacion = variacionesValidas[i]
+        const variacionIndex = variaciones.findIndex((v) => v.id === variacion.id)
+        const imagenVariacion = imagenesVariaciones[variacionIndex]
+        
+        let imagenPayload = undefined
+        if (imagenVariacion?.file) {
+          const imagenSubida = await subirImagen(imagenVariacion.file)
+          imagenPayload = imagenSubida.id
+        } else if (imagenVariacion?.id) {
+          imagenPayload = imagenVariacion.id
+        } else if (variacion.backendDocumentId || variacion.backendId) {
+          imagenPayload = undefined
+        }
+        
         const payloadVariacion = {
           data: {
             talle: variacion.talle,
             color: variacion.color,
             stock: Number(variacion.cantidad),
-            producto: relacionProducto
+            producto: relacionProducto,
+            ...(imagenPayload !== undefined ? { imagen: imagenPayload } : {})
           }
         }
 
@@ -456,6 +601,31 @@ export default function ProductosAgregar() {
                   }
                 />
               </div>
+            </div>
+            <div className="admin-field admin-variant-image">
+              <label>Imagen de la variación</label>
+              {imagenesVariaciones[index]?.preview && (
+                <div className="admin-media-preview-container">
+                  <img
+                    src={imagenesVariaciones[index].preview}
+                    alt={`Preview variación ${index + 1}`}
+                    className="admin-media-preview"
+                  />
+                  <button
+                    type="button"
+                    className="admin-remove-image"
+                    onClick={() => eliminarImagenVariacion(index)}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                onChange={(e) => handleImagenVariacionChange(index, e)}
+                className="admin-file-input"
+              />
             </div>
           </div>
         ))}

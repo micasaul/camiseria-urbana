@@ -5,6 +5,41 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+const urlImagenVariacion = (imagenRaw) => {
+  if (!imagenRaw) return null;
+  const data = imagenRaw?.data ?? imagenRaw;
+  const attrs = data?.attributes ?? data ?? {};
+  const url = attrs?.url ?? data?.url ?? imagenRaw?.url;
+  if (!url) return null;
+  return url.startsWith('http') ? url : `${BACKEND_URL}${url}`;
+};
+
+const obtenerVariacionesConImagen = async (productoDocumentId) => {
+  if (!productoDocumentId) return [];
+  try {
+    const res = await fetch(
+      `${BACKEND_URL}/api/variaciones?filters[producto][documentId][$eq]=${productoDocumentId}&populate=imagen&pagination[pageSize]=1000`
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    const variacionesRaw = data?.data ?? [];
+    return variacionesRaw.map((variacion) => {
+      const variacionAttrs = variacion?.attributes ?? variacion;
+      const imagenRaw = variacionAttrs?.imagen ?? variacion?.imagen;
+      return {
+        id: variacion?.id ?? variacionAttrs?.id,
+        documentId: variacion?.documentId ?? variacionAttrs?.documentId ?? null,
+        color: variacionAttrs?.color ?? variacion?.color ?? '',
+        talle: variacionAttrs?.talle ?? variacion?.talle ?? '',
+        imagen: urlImagenVariacion(imagenRaw)
+      };
+    });
+  } catch (error) {
+    console.error('Error obteniendo variaciones con imagen:', error);
+    return [];
+  }
+};
+
 export async function agregarAWishlist(productoDocumentId, comboDocumentId = null) {
   try {
     const userRes = await fetch(`${BACKEND_URL}/api/users/me`, {
@@ -110,7 +145,7 @@ export async function obtenerWishlistCompleta() {
     const data = await res.json();
     const wishlists = data?.data ?? [];
 
-    const mapped = wishlists.map((wishlist) => {
+    const mapped = await Promise.all(wishlists.map(async (wishlist) => {
       const wishlistAttrs = wishlist?.attributes ?? wishlist;
       const producto = wishlistAttrs?.producto?.data ?? wishlistAttrs?.producto;
       const productoAttrs = producto?.attributes ?? producto;
@@ -129,6 +164,14 @@ export async function obtenerWishlistCompleta() {
           imagenUrl = item.imagen.url
         } else if (typeof item.imagen === 'string') {
           imagenUrl = item.imagen
+        }
+      } else if (!esCombo && productoAttrs) {
+        const productoDocId = producto?.documentId ?? productoAttrs?.documentId ?? producto?.id ?? productoAttrs?.id
+        const variacionesConImagen = await obtenerVariacionesConImagen(productoDocId)
+        const conImg = variacionesConImagen.filter((v) => v?.imagen)
+        if (conImg.length) {
+          const v = conImg[Math.floor(Math.random() * conImg.length)]
+          imagenUrl = v.imagen
         }
       }
       if (!imagenUrl.startsWith('http')) {
@@ -153,7 +196,7 @@ export async function obtenerWishlistCompleta() {
         price: `$${precioBase.toFixed(2)}`,
         isProductoInactivo
       };
-    });
+    }));
 
     const toRemove = mapped.filter((m) => m.isProductoInactivo);
     const valid = mapped.filter((m) => !m.isProductoInactivo);

@@ -140,14 +140,22 @@ export default function DetalleVenta() {
                 let imgPath = '/assets/fallback.jpg'
                 if (esCombo) {
                   const img = comboAttrs?.imagen?.data ?? comboAttrs?.imagen ?? null
-                  const imgAttrs = img?.attributes ?? img ?? {}
-                  imgPath = imgAttrs?.url ?? img?.url ?? '/assets/fallback.jpg'
+                  if (img) {
+                    const imgAttrs = img?.attributes ?? img ?? {}
+                    const url = imgAttrs?.url ?? img?.url ?? null
+                    if (url) {
+                      imgPath = url
+                    }
+                  }
                 } else {
-                  const producto = variacionAttrs?.producto?.data ?? variacionAttrs?.producto ?? null
-                  const productoAttrs = producto?.attributes ?? producto ?? {}
-                  const img = productoAttrs?.imagen?.data ?? productoAttrs?.imagen ?? null
-                  const imgAttrs = img?.attributes ?? img ?? {}
-                  imgPath = imgAttrs?.url ?? img?.url ?? '/assets/fallback.jpg'
+                  const img = variacionAttrs?.imagen?.data ?? variacionAttrs?.imagen ?? null
+                  if (img) {
+                    const imgAttrs = img?.attributes ?? img ?? {}
+                    const url = imgAttrs?.url ?? img?.url ?? null
+                    if (url) {
+                      imgPath = url
+                    }
+                  }
                 }
                 const imagenUrl = imgPath.startsWith('http') ? imgPath : `${BACKEND_URL}${imgPath}`
                 
