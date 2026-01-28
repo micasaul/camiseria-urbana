@@ -22,22 +22,33 @@ const obtenerProductoDesdeDetalle = (detalle) => {
   const variacionAttrs = normalizarEntidad(variacion);
   const producto = variacionAttrs?.producto?.data ?? variacionAttrs?.producto ?? null;
   const productoAttrs = normalizarEntidad(producto);
+  const documentId = producto?.documentId ?? productoAttrs?.documentId ?? null;
+  const id = producto?.id ?? productoAttrs?.id ?? null;
   return {
-    id: producto?.id ?? productoAttrs?.id ?? productoAttrs?.documentId ?? null,
+    documentId,
+    id,
     nombre: productoAttrs?.nombre ?? 'Producto',
   };
 };
 
 export const calcularTopProductos = (ventas) => {
   const acumulado = new Map();
-  (ventas ?? []).forEach((venta) => {
+  const ventasValidas = (ventas ?? []).filter((venta) => {
+    const attrs = normalizarEntidad(venta);
+    const estado = attrs?.estado ?? '';
+    return estado !== 'pendiente' && estado !== '';
+  });
+
+  ventasValidas.forEach((venta) => {
     const detalles = obtenerDetalleVentas(venta);
     detalles.forEach((detalle) => {
       const attrs = normalizarEntidad(detalle);
       const cantidad = Number(attrs?.cantidad ?? 0);
       const producto = obtenerProductoDesdeDetalle(detalle);
-      const clave = producto.id ?? producto.nombre;
+      
+      const clave = producto.documentId ?? producto.id ?? producto.nombre;
       if (!clave) return;
+      
       const prev = acumulado.get(clave) || { nombre: producto.nombre, cantidad: 0 };
       acumulado.set(clave, {
         nombre: prev.nombre,
