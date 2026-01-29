@@ -373,7 +373,7 @@ export default function ProductosAgregar() {
     const payloadProducto = {
       data: {
         nombre: nombreNormalizado,
-        descripcion,
+        descripcion: (descripcion ?? '').trim(),
         material,
         precio: precioNumero,
         ...(marcaRelacion ? { marca: marcaRelacion } : {})

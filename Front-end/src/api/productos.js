@@ -423,6 +423,7 @@ export async function getProductoPorId(id) {
     id: item.id ?? attrs?.id,
     documentId: item.documentId ?? attrs?.documentId ?? null,
     nombre: attrs?.nombre ?? '',
+    descripcion: attrs?.descripcion ?? '',
     material: attrs?.material ?? '',
     precio: attrs?.precio ?? 0,
     promo_productos: promoProductos,

@@ -46,7 +46,7 @@
     "stock": {
       "type": "integer",
       "required": true,
-      "default": 1,
+      "default": 15,
       "min": 0
     },
     "producto": {
