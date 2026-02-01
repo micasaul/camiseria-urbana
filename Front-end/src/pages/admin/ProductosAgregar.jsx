@@ -38,7 +38,7 @@ export default function ProductosAgregar() {
   const [cargandoEnums, setCargandoEnums] = useState(false)
   const [precio, setPrecio] = useState('')
   const [variaciones, setVariaciones] = useState([
-    { id: 1, talle: '', color: '', cantidad: '', backendId: null, backendDocumentId: null }
+    { id: 1, talle: '', color: '', cantidad: '15', backendId: null, backendDocumentId: null }
   ])
   const [enviando, setEnviando] = useState(false)
   const [mensaje, setMensaje] = useState('')
@@ -100,7 +100,7 @@ export default function ProductosAgregar() {
   const agregarVariacion = () => {
     setVariaciones((prev) => [
       ...prev,
-      { id: prev.length + 1, talle: '', color: '', cantidad: '', backendId: null, backendDocumentId: null }
+      { id: prev.length + 1, talle: '', color: '', cantidad: '15', backendId: null, backendDocumentId: null }
     ])
   }
 
@@ -206,7 +206,7 @@ export default function ProductosAgregar() {
             backendDocumentId: variacion?.documentId ?? null
           }
         })
-        setVariaciones(listaVariaciones.length ? listaVariaciones : [{ id: 1, talle: '', color: '', cantidad: '', backendId: null, backendDocumentId: null }])
+        setVariaciones(listaVariaciones.length ? listaVariaciones : [{ id: 1, talle: '', color: '', cantidad: '15', backendId: null, backendDocumentId: null }])
         
         const imagenesNuevas = {}
         if (variacionesNormalizadas.length > 0 && productoDocId) {

@@ -22,7 +22,7 @@ export default function CombosAgregar() {
   const [cargandoEnums, setCargandoEnums] = useState(false)
   const [precio, setPrecio] = useState('')
   const [variaciones, setVariaciones] = useState([
-    { id: 1, talle: '', cantidad: '', backendId: null, backendDocumentId: null }
+    { id: 1, talle: '', cantidad: '15', backendId: null, backendDocumentId: null }
   ])
   const [enviando, setEnviando] = useState(false)
   const [mensaje, setMensaje] = useState('')
@@ -60,7 +60,7 @@ export default function CombosAgregar() {
   const agregarVariacion = () => {
     setVariaciones((prev) => [
       ...prev,
-      { id: prev.length + 1, talle: '', cantidad: '' }
+      { id: prev.length + 1, talle: '', cantidad: '15' }
     ])
   }
 
@@ -76,7 +76,7 @@ export default function CombosAgregar() {
     if (imagenPreview?.startsWith('blob:')) URL.revokeObjectURL(imagenPreview)
     setNombre('')
     setPrecio('')
-    setVariaciones([{ id: 1, talle: '', cantidad: '', backendId: null, backendDocumentId: null }])
+    setVariaciones([{ id: 1, talle: '', cantidad: '15', backendId: null, backendDocumentId: null }])
     setMensaje('')
     setError('')
     setComboId(null)
@@ -140,7 +140,7 @@ export default function CombosAgregar() {
             backendDocumentId: variacion?.documentId ?? variacionAttrs?.documentId ?? null
           }
         })
-        setVariaciones(listaVariaciones.length ? listaVariaciones : [{ id: 1, talle: '', cantidad: '', backendId: null, backendDocumentId: null }])
+        setVariaciones(listaVariaciones.length ? listaVariaciones : [{ id: 1, talle: '', cantidad: '15', backendId: null, backendDocumentId: null }])
       })
       .catch(() => {
         if (!activo) return
