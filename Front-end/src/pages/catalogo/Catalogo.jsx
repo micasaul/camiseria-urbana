@@ -49,6 +49,9 @@ export default function Catalogo() {
   const [precioMaxReal, setPrecioMaxReal] = useState(0)
   const [descuentosMap, setDescuentosMap] = useState(new Map())
   const [descuentosLoaded, setDescuentosLoaded] = useState(false)
+  const [coloresConStock, setColoresConStock] = useState(new Set())
+  const [tallesConStock, setTallesConStock] = useState(new Set())
+  const [marcasConStock, setMarcasConStock] = useState(new Set())
 
   useEffect(() => {
     let activo = true
@@ -99,27 +102,6 @@ export default function Catalogo() {
 
   useEffect(() => {
     let activo = true
-    const obtenerPreciosReales = async () => {
-      try {
-        const filtroInactivos = 'filters[$or][0][inactivo][$eq]=false&filters[$or][1][inactivo][$null]=true'
-        const [resMin, resMax] = await Promise.all([
-          fetch(`${VITE_BACKEND_URL}/api/productos?${filtroInactivos}&sort=precio:asc&pagination[pageSize]=1`),
-          fetch(`${VITE_BACKEND_URL}/api/productos?${filtroInactivos}&sort=precio:desc&pagination[pageSize]=1`)
-        ])
-        if (resMin.ok) {
-          const dataMin = await resMin.json()
-          if (activo) setPrecioMinReal(dataMin?.data?.[0]?.attributes?.precio ?? 0)
-        }
-        if (resMax.ok) {
-          const dataMax = await resMax.json()
-          if (activo) setPrecioMaxReal(dataMax?.data?.[0]?.attributes?.precio ?? 10000)
-        }
-      } catch (error) {
-        if (activo) { setPrecioMinReal(0); setPrecioMaxReal(10000); }
-      }
-    }
-    obtenerPreciosReales()
-    
     obtenerDescuentosActivos()
       .then((map) => {
         if (activo) { setDescuentosMap(map); setDescuentosLoaded(true); }
@@ -127,7 +109,6 @@ export default function Catalogo() {
       .catch(() => {
         if (activo) { setDescuentosMap(new Map()); setDescuentosLoaded(true); }
       })
-    
     return () => { activo = false }
   }, [])
 
@@ -148,14 +129,13 @@ export default function Catalogo() {
       return () => { activo = false }
     }
 
+    const ordenarPorPrecio = ordenarPor === 'precio:asc' || ordenarPor === 'precio:desc'
     const filtros = {
       ...(filtrosAplicados.material && { material: filtrosAplicados.material }),
-      ...(filtrosAplicados.precioMin && { precioMin: Number(filtrosAplicados.precioMin) }),
-      ...(filtrosAplicados.precioMax && { precioMax: Number(filtrosAplicados.precioMax) }),
       ...(filtrosAplicados.colores.length > 0 && { colores: filtrosAplicados.colores }),
       ...(filtrosAplicados.talles.length > 0 && { talles: filtrosAplicados.talles }),
       ...(filtrosAplicados.marca && { marca: filtrosAplicados.marca }),
-      ...(ordenarPor && { ordenarPor: ordenarPor }),
+      ...(ordenarPor && !ordenarPorPrecio && { ordenarPor: ordenarPor }),
       ...(ofertasFromUrl && idsOfertas.length > 0 && { ids: idsOfertas })
     }
 
@@ -219,24 +199,70 @@ export default function Catalogo() {
 
           const cantidadTotal = calcularCantidadTotal(variacionesNormalizadas)
           const tieneStock = cantidadTotal > 0
-
           const prioridad = tieneStock ? 1 : 2
 
-          return { ...producto, cantidadTotal, prioridad, nombre: producto.nombre || '' }
+          const productoKey = String(producto.documentId ?? producto.id)
+          const descuento = descuentosMap.get(productoKey) ?? 0
+          const precioBase = Number(producto.precio ?? 0)
+          const precioFinal = descuento > 0 ? precioBase * (1 - descuento / 100) : precioBase
+
+          return { ...producto, cantidadTotal, prioridad, nombre: producto.nombre || '', precioFinal }
         })
 
-        productosProcesados.sort((a, b) => {
+        const coloresSet = new Set()
+        const tallesSet = new Set()
+        const marcasSet = new Set()
+        productosProcesados.forEach((p) => {
+          const vars = p?.variaciones ?? []
+          const tieneStock = vars.some((v) => Number(v?.stock ?? 0) > 0)
+          if (tieneStock && p.marca) {
+            const marcaId = p.marca?.documentId ?? p.marca?.id
+            if (marcaId != null) marcasSet.add(String(marcaId))
+          }
+          vars.forEach((v) => {
+            if (Number(v?.stock ?? 0) > 0) {
+              if (v?.color) coloresSet.add(v.color)
+              if (v?.talle) tallesSet.add(v.talle)
+            }
+          })
+        })
+        if (activo) {
+          setColoresConStock(coloresSet)
+          setTallesConStock(tallesSet)
+          setMarcasConStock(marcasSet)
+        }
+
+        const precioMinFiltro = filtrosAplicados.precioMin ? Number(filtrosAplicados.precioMin) : null
+        const precioMaxFiltro = filtrosAplicados.precioMax ? Number(filtrosAplicados.precioMax) : null
+
+        let filtrados = productosProcesados
+        if (precioMinFiltro != null && !isNaN(precioMinFiltro)) {
+          filtrados = filtrados.filter((p) => (p.precioFinal ?? 0) >= precioMinFiltro)
+        }
+        if (precioMaxFiltro != null && !isNaN(precioMaxFiltro)) {
+          filtrados = filtrados.filter((p) => (p.precioFinal ?? 0) <= precioMaxFiltro)
+        }
+
+        const preciosFinales = productosProcesados.map((p) => p.precioFinal ?? 0).filter((n) => n > 0)
+        const minReal = preciosFinales.length ? Math.min(...preciosFinales) : 0
+        const maxReal = preciosFinales.length ? Math.max(...preciosFinales) : 10000
+        if (activo) {
+          setPrecioMinReal(minReal)
+          setPrecioMaxReal(maxReal)
+        }
+
+        filtrados.sort((a, b) => {
           if (a.prioridad !== b.prioridad) return a.prioridad - b.prioridad
           
           const ordenarPorValue = ordenarPor || ''
           
           if (ordenarPorValue === 'precio:desc') {
-            const precioA = Number(a.precio ?? 0)
-            const precioB = Number(b.precio ?? 0)
+            const precioA = a.precioFinal ?? Number(a.precio ?? 0)
+            const precioB = b.precioFinal ?? Number(b.precio ?? 0)
             if (precioA !== precioB) return precioB - precioA
           } else if (ordenarPorValue === 'precio:asc') {
-            const precioA = Number(a.precio ?? 0)
-            const precioB = Number(b.precio ?? 0)
+            const precioA = a.precioFinal ?? Number(a.precio ?? 0)
+            const precioB = b.precioFinal ?? Number(b.precio ?? 0)
             if (precioA !== precioB) return precioA - precioB
           } else if (ordenarPorValue === 'createdAt:desc') {
             const fechaA = a.createdAt || a.publishedAt
@@ -246,8 +272,8 @@ export default function Catalogo() {
             if (!fechaB) return -1
             const timeA = new Date(fechaA).getTime()
             const timeB = new Date(fechaB).getTime()
-              if (isNaN(timeA) || isNaN(timeB)) return 0
-              return timeB - timeA
+            if (isNaN(timeA) || isNaN(timeB)) return 0
+            return timeB - timeA
           } else if (ordenarPorValue === 'createdAt:asc') {
             const fechaA = a.createdAt || a.publishedAt
             const fechaB = b.createdAt || b.publishedAt
@@ -260,11 +286,11 @@ export default function Catalogo() {
             return timeA - timeB
           }
           
-          return a.nombre.localeCompare(b.nombre, 'es')
+          return (a.nombre || '').localeCompare(b.nombre || '', 'es')
         })
         
-        setProductos(productosProcesados)
-        const totalItems = productosProcesados.length
+        setProductos(filtrados)
+        const totalItems = filtrados.length
         setPaginacion({
           page: 1,
           pageCount: Math.ceil(totalItems / ITEMS_POR_PAGINA) || 1,
@@ -275,6 +301,9 @@ export default function Catalogo() {
         if (activo) {
           setProductos([])
           setPaginacion({ page: 1, pageCount: 1, total: 0 })
+          setColoresConStock(new Set())
+          setTallesConStock(new Set())
+          setMarcasConStock(new Set())
         }
       })
       .finally(() => {
@@ -402,13 +431,13 @@ export default function Catalogo() {
 
           <div className="catalogo-filter-group">
             <label className="catalogo-filter-label">Color</label>
-            <ColorSelector colores={colores} selectedColors={coloresPendientes} onColorToggle={setColoresPendientes} multiple={true} />
+            <ColorSelector colores={coloresConStock.size > 0 ? colores.filter((c) => coloresConStock.has(c) || coloresPendientes.includes(c)) : colores} selectedColors={coloresPendientes} onColorToggle={setColoresPendientes} multiple={true} />
           </div>
 
           <div className="catalogo-filter-group">
             <label className="catalogo-filter-label">Talle</label>
             <div className="catalogo-talles">
-              {talles.map((talle) => {
+              {(tallesConStock.size > 0 ? talles.filter((t) => tallesConStock.has(t) || tallesPendientes.includes(t)) : talles).map((talle) => {
                 const isSelected = tallesPendientes.includes(talle)
                 return (
                   <button key={talle} type="button" className={`catalogo-talle-btn${isSelected ? ' selected' : ''}`} onClick={() => setTallesPendientes(isSelected ? tallesPendientes.filter(t => t !== talle) : [...tallesPendientes, talle])}>
@@ -423,7 +452,7 @@ export default function Catalogo() {
             <label className="catalogo-filter-label">Marca</label>
             <select className="catalogo-filter-select" value={marcaPendiente} onChange={(e) => setMarcaPendiente(e.target.value)}>
               <option value="">Todas las marcas</option>
-              {marcas.map((marca) => (
+              {(marcasConStock.size > 0 ? marcas.filter((m) => marcasConStock.has(String(m.id)) || marcaPendiente === String(m.id)) : marcas).map((marca) => (
                 <option key={marca.id} value={marca.id}>{marca.nombre}</option>
               ))}
             </select>
