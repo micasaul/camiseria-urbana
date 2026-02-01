@@ -502,17 +502,7 @@ export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 
       params.append('filters[precio][$lte]', filtros.precioMax);
     }
 
-    if (filtros.colores && filtros.colores.length > 0) {
-      filtros.colores.forEach((color, index) => {
-        params.append(`filters[variacions][color][$in][${index}]`, color);
-      });
-    }
-
-    if (filtros.talles && filtros.talles.length > 0) {
-      filtros.talles.forEach((talle, index) => {
-        params.append(`filters[variacions][talle][$in][${index}]`, talle);
-      });
-    }
+    // color y talle se filtran client-side (las variaciones vienen populadas)
 
     if (filtros.ordenarPor) {
       params.append('sort', filtros.ordenarPor);

@@ -242,6 +242,18 @@ export default function Catalogo() {
         if (precioMaxFiltro != null && !isNaN(precioMaxFiltro)) {
           filtrados = filtrados.filter((p) => (p.precioFinal ?? 0) <= precioMaxFiltro)
         }
+        if (filtrosAplicados.colores?.length > 0) {
+          filtrados = filtrados.filter((p) => {
+            const vars = p?.variaciones ?? []
+            return vars.some((v) => filtrosAplicados.colores.includes(v?.color))
+          })
+        }
+        if (filtrosAplicados.talles?.length > 0) {
+          filtrados = filtrados.filter((p) => {
+            const vars = p?.variaciones ?? []
+            return vars.some((v) => filtrosAplicados.talles.includes(v?.talle))
+          })
+        }
 
         const preciosFinales = productosProcesados.map((p) => p.precioFinal ?? 0).filter((n) => n > 0)
         const minReal = preciosFinales.length ? Math.min(...preciosFinales) : 0
