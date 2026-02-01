@@ -29,10 +29,10 @@
       "target": "api::variacion.variacion",
       "inversedBy": "detalle_carritos"
     },
-    "combo": {
+    "combo_variacion": {
       "type": "relation",
       "relation": "manyToOne",
-      "target": "api::combo.combo",
+      "target": "api::combo-variacion.combo-variacion",
       "inversedBy": "detalle_carritos"
     }
   }

@@ -12,7 +12,7 @@
 .home-hero {
   position: relative;
   width: 100%;
-  min-height: 100vh;
+  min-height: 65vh;
 
   background-size: cover;
   background-position: center;
@@ -69,18 +69,18 @@
   margin-bottom: 2rem;
 }
 .home-destacados {
-  padding: 4rem 10%;
-  margin-top: 4rem; 
+  padding: 1rem 10%;
+  margin-top: 1rem;
   display: flex;
   flex-direction: column;
   align-items: center; 
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .home-destacados h2 {
-  text-align: center; /* centra solo el título */
+  text-align: center;
   font-weight: bold;
   text-transform: uppercase;
-  margin-bottom: 2rem;
+  margin-bottom: 0;
 }
 

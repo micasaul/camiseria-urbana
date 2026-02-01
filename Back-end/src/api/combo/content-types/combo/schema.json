@@ -40,18 +40,6 @@
       "target": "api::wishlist.wishlist",
       "mappedBy": "combo"
     },
-    "detalle_ventas": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::detalle-venta.detalle-venta",
-      "mappedBy": "combo"
-    },
-    "detalle_carritos": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::detalle-carrito.detalle-carrito",
-      "mappedBy": "combo"
-    },
     "combos-variaciones": {
       "type": "relation",
       "relation": "oneToMany",

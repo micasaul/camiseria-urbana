@@ -32,7 +32,11 @@ module.exports = createCoreService(
                       producto: true,
                     },
                   },
-                  combo: true,
+                  combo_variacion: {
+                    populate: {
+                      combo: true,
+                    },
+                  },
                 },
               },
               users_permissions_user: true,
@@ -58,7 +62,8 @@ module.exports = createCoreService(
         const itemsVenta = await Promise.all(
           detalleCarritos.map(async (detalle) => {
             const variacion = detalle?.variacion;
-            const combo = detalle?.combo;
+            const comboVariacion = detalle?.combo_variacion;
+            const combo = comboVariacion?.combo ?? detalle?.combo;
             const cantidad = aNumero(detalle?.cantidad);
 
             if (cantidad <= 0) {
@@ -99,11 +104,13 @@ module.exports = createCoreService(
               };
             }
 
-            if (combo) {
+            if (combo || comboVariacion) {
               const comboId = combo?.id;
               const comboDocumentId = combo?.documentId;
+              const comboVariacionId = comboVariacion?.id;
+              const comboVariacionDocumentId = comboVariacion?.documentId;
 
-              if (!comboId || !comboDocumentId) {
+              if (!combo) {
                 return null;
               }
 
@@ -125,6 +132,8 @@ module.exports = createCoreService(
                 tipo: 'combo',
                 combo: comboId,
                 comboDocumentId,
+                comboVariacionId,
+                comboVariacionDocumentId,
                 cantidad,
                 precioUnitario,
                 descuento,
@@ -205,9 +214,9 @@ module.exports = createCoreService(
               dataBase.variacion = {
                 connect: [{ documentId: item.variacionDocumentId }],
               };
-            } else if (item.tipo === 'combo') {
-              dataBase.combo = {
-                connect: [{ documentId: item.comboDocumentId }],
+            } else if (item.tipo === 'combo' && item.comboVariacionDocumentId) {
+              dataBase.combo_variacion = {
+                connect: [{ documentId: item.comboVariacionDocumentId }],
               };
             }
 
@@ -280,7 +289,7 @@ module.exports = createCoreService(
               detalle_ventas: {
                 populate: {
                   variacion: true,
-                  combo: true,
+                  combo_variacion: true,
                 },
               },
               users_permissions_user: true,
@@ -371,7 +380,7 @@ module.exports = createCoreService(
 
         for (const detalle of detalleVentas) {
           const variacion = detalle?.variacion;
-          const combo = detalle?.combo;
+          const comboVariacion = detalle?.combo_variacion;
           const cantidad = aNumero(detalle?.cantidad);
 
           if (cantidad <= 0) {
@@ -386,26 +395,24 @@ module.exports = createCoreService(
           };
 
           if (variacion) {
-            const variacionId = variacion?.id;
-            const variacionDocumentId = variacion?.documentId;
+            const variacionDocumentId = variacion?.documentId ?? variacion?.id;
 
-            if (!variacionId || !variacionDocumentId) {
+            if (!variacionDocumentId) {
               continue;
             }
 
             dataBase.variacion = {
-              connect: [{ documentId: variacionDocumentId }],
+              connect: [{ documentId: String(variacionDocumentId) }],
             };
-          } else if (combo) {
-            const comboId = combo?.id;
-            const comboDocumentId = combo?.documentId;
+          } else if (comboVariacion) {
+            const comboVariacionDocumentId = comboVariacion?.documentId ?? comboVariacion?.id;
 
-            if (!comboId || !comboDocumentId) {
+            if (!comboVariacionDocumentId) {
               continue;
             }
 
-            dataBase.combo = {
-              connect: [{ documentId: comboDocumentId }],
+            dataBase.combo_variacion = {
+              connect: [{ documentId: String(comboVariacionDocumentId) }],
             };
           } else {
             continue;
@@ -468,7 +475,7 @@ module.exports = createCoreService(
               detalle_ventas: {
                 populate: {
                   variacion: true,
-                  combo: true,
+                  combo_variacion: true,
                 },
               },
             },
@@ -495,7 +502,7 @@ module.exports = createCoreService(
         const variacionesActualizadas = [];
         for (const detalle of detalleVentas) {
           const variacion = detalle?.variacion;
-          const combo = detalle?.combo;
+          const comboVariacion = detalle?.combo_variacion;
           const cantidad = aNumero(detalle?.cantidad);
 
           if (cantidad <= 0) {
@@ -539,6 +546,44 @@ module.exports = createCoreService(
 
             if (variacionActualizada?.documentId) {
               variacionesActualizadas.push(variacionActualizada.documentId);
+            }
+          } else if (comboVariacion) {
+            const comboVariacionId = comboVariacion?.id;
+
+            if (!comboVariacionId) {
+              continue;
+            }
+
+            const comboVariacionActual = await strapi.entityService.findOne(
+              /** @type {any} */ ('api::combo-variacion.combo-variacion'),
+              comboVariacionId,
+              /** @type {any} */ ({ transaction: trx })
+            );
+
+            if (!comboVariacionActual) {
+              continue;
+            }
+
+            const stockActual = aNumero(comboVariacionActual.stock);
+            const nuevoStock = stockActual - cantidad;
+
+            if (nuevoStock < 0) {
+              throw new errors.ValidationError(`Stock insuficiente para el combo (talle) ${comboVariacionId}`);
+            }
+
+            const comboVariacionActualizada = await strapi.entityService.update(
+              /** @type {any} */ ('api::combo-variacion.combo-variacion'),
+              comboVariacionId,
+              /** @type {any} */ ({
+                data: {
+                  stock: nuevoStock,
+                },
+                transaction: trx,
+              })
+            );
+
+            if (comboVariacionActualizada?.documentId) {
+              variacionesActualizadas.push(comboVariacionActualizada.documentId);
             }
           }
         }

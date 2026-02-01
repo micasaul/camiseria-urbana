@@ -121,10 +121,14 @@ export default function DetalleCombo() {
         setCarritoError('No hay suficiente stock disponible.')
         return
       }
+      if (!variacion.documentId) {
+        setCarritoError('No se pudo obtener la variación del combo.')
+        return
+      }
 
       const carrito = await obtenerCarritoUsuario()
       
-      await agregarComboAlCarrito(carrito.documentId, combo.documentId, cantidad)
+      await agregarComboAlCarrito(carrito.documentId, variacion.documentId, cantidad)
       setCarritoError('')
       window.dispatchEvent(new CustomEvent('cart:open'))
     } catch (error) {

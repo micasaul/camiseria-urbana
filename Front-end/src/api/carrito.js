@@ -21,7 +21,11 @@ export async function obtenerCarritoUsuario() {
     }
     
     const userData = await userRes.json();
-    const userDocumentId = userData.documentId;
+    const userDocumentId = userData?.documentId ?? userData?.id ?? userData?.attributes?.documentId ?? userData?.attributes?.id;
+    
+    if (!userDocumentId) {
+      throw new Error('No se pudo obtener el identificador del usuario.');
+    }
     
     const res = await fetch(
       `${BACKEND_URL}/api/carritos?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=detalle_carritos`,
@@ -71,7 +75,11 @@ export async function crearCarrito() {
     }
     
     const userData = await userRes.json();
-    const userDocumentId = userData.documentId;
+    const userDocumentId = userData?.documentId ?? userData?.id ?? userData?.attributes?.documentId ?? userData?.attributes?.id;
+    
+    if (!userDocumentId) {
+      throw new Error('No se pudo obtener el identificador del usuario.');
+    }
     
     const res = await fetch(`${BACKEND_URL}/api/carritos`, {
       method: 'POST',
@@ -122,11 +130,14 @@ export async function obtenerCarritoCompleto() {
     }
     
     const userData = await userRes.json();
-    const userDocumentId = userData.documentId;
+    const userDocumentId = userData?.documentId ?? userData?.id ?? userData?.attributes?.documentId ?? userData?.attributes?.id;
     
+    if (!userDocumentId) {
+      return [];
+    }
 
     const res = await fetch(
-      `${BACKEND_URL}/api/carritos?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=detalle_carritos&populate[1]=detalle_carritos.variacion&populate[2]=detalle_carritos.variacion.imagen&populate[3]=detalle_carritos.variacion.producto&populate[4]=detalle_carritos.combo&populate[5]=detalle_carritos.combo.imagen`,
+      `${BACKEND_URL}/api/carritos?filters[users_permissions_user][documentId][$eq]=${userDocumentId}&populate[0]=detalle_carritos&populate[1]=detalle_carritos.variacion&populate[2]=detalle_carritos.variacion.imagen&populate[3]=detalle_carritos.variacion.producto&populate[4]=detalle_carritos.combo_variacion&populate[5]=detalle_carritos.combo_variacion.combo&populate[6]=detalle_carritos.combo_variacion.combo.imagen`,
       {
         headers: {
           ...getAuthHeaders()
@@ -155,10 +166,11 @@ export async function obtenerCarritoCompleto() {
       const variacionAttrs = variacion?.attributes ?? variacion;
       const producto = variacionAttrs?.producto?.data ?? variacionAttrs?.producto;
       const productoAttrs = producto?.attributes ?? producto;
-      const combo = detalleAttrs?.combo?.data ?? detalleAttrs?.combo;
+      const comboVariacion = detalleAttrs?.combo_variacion?.data ?? detalleAttrs?.combo_variacion;
+      const combo = comboVariacion?.combo?.data ?? comboVariacion?.combo ?? detalleAttrs?.combo?.data ?? detalleAttrs?.combo;
       const comboAttrs = combo?.attributes ?? combo;
 
-      const esCombo = !!combo;
+      const esCombo = !!(combo ?? comboVariacion);
       const item = esCombo ? comboAttrs : productoAttrs;
       const isProductoInactivo = !esCombo && productoAttrs?.inactivo === true;
 
@@ -179,30 +191,67 @@ export async function obtenerCarritoCompleto() {
           const url = attrs?.url ?? data?.url ?? imagenRaw?.url
           if (url) {
             imagenUrl = url.startsWith('http') ? url : `${BACKEND_URL}${url}`
-          } else {
-            const variacionDocId = variacion?.documentId ?? variacionAttrs?.documentId ?? variacion?.id ?? variacionAttrs?.id
-            if (variacionDocId) {
-              try {
-                const variacionRes = await fetch(`${BACKEND_URL}/api/variaciones/${variacionDocId}?populate=imagen`, {
-                  headers: { ...getAuthHeaders() }
-                })
-                if (variacionRes.ok) {
-                  const variacionData = await variacionRes.json()
-                  const variacionItem = variacionData?.data ?? variacionData
-                  const variacionItemAttrs = variacionItem?.attributes ?? variacionItem
-                  const imagenRaw2 = variacionItemAttrs?.imagen
-                  if (imagenRaw2) {
-                    const data2 = imagenRaw2?.data ?? imagenRaw2
-                    const attrs2 = data2?.attributes ?? data2 ?? {}
-                    const url2 = attrs2?.url ?? data2?.url ?? imagenRaw2?.url
-                    if (url2) {
-                      imagenUrl = url2.startsWith('http') ? url2 : `${BACKEND_URL}${url2}`
-                    }
+          }
+        }
+        if (imagenUrl === '/assets/fallback.jpg') {
+          const variacionDocId = variacion?.documentId ?? variacionAttrs?.documentId ?? variacion?.id ?? variacionAttrs?.id
+          if (variacionDocId) {
+            try {
+              const variacionRes = await fetch(`${BACKEND_URL}/api/variaciones/${variacionDocId}?populate=imagen`, {
+                headers: { ...getAuthHeaders() }
+              })
+              if (variacionRes.ok) {
+                const variacionData = await variacionRes.json()
+                const variacionItem = variacionData?.data ?? variacionData
+                const variacionItemAttrs = variacionItem?.attributes ?? variacionItem
+                const imagenRaw2 = variacionItemAttrs?.imagen
+                if (imagenRaw2) {
+                  const data2 = imagenRaw2?.data ?? imagenRaw2
+                  const attrs2 = data2?.attributes ?? data2 ?? {}
+                  const url2 = attrs2?.url ?? data2?.url ?? imagenRaw2?.url
+                  if (url2) {
+                    imagenUrl = url2.startsWith('http') ? url2 : `${BACKEND_URL}${url2}`
                   }
                 }
-              } catch (error) {
-                console.error('Error obteniendo imagen de variación:', error)
               }
+            } catch (error) {
+              console.error('Error obteniendo imagen de variación:', error)
+            }
+          }
+        }
+        if (imagenUrl === '/assets/fallback.jpg') {
+          const productoDocId = producto?.documentId ?? productoAttrs?.documentId ?? producto?.id ?? productoAttrs?.id
+          const color = variacionAttrs?.color ?? ''
+          if (productoDocId) {
+            try {
+              const params = new URLSearchParams()
+              params.append('filters[producto][documentId][$eq]', productoDocId)
+              if (color) params.append('filters[color][$eq]', color)
+              params.append('populate', 'imagen')
+              params.append('pagination[pageSize]', '50')
+              const otrasRes = await fetch(`${BACKEND_URL}/api/variaciones?${params.toString()}`, {
+                headers: { ...getAuthHeaders() }
+              })
+              if (otrasRes.ok) {
+                const otrasData = await otrasRes.json()
+                const otras = otrasData?.data ?? []
+                const conImagen = otras.find((v) => {
+                  const vAttrs = v?.attributes ?? v
+                  const img = vAttrs?.imagen
+                  const d = img?.data ?? img
+                  const u = d?.attributes?.url ?? d?.url ?? img?.url
+                  return !!u
+                })
+                if (conImagen) {
+                  const vAttrs = conImagen?.attributes ?? conImagen
+                  const img = vAttrs?.imagen
+                  const d = img?.data ?? img
+                  const u = d?.attributes?.url ?? d?.url ?? img?.url
+                  if (u) imagenUrl = u.startsWith('http') ? u : `${BACKEND_URL}${u}`
+                }
+              }
+            } catch (error) {
+              console.error('Error buscando imagen de otra variación:', error)
             }
           }
         }
@@ -260,9 +309,9 @@ export async function agregarAlCarrito(carritoDocumentId, variacionDocumentId, c
       },
       body: JSON.stringify({
         data: {
-          cantidad: cantidad,
-          carrito: carritoDocumentId,
-          variacion: variacionDocumentId
+          cantidad: Number(cantidad) || 1,
+          carrito: { connect: [{ documentId: String(carritoDocumentId) }] },
+          variacion: { connect: [{ documentId: String(variacionDocumentId) }] }
         }
       })
     });
@@ -272,6 +321,8 @@ export async function agregarAlCarrito(carritoDocumentId, variacionDocumentId, c
       console.error('Error response:', errorText);
       throw new Error('No se pudo agregar al carrito.');
     }
+
+    window.dispatchEvent(new CustomEvent('cart:updated'));
 
     return res.json();
   } catch (error) {
@@ -348,7 +399,7 @@ export async function eliminarDetalleCarrito(detalleDocumentId) {
  * @param {number} 
  * @returns {Promise<Object>}
  */
-export async function agregarComboAlCarrito(carritoDocumentId, comboDocumentId, cantidad) {
+export async function agregarComboAlCarrito(carritoDocumentId, comboVariacionDocumentId, cantidad) {
   try {
     const res = await fetch(`${BACKEND_URL}/api/detalles-carritos`, {
       method: 'POST',
@@ -358,9 +409,9 @@ export async function agregarComboAlCarrito(carritoDocumentId, comboDocumentId, 
       },
       body: JSON.stringify({
         data: {
-          cantidad: cantidad,
-          carrito: carritoDocumentId,
-          combo: comboDocumentId
+          cantidad: Number(cantidad) || 1,
+          carrito: { connect: [{ documentId: String(carritoDocumentId) }] },
+          combo_variacion: { connect: [{ documentId: String(comboVariacionDocumentId) }] }
         }
       })
     });

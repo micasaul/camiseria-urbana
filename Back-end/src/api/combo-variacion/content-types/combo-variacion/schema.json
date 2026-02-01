@@ -33,6 +33,18 @@
       "relation": "manyToOne",
       "target": "api::combo.combo",
       "inversedBy": "combos-variaciones"
+    },
+    "detalle_carritos": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::detalle-carrito.detalle-carrito",
+      "mappedBy": "combo_variacion"
+    },
+    "detalle_ventas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::detalle-venta.detalle-venta",
+      "mappedBy": "combo_variacion"
     }
   }
 }
