@@ -1,5 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import "./Header.css"
 import LogoCamiseriaUrbana from "../../assets/LogoCamiseriaUrbana.png" 
 import MenuButton from './buttons/MenuButton.jsx'
@@ -13,6 +13,8 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function Header() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const headerRef = useRef(null)
   const { rol, cerrarSesion } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -66,6 +68,28 @@ export default function Header() {
 
     window.addEventListener('cart:open', handleOpenCart)
     return () => window.removeEventListener('cart:open', handleOpenCart)
+  }, [])
+
+  const closeAllPanels = () => {
+    setIsMenuOpen(false)
+    setIsSearchOpen(false)
+    setIsAccountOpen(false)
+    setIsWishlistOpen(false)
+    setIsCartOpen(false)
+  }
+
+  useEffect(() => {
+    closeAllPanels()
+  }, [location.pathname])
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (headerRef.current && !headerRef.current.contains(e.target)) {
+        closeAllPanels()
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   const cargarProductosOferta = async () => {
@@ -145,7 +169,7 @@ export default function Header() {
   }
 
   return (
-    <header className="header">
+    <header ref={headerRef} className="header">
 
       {/* Menú izquierda */}
       <MenuButton
