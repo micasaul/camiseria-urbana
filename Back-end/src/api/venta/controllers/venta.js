@@ -20,6 +20,18 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
   async find(ctx) {
     const page = Number(ctx.query?.pagination?.page) || 1;
     const pageSize = Number(ctx.query?.pagination?.pageSize) || 10;
+    const queryFilters = ctx.query?.filters || {};
+
+    const isFilterByUser = Boolean(
+      queryFilters?.users_permissions_user ||
+      queryFilters?.users_permissions_user?.documentId ||
+      queryFilters?.users_permissions_user?.id
+    );
+
+    const filters = { ...queryFilters };
+    if (!isFilterByUser) {
+      filters.estado = { $ne: 'pendiente' };
+    }
 
     const { results, pagination } = await strapi.entityService.findPage(
       'api::venta.venta',
@@ -28,11 +40,7 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
         pageSize,
         sort: { createdAt: 'desc' },
         publicationState: 'live',
-        filters: {
-          estado: {
-            $ne: 'pendiente', 
-          },
-        },
+        filters,
         populate: {
           users_permissions_user: true,
           direccion: true,
@@ -41,7 +49,9 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
               variacion: {
                 populate: { producto: true },
               },
-              combo: true,
+              combo_variacion: {
+                populate: { combo: true },
+              },
             },
           },
         },

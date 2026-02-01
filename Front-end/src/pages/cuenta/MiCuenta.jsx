@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext"
 import { Link } from "react-router-dom"
 import LinkButton from "../../components/buttons/link-btn/LinkButton"
 import BlueButton from "../../components/buttons/blue-btn/BlueButton"
+import { getVentasPorUsuario } from "../../api/ventas"
 
 import userIcon from "../../assets/1144811.png"
 import mapIcon from "../../assets/map-location-pin-icon-free.png"
@@ -26,35 +27,20 @@ const MiCuenta = () => {
         const token = localStorage.getItem("strapiToken")
         if (!token) throw new Error("No hay token de sesión")
 
-        const userWithVentas = await fetch(
-          `${API_URL}/api/users/me?populate[0]=ventas&populate[1]=ventas.direccion&populate[2]=ventas.detalle_ventas&populate[3]=ventas.detalle_ventas.variacion&populate[4]=ventas.detalle_ventas.variacion.producto&populate[5]=ventas.detalle_ventas.combo&populate[6]=ventas.detalle_ventas.combo.imagen`,
-          {
-            headers: { Authorization: `Bearer ${token}` }
+        let userDocId = usuario?.documentId ?? usuario?.id ?? usuario?.attributes?.documentId ?? usuario?.attributes?.id
+        if (!userDocId) {
+          const meRes = await fetch(`${API_URL}/api/users/me`, { headers: { Authorization: `Bearer ${token}` } })
+          if (meRes.ok) {
+            const meData = await meRes.json()
+            userDocId = meData?.documentId ?? meData?.id ?? meData?.attributes?.documentId ?? meData?.attributes?.id
           }
-        )
-
-        if (!userWithVentas.ok) {
-          throw new Error("No se pudieron obtener las ventas")
+        }
+        if (!userDocId) {
+          setVentas([])
+          return
         }
 
-        const userData = await userWithVentas.json()
-        const ventasRaw = userData?.ventas?.data ?? userData?.ventas ?? []
-        
-        const ventasOrdenadas = ventasRaw
-          .map(item => {
-            const attrs = item?.attributes ?? item
-            return {
-              ...attrs,
-              id: item?.id ?? attrs?.id,
-              documentId: item?.documentId ?? attrs?.documentId ?? null
-            }
-          })
-          .sort((a, b) => {
-            const fechaA = a.fecha ? new Date(a.fecha).getTime() : 0
-            const fechaB = b.fecha ? new Date(b.fecha).getTime() : 0
-            return fechaB - fechaA 
-          })
-        
+        const ventasOrdenadas = await getVentasPorUsuario(userDocId)
         setVentas(ventasOrdenadas)
       } catch (error) {
         console.error("Error ventas:", error)

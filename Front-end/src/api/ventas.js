@@ -51,25 +51,42 @@ export async function getVentaPorId(id) {
   return res.json();
 }
 
-export async function getVentasUsuario(page = 1, pageSize = 100) {
-  const token = window.localStorage.getItem('strapiToken');
-  if (!token) {
-    throw new Error('No hay token de sesión');
+/**
+ * @param {string|number} 
+ * @returns {Promise<Array>}
+ */
+export async function getVentasPorUsuario(userId) {
+  if (userId === undefined || userId === null || userId === '') return [];
+
+  const params = new URLSearchParams();
+  const isDocumentId = typeof userId === 'string' && userId.length > 10 && !/^\d+$/.test(userId);
+  if (isDocumentId) {
+    params.append('filters[users_permissions_user][documentId][$eq]', userId);
+  } else {
+    params.append('filters[users_permissions_user][id][$eq]', String(userId));
+  }
+  params.append('populate[0]', 'direccion');
+  params.append('populate[1]', 'detalle_ventas');
+  params.append('populate[2]', 'detalle_ventas.variacion');
+  params.append('populate[3]', 'detalle_ventas.variacion.producto');
+  params.append('populate[4]', 'detalle_ventas.combo_variacion');
+  params.append('populate[5]', 'detalle_ventas.combo_variacion.combo');
+  params.append('populate[6]', 'detalle_ventas.combo_variacion.combo.imagen');
+  params.append('sort', 'createdAt:desc');
+  params.append('pagination[pageSize]', '100');
+
+  const res = await fetch(`${BACKEND_URL}/api/ventas?${params.toString()}`, {
+    headers: { ...getAuthHeaders() }
+  });
+
+  if (!res.ok) {
+    throw new Error('No se pudieron obtener las ventas.');
   }
 
-  const userRes = await fetch(
-    `${BACKEND_URL}/api/users/me?populate[0]=ventas&populate[1]=ventas.direccion&populate[2]=ventas.detalle_ventas&populate[3]=ventas.detalle_ventas.variacion&populate[4]=ventas.detalle_ventas.variacion.producto&populate[5]=ventas.detalle_ventas.combo&populate[6]=ventas.detalle_ventas.combo.imagen`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  
-  if (!userRes.ok) {
-    throw new Error('No se pudieron obtener las ventas del usuario.');
-  }
-  
-  const userData = await userRes.json();
-  const ventasRaw = userData?.ventas?.data ?? userData?.ventas ?? [];
-  
-  const items = ventasRaw
+  const data = await res.json();
+  const ventasRaw = data?.data ?? [];
+
+  return ventasRaw
     .map((item) => {
       const attrs = item?.attributes ?? item;
       return {
@@ -81,15 +98,33 @@ export async function getVentasUsuario(page = 1, pageSize = 100) {
     .sort((a, b) => {
       const fechaA = a.fecha ? new Date(a.fecha).getTime() : 0;
       const fechaB = b.fecha ? new Date(b.fecha).getTime() : 0;
-      return fechaB - fechaA; // Descendente
+      return fechaB - fechaA;
     });
-  
+}
+
+export async function getVentasUsuario(page = 1, pageSize = 100) {
+  const token = window.localStorage.getItem('strapiToken');
+  if (!token) {
+    throw new Error('No hay token de sesión');
+  }
+
+  const userRes = await fetch(`${BACKEND_URL}/api/users/me`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!userRes.ok) {
+    throw new Error('No se pudieron obtener las ventas del usuario.');
+  }
+  const userData = await userRes.json();
+  const userDocumentId = userData?.documentId ?? userData?.id ?? userData?.attributes?.documentId ?? userData?.attributes?.id;
+  if (!userDocumentId) return { items: [], pagination: { page, pageSize, pageCount: 0, total: 0 } };
+
+  const items = await getVentasPorUsuario(userDocumentId);
+  const total = items.length;
   const startIndex = (page - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const paginatedItems = items.slice(startIndex, endIndex);
-  const total = items.length;
   const pageCount = Math.ceil(total / pageSize);
-  
+
   return {
     items: paginatedItems,
     pagination: { page, pageSize, pageCount, total }

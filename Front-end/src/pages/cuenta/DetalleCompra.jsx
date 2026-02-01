@@ -176,13 +176,15 @@ export default function DetalleCompra() {
                       </span>
                       <span>${item.subtotal.toFixed(2)}</span>
                       <span>
-                        {itemId ? (
+                        {itemId && (attrs?.estado ?? venta?.estado) === 'Entregado' ? (
                           <Link 
                             to={`/cuenta/crear-resena/${itemId}`} 
                             className="detalle-resena-link"
                           >
                             Agregar reseña
                           </Link>
+                        ) : itemId ? (
+                          <span className="detalle-resena-disabled">Agregar reseña (disponible cuando esté entregado)</span>
                         ) : (
                           <span>—</span>
                         )}

@@ -95,6 +95,12 @@
   color: #F4ACB7;
 }
 
+.detalle-resena-disabled {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  cursor: default;
+}
+
 .detalle-producto-row span {
   font-size: 1rem;
 }
