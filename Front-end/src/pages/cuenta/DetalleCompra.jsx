@@ -61,10 +61,12 @@ export default function DetalleCompra() {
   const detalleVentas = Array.isArray(detalleVentasRaw) ? detalleVentasRaw.map(item => {
     const itemAttrs = item?.attributes ?? item
     const variacionData = itemAttrs?.variacion?.data ?? itemAttrs?.variacion
-    const comboData = itemAttrs?.combo?.data ?? itemAttrs?.combo
-    const esCombo = !!comboData
+    const comboVariacionData = itemAttrs?.combo_variacion?.data ?? itemAttrs?.combo_variacion
+    const comboData = comboVariacionData?.combo?.data ?? comboVariacionData?.combo ?? comboVariacionData?.attributes?.combo
+    const esCombo = !!comboVariacionData
     
     const variacion = variacionData?.attributes ?? variacionData ?? {}
+    const comboVariacionAttrs = comboVariacionData?.attributes ?? comboVariacionData ?? {}
     const combo = comboData?.attributes ?? comboData ?? {}
     
     const productoData = variacion?.producto?.data ?? variacion?.producto
@@ -152,7 +154,7 @@ export default function DetalleCompra() {
                 </div>
                 {detalleVentas.map(item => {
                   const nombre = item.esCombo 
-                    ? (item.combo?.nombre ?? 'Combo')
+                    ? (item.combo?.talle ? `${item.combo?.nombre ?? 'Combo'} - Talle ${item.combo.talle}` : (item.combo?.nombre ?? 'Combo'))
                     : (item.variacion?.producto?.nombre ?? 'Producto')
                   const itemId = item.esCombo
                     ? (item.combo?.documentId ?? item.combo?.id)

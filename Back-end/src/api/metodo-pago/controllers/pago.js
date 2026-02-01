@@ -177,9 +177,13 @@ export default {
                     },
                   },
                 },
-                combo: {
+                combo_variacion: {
                   populate: {
-                    imagen: true,
+                    combo: {
+                      populate: {
+                        imagen: true,
+                      },
+                    },
                   },
                 },
               },
@@ -245,8 +249,8 @@ export default {
                       imagenUrl = url.startsWith('http') ? url : `${backendUrl}${url}`;
                     }
                   }
-                } else if (detalle?.combo) {
-                  const combo = detalle.combo;
+                } else if (detalle?.combo_variacion?.combo) {
+                  const combo = detalle.combo_variacion.combo;
                   nombre = combo.nombre || 'Combo';
                   const imagen = combo.imagen;
                   if (imagen) {

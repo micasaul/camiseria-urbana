@@ -34,7 +34,9 @@ module.exports = createCoreService(
                   },
                   combo_variacion: {
                     populate: {
-                      combo: true,
+                      combo: {
+                        populate: { imagen: true },
+                      },
                     },
                   },
                 },

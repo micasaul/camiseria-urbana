@@ -127,9 +127,10 @@ export default function DetalleVenta() {
               {detalleItems.map((detalleItem, index) => {
                 const item = detalleItem?.attributes ?? detalleItem
                 const variacion = item?.variacion?.data ?? item?.variacion ?? null
-                const combo = item?.combo?.data ?? item?.combo ?? null
+                const comboVariacion = item?.combo_variacion?.data ?? item?.combo_variacion ?? null
+                const combo = comboVariacion?.combo?.data ?? comboVariacion?.combo ?? comboVariacion?.attributes?.combo ?? null
                 
-                const esCombo = !!combo
+                const esCombo = !!comboVariacion
                 const variacionAttrs = variacion?.attributes ?? variacion ?? {}
                 const comboAttrs = combo?.attributes ?? combo ?? {}
                 
@@ -176,7 +177,7 @@ export default function DetalleVenta() {
                       <span className="admin-venta-product-name">{nombre}</span>
                       <span className="admin-venta-product-variant">
                         {esCombo ? (
-                          <>Combo</>
+                          <>Talle: {comboVariacion?.talle ?? comboVariacion?.attributes?.talle ?? '—'}</>
                         ) : (
                           <>Talle: {variacionAttrs?.talle || '—'} - Color: {variacionAttrs?.color || '—'}</>
                         )}

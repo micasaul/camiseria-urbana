@@ -176,12 +176,16 @@ export async function obtenerCarritoCompleto() {
 
       let imagenUrl = '/assets/fallback.jpg'
       if (esCombo && item?.imagen) {
+        let url = null
         if (item.imagen?.data?.attributes?.url) {
-          imagenUrl = item.imagen.data.attributes.url
+          url = item.imagen.data.attributes.url
         } else if (item.imagen?.url) {
-          imagenUrl = item.imagen.url
+          url = item.imagen.url
         } else if (typeof item.imagen === 'string') {
-          imagenUrl = item.imagen
+          url = item.imagen
+        }
+        if (url) {
+          imagenUrl = url.startsWith('http') ? url : `${BACKEND_URL}${url}`
         }
       } else if (!esCombo && variacionAttrs) {
         const imagenRaw = variacionAttrs?.imagen
@@ -272,7 +276,7 @@ export async function obtenerCarritoCompleto() {
         comboId: esCombo ? (itemId ?? null) : null,
         imageSrc: imagenUrl,
         name: item?.nombre ?? '',
-        size: esCombo ? null : (variacionAttrs?.talle ?? ''),
+        size: esCombo ? (comboVariacion?.talle ?? comboVariacion?.attributes?.talle ?? '') : (variacionAttrs?.talle ?? ''),
         color: esCombo ? null : (variacionAttrs?.color ?? ''),
         priceValue: precioBase,
         price: `$${precioBase.toFixed(2)}`,
