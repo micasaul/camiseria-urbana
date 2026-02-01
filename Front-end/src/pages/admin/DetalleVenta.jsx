@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
 import { actualizarEstadoVenta, getVentaPorId } from '../../api/ventas.js'
+import { getImageUrl } from '../../utils/url.js'
+import NgrokImage from '../../components/NgrokImage.jsx'
 import './admin.css'
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 const ESTADOS_VENTA = ['En proceso', 'Enviado', 'Entregado']
 
 export default function DetalleVenta() {
@@ -158,7 +158,7 @@ export default function DetalleVenta() {
                     }
                   }
                 }
-                const imagenUrl = imgPath.startsWith('http') ? imgPath : `${BACKEND_URL}${imgPath}`
+                const imagenUrl = getImageUrl(imgPath)
                 
                 const descuento = Number(item?.descuento ?? 0)
                 const precioUnitario = Number(item?.precioUnitario ?? 0)
@@ -168,7 +168,7 @@ export default function DetalleVenta() {
                 
                 return (
                   <div key={detalleItem.id ?? index} className="admin-venta-product">
-                    <img
+                    <NgrokImage
                       src={imagenUrl}
                       alt={nombre}
                       className="admin-venta-product-img"

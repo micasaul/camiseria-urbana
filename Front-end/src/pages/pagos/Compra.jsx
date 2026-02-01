@@ -6,6 +6,7 @@ import { obtenerCarritoCompleto } from "../../api/carrito.js";
 import { obtenerDescuentosActivos } from "../../api/promos.js";
 import { parsearPrecio, aplicarDescuentos, calcularSubtotal } from "../../utils/carrito.js";
 import { obtenerPrecioEnvio } from "../../utils/envio.js";
+import NgrokImage from "../../components/NgrokImage.jsx";
 import "./Compra.css"
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -199,7 +200,7 @@ export default function Compra() {
           {productos.map((producto) => {
             return (
               <div key={producto.id ?? producto.documentId} className="compra-producto">
-                <img src={producto.imageSrc} alt={producto.name} />
+                <NgrokImage src={producto.imageSrc} alt={producto.name} />
                 <div className="compra-producto-info">
                   <h3>{producto.name}</h3>
                   <p>Talle: {producto.size}   -   Color: {producto.color}</p>

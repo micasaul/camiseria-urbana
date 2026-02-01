@@ -4,9 +4,9 @@ import { getProductos, actualizarVariacion, actualizarProducto } from '../../api
 import { COLOR_HEX_MAP } from '../../utils/colorMap.js'
 import { calcularCantidadTotal, formatearPrecio } from '../../utils/adminHelpers.js'
 import PageButton from '../../components/forms/page-button/page-button.jsx'
+import { getImageUrl } from '../../utils/url.js'
+import NgrokImage from '../../components/NgrokImage.jsx'
 import './admin.css'
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function ProductosListar() {
   const navigate = useNavigate()
@@ -58,9 +58,7 @@ export default function ProductosListar() {
             const img = attrs.imagen?.data ?? attrs.imagen
             const imgAttrs = img?.attributes ?? img ?? {}
             const url = imgAttrs?.url ?? img?.url ?? attrs.imagen?.url
-            if (url) {
-              imagen = url.startsWith('http') ? url : `${BACKEND_URL}${url}`
-            }
+            if (url) imagen = getImageUrl(url)
           }
           return {
             id: variacion?.id ?? attrs?.id,
@@ -235,14 +233,14 @@ export default function ProductosListar() {
             const variacionesConImagen = (producto?.variaciones ?? []).filter((v) => v?.imagen)
             const imagenUrl = variacionesConImagen.length > 0
               ? variacionesConImagen[0].imagen
-              : `${BACKEND_URL}/assets/fallback.jpg`
+              : getImageUrl('/assets/fallback.jpg')
             return (
             <div
               key={producto.id}
               className={`admin-table-row admin-table-products${sinStock ? ' admin-row-muted' : ''}`}
             >
               <span>
-                <img
+                <NgrokImage
                   src={imagenUrl}
                   alt={producto.nombre || 'Producto'}
                   className="admin-product-img"

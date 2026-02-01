@@ -1,3 +1,5 @@
+import { getImageUrl } from '../utils/url.js';
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const getAuthHeaders = () => {
@@ -185,7 +187,7 @@ export async function obtenerCarritoCompleto() {
           url = item.imagen
         }
         if (url) {
-          imagenUrl = url.startsWith('http') ? url : `${BACKEND_URL}${url}`
+          imagenUrl = getImageUrl(url) ?? url
         }
       } else if (!esCombo && variacionAttrs) {
         const imagenRaw = variacionAttrs?.imagen
@@ -194,7 +196,7 @@ export async function obtenerCarritoCompleto() {
           const attrs = data?.attributes ?? data ?? {}
           const url = attrs?.url ?? data?.url ?? imagenRaw?.url
           if (url) {
-            imagenUrl = url.startsWith('http') ? url : `${BACKEND_URL}${url}`
+            imagenUrl = getImageUrl(url) ?? url
           }
         }
         if (imagenUrl === '/assets/fallback.jpg') {
@@ -214,7 +216,7 @@ export async function obtenerCarritoCompleto() {
                   const attrs2 = data2?.attributes ?? data2 ?? {}
                   const url2 = attrs2?.url ?? data2?.url ?? imagenRaw2?.url
                   if (url2) {
-                    imagenUrl = url2.startsWith('http') ? url2 : `${BACKEND_URL}${url2}`
+                    imagenUrl = getImageUrl(url2) ?? url2
                   }
                 }
               }
@@ -251,7 +253,7 @@ export async function obtenerCarritoCompleto() {
                   const img = vAttrs?.imagen
                   const d = img?.data ?? img
                   const u = d?.attributes?.url ?? d?.url ?? img?.url
-                  if (u) imagenUrl = u.startsWith('http') ? u : `${BACKEND_URL}${u}`
+                  if (u) imagenUrl = getImageUrl(u) ?? u
                 }
               }
             } catch (error) {
@@ -260,9 +262,7 @@ export async function obtenerCarritoCompleto() {
           }
         }
       }
-      if (!imagenUrl.startsWith('http')) {
-        imagenUrl = `${BACKEND_URL}${imagenUrl}`
-      }
+      imagenUrl = getImageUrl(imagenUrl) ?? imagenUrl
 
       const precioBase = Number(item?.precio ?? 0)
       const itemId = esCombo

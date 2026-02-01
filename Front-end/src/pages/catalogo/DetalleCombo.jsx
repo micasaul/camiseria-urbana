@@ -8,9 +8,9 @@ import { calcularPromedioValoraciones } from '../../utils/producto.js'
 import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
 import ReviewCard from '../../components/cards/review-card/ReviewCard.jsx'
 import Destacados from '../../components/cards/Destacados.jsx'
+import { getImageUrl } from '../../utils/url.js'
+import NgrokImage from '../../components/NgrokImage.jsx'
 import './Producto.css'
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function DetalleCombo() {
   const { documentId } = useParams()
@@ -188,9 +188,7 @@ export default function DetalleCombo() {
     return <div className="producto-page">Combo no encontrado</div>
   }
 
-  const imagenUrl = combo.imagen?.startsWith('http')
-    ? combo.imagen
-    : `${BACKEND_URL}${combo.imagen || '/assets/fallback.jpg'}`
+  const imagenUrl = getImageUrl(combo.imagen) ?? getImageUrl('/assets/fallback.jpg')
 
   const precioBase = Number(combo?.precio ?? 0)
 
@@ -198,7 +196,7 @@ export default function DetalleCombo() {
     <div className="producto-page">
       <div className="producto-container">
         <div className={`producto-imagen-wrap${sinStockCombo ? ' agotado' : ''}`}>
-          <img src={imagenUrl} alt={combo.nombre} className="producto-imagen" />
+          <NgrokImage src={imagenUrl} alt={combo.nombre} className="producto-imagen" />
           {sinStockCombo && <div className="producto-agotado">AGOTADO</div>}
         </div>
 

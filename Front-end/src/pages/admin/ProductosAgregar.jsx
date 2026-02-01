@@ -20,6 +20,8 @@ import { getProductoEnums } from '../../api/enums.js'
 import { crearMarca, getMarcas } from '../../api/marcas.js'
 import { resetearFormularioProducto, validarPrecio } from '../../utils/adminHelpers.js'
 import ColorSelector from '../../components/forms/color/ColorSelector.jsx'
+import { getImageUrl } from '../../utils/url.js'
+import NgrokImage from '../../components/NgrokImage.jsx'
 import './admin.css'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
@@ -282,7 +284,7 @@ export default function ProductosAgregar() {
               if (imgUrl) {
                 imagenesNuevas[index] = {
                   file: null,
-                  preview: imgUrl.startsWith('http') ? imgUrl : `${BACKEND_URL}${imgUrl}`,
+                  preview: getImageUrl(imgUrl),
                   id: imagenId
                 }
               }
@@ -606,7 +608,7 @@ export default function ProductosAgregar() {
               <label>Imagen de la variación</label>
               {imagenesVariaciones[index]?.preview && (
                 <div className="admin-media-preview-container">
-                  <img
+                  <NgrokImage
                     src={imagenesVariaciones[index].preview}
                     alt={`Preview variación ${index + 1}`}
                     className="admin-media-preview"

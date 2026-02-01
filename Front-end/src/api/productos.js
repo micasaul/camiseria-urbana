@@ -1,3 +1,4 @@
+import { getImageUrl } from '../utils/url.js';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -25,7 +26,7 @@ const urlImagenVariacion = (imagenRaw) => {
     return null;
   }
   
-  const finalUrl = url.startsWith('http') ? url : `${BACKEND_URL}${url}`;
+  const finalUrl = getImageUrl(url);
   console.log('urlImagenVariacion - URL final:', finalUrl);
   return finalUrl;
 };

@@ -1,3 +1,5 @@
+import { getImageUrl } from '../utils/url.js';
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const getAuthHeaders = () => {
@@ -11,7 +13,7 @@ const urlImagenVariacion = (imagenRaw) => {
   const attrs = data?.attributes ?? data ?? {};
   const url = attrs?.url ?? data?.url ?? imagenRaw?.url;
   if (!url) return null;
-  return url.startsWith('http') ? url : `${BACKEND_URL}${url}`;
+  return getImageUrl(url);
 };
 
 const obtenerVariacionesConImagen = async (productoDocumentId) => {
@@ -174,9 +176,7 @@ export async function obtenerWishlistCompleta() {
           imagenUrl = v.imagen
         }
       }
-      if (!imagenUrl.startsWith('http')) {
-        imagenUrl = `${BACKEND_URL}${imagenUrl}`
-      }
+      imagenUrl = getImageUrl(imagenUrl) ?? imagenUrl
 
       const precioBase = Number(item?.precio ?? 0)
       const itemId = esCombo

@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { getCombos, actualizarComboVariacion } from '../../api/combos.js'
 import { calcularCantidadTotal, formatearPrecio } from '../../utils/adminHelpers.js'
 import PageButton from '../../components/forms/page-button/page-button.jsx'
+import { getImageUrl } from '../../utils/url.js'
+import NgrokImage from '../../components/NgrokImage.jsx'
 import './admin.css'
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function CombosListar() {
   const navigate = useNavigate()
@@ -197,7 +197,7 @@ export default function CombosListar() {
               className={`admin-table-row admin-table-products${sinStock ? ' admin-row-muted' : ''}`}
             >
               <span>
-                <img
+                <NgrokImage
                   src={imagenUrl}
                   alt={combo.nombre || 'Combo'}
                   className="admin-product-img"

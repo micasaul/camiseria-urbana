@@ -17,9 +17,9 @@ import ReviewCard from '../../components/cards/review-card/ReviewCard.jsx'
 import ProductosMismaMarca from '../../components/cards/ProductosMismaMarca.jsx'
 import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { getImageUrl } from '../../utils/url.js'
+import NgrokImage from '../../components/NgrokImage.jsx'
 import './Producto.css'
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function Producto() {
   const { documentId } = useParams()
@@ -142,7 +142,7 @@ export default function Producto() {
     
     const conImg = vars.filter((variacion) => variacion?.imagen)
     if (conImg.length) return conImg[0].imagen
-    return `${BACKEND_URL}/assets/fallback.jpg`
+    return getImageUrl('/assets/fallback.jpg')
   }, [producto?.variaciones, colorSeleccionado, talleSeleccionado])
 
   const precioBase = Number(producto?.precio ?? 0)
@@ -236,7 +236,7 @@ export default function Producto() {
     <div className="producto-page">
       <div className="producto-container">
         <div className={`producto-imagen-wrap${sinStockProducto ? ' agotado' : ''}`}>
-          <img src={imagenUrl} alt={producto.nombre} className="producto-imagen" />
+          <NgrokImage src={imagenUrl} alt={producto.nombre} className="producto-imagen" />
           {sinStockProducto && <div className="producto-agotado">AGOTADO</div>}
         </div>
 

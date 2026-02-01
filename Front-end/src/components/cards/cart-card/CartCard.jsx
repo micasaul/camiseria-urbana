@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
+import { getImageUrl } from '../../../utils/url.js'
+import NgrokImage from '../../NgrokImage.jsx'
 import './cart-card.css'
 
 const FALLBACK_IMAGEN = '/assets/fallback.jpg'
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function CartCard({
   imageSrc,
@@ -18,7 +19,7 @@ export default function CartCard({
   onQuantityChange,
   onRemove
 }) {
-  const src = imageSrc || `${BACKEND_URL}${FALLBACK_IMAGEN}`
+  const src = imageSrc || getImageUrl(FALLBACK_IMAGEN)
   const [count, setCount] = useState(quantity)
 
   useEffect(() => {
@@ -48,7 +49,7 @@ export default function CartCard({
 
   return (
     <div className="cart-card">
-      <img className="cart-card-image" src={src} alt={name} />
+      <NgrokImage className="cart-card-image" src={src} alt={name} />
       <div className="cart-card-details">
         <span className="cart-card-name">{name}</span>
         <div className="cart-card-variant">

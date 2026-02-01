@@ -1,7 +1,8 @@
+import { getImageUrl } from '../../../utils/url.js'
+import NgrokImage from '../../NgrokImage.jsx'
 import './wishlist-card.css'
 
 const FALLBACK_IMAGEN = '/assets/fallback.jpg'
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function WishlistCard({
   imageSrc,
@@ -12,10 +13,10 @@ export default function WishlistCard({
   hasDiscount = false,
   onRemove
 }) {
-  const src = imageSrc || `${BACKEND_URL}${FALLBACK_IMAGEN}`
+  const src = imageSrc || getImageUrl(FALLBACK_IMAGEN)
   return (
     <div className="wishlist-card">
-      <img className="wishlist-card-image" src={src} alt={name} />
+      <NgrokImage className="wishlist-card-image" src={src} alt={name} />
       <div className="wishlist-card-details">
         <span className="wishlist-card-name">{name}</span>
         <span className="wishlist-card-price">

@@ -1,3 +1,5 @@
+import { getImageUrl } from '../utils/url.js';
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const getAuthHeaders = () => {
@@ -121,7 +123,7 @@ export async function getCombos(page = 1, pageSize = 10) {
         documentId: item.documentId ?? attrs?.documentId ?? null,
         nombre: attrs?.nombre ?? '',
         precio: attrs?.precio ?? 0,
-        imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
+        imagen: getImageUrl(attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url) || '/assets/fallback.jpg',
         createdAt: attrs?.createdAt ?? item?.createdAt ?? null,
         publishedAt: attrs?.publishedAt ?? item?.publishedAt ?? null,
         variaciones: variaciones.map(v => {
@@ -179,7 +181,7 @@ export async function getComboPorId(id) {
       documentId: comboDocumentId,
       nombre: attrs?.nombre ?? '',
       precio: attrs?.precio ?? 0,
-      imagen: attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url || '/assets/fallback.jpg',
+      imagen: getImageUrl(attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url) || '/assets/fallback.jpg',
       variaciones: variaciones.map(v => {
         const vAttrs = v?.attributes ?? v;
         return {

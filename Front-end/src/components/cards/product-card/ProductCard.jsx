@@ -1,46 +1,22 @@
 import { Link } from 'react-router-dom'
+import { getImageUrl } from '../../../utils/url.js'
+import NgrokImage from '../../NgrokImage.jsx'
 import './product-card.css'
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 const FALLBACK_IMAGEN = '/assets/fallback.jpg'
 
 function imagenDeVariacion(producto) {
   const todasVariaciones = producto?.variaciones ?? []
   const vars = todasVariaciones.filter((v) => v?.imagen && v.imagen !== null && v.imagen !== '')
-  
-  if (!vars.length) {
-    console.log('ProductCard - No hay variaciones con imagen:', {
-      productoId: producto?.documentId ?? producto?.id,
-      nombre: producto?.nombre,
-      totalVariaciones: todasVariaciones.length,
-      variaciones: todasVariaciones.map(v => ({ 
-        id: v?.id, 
-        documentId: v?.documentId,
-        color: v?.color,
-        talle: v?.talle,
-        tieneImagen: !!(v?.imagen && v.imagen !== null && v.imagen !== ''),
-        imagen: v?.imagen,
-        tipoImagen: typeof v?.imagen
-      })) ?? []
-    })
-    return `${BACKEND_URL}${FALLBACK_IMAGEN}`
-  }
-  
+  if (!vars.length) return getImageUrl(FALLBACK_IMAGEN)
   const idx = Math.abs((producto?.documentId ?? producto?.id ?? '').toString().split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % vars.length
-  console.log('ProductCard - Usando imagen de variación:', {
-    productoId: producto?.documentId ?? producto?.id,
-    nombre: producto?.nombre,
-    imagenUrl: vars[idx].imagen,
-    variacionUsada: { color: vars[idx].color, talle: vars[idx].talle }
-  })
   return vars[idx].imagen
 }
 
 export default function ProductCard({ producto, descuento = 0, to = null }) {
   const imagenUrl =
     producto?.esCombo && producto?.imagen
-      ? (producto.imagen.startsWith('http') ? producto.imagen : `${BACKEND_URL}${producto.imagen}`)
+      ? (getImageUrl(producto.imagen) ?? producto.imagen)
       : imagenDeVariacion(producto)
 
   const variaciones = producto?.variaciones ?? []
@@ -59,7 +35,7 @@ export default function ProductCard({ producto, descuento = 0, to = null }) {
   const cardContent = (
     <>
       <div className={`product-card-image-container${sinStock ? ' agotado' : ''}`}>
-        <img 
+        <NgrokImage 
           src={imagenUrl} 
           alt={producto.nombre} 
           className="product-card-image"

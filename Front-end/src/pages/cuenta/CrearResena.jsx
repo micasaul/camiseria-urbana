@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from "react-router-dom"
 import { useAuth } from "../../context/AuthContext"
 import BlueButton from "../../components/buttons/blue-btn/BlueButton"
 import LinkButton from "../../components/buttons/link-btn/LinkButton"
+import { getImageUrl } from "../../utils/url.js"
+import NgrokImage from "../../components/NgrokImage.jsx"
 import "./CrearResena.css"
 
 const API_URL = import.meta.env.VITE_BACKEND_URL
@@ -43,9 +45,7 @@ const CrearResena = () => {
             const attrs = prod?.attributes ?? prod
             const imagenData = attrs?.imagen?.data ?? attrs?.imagen
             const imagen = imagenData?.attributes ?? imagenData ?? {}
-            const imagenUrl = imagen?.url 
-              ? (imagen.url.startsWith('http') ? imagen.url : `${API_URL}${imagen.url}`)
-              : null
+            const imagenUrl = imagen?.url ? getImageUrl(imagen.url) : null
 
             setItem({
               id: prod?.id,
@@ -75,9 +75,7 @@ const CrearResena = () => {
           const attrs = combo?.attributes ?? combo
           const imagenData = attrs?.imagen?.data ?? attrs?.imagen
           const imagen = imagenData?.attributes ?? imagenData ?? {}
-          const imagenUrl = imagen?.url 
-            ? (imagen.url.startsWith('http') ? imagen.url : `${API_URL}${imagen.url}`)
-            : null
+          const imagenUrl = imagen?.url ? getImageUrl(imagen.url) : null
 
           setItem({
             id: combo?.id,
@@ -210,7 +208,7 @@ const CrearResena = () => {
 
         <div className="crear-resena-producto">
           {item.imagenUrl && (
-            <img src={item.imagenUrl} alt={item.nombre} className="crear-resena-imagen" />
+            <NgrokImage src={item.imagenUrl} alt={item.nombre} className="crear-resena-imagen" />
           )}
           <div className="crear-resena-producto-info">
             <h2>{item.nombre}</h2>

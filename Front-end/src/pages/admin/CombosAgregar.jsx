@@ -12,6 +12,8 @@ import {
 } from '../../api/combos.js'
 import { getProductoEnums } from '../../api/enums.js'
 import { validarPrecio } from '../../utils/adminHelpers.js'
+import { getImageUrl } from '../../utils/url.js'
+import NgrokImage from '../../components/NgrokImage.jsx'
 import './admin.css'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
@@ -120,7 +122,7 @@ export default function CombosAgregar() {
         const imgAttrs = img?.attributes ?? img ?? {}
         const imgUrl = imgAttrs?.url ?? img?.url
         if (imgUrl) {
-          setImagenPreview(imgUrl.startsWith('http') ? imgUrl : `${BACKEND_URL}${imgUrl}`)
+          setImagenPreview(getImageUrl(imgUrl))
           setImagenId(img?.id ?? imgAttrs?.id ?? null)
         }
 
@@ -330,7 +332,7 @@ export default function CombosAgregar() {
             <p className="admin-media-hint">Se sube a la Media Library y se asocia por ID al combo.</p>
             {imagenPreview ? (
               <div className="admin-media-preview-wrap">
-                <img src={imagenPreview} alt="Vista previa" className="admin-media-preview" />
+                <NgrokImage src={imagenPreview} alt="Vista previa" className="admin-media-preview" />
                 <div className="admin-media-actions">
                   <label className="admin-media-upload">
                     <input
