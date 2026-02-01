@@ -1,68 +1,107 @@
 'use strict';
 
-const isActive = (promo) => {
-  if (!promo) return false;
+const { actualizarPromosActivas } = require('../../../../extensions/promos/promo-cron');
+
+const getPromoAttrs = (raw) => {
+  if (!raw) return null;
+  const attrs = raw.attributes ?? raw;
+  const nombre = attrs.nombre ?? raw.nombre;
+  const fechaInicio = attrs.fechaInicio ?? raw.fechaInicio;
+  const fechaFin = attrs.fechaFin ?? raw.fechaFin;
+  if (!nombre || !fechaInicio || !fechaFin) return null;
+  return { nombre, fechaInicio, fechaFin };
+};
+
+const isActive = (promoAttrs) => {
+  if (!promoAttrs) return false;
   const now = new Date();
-  const start = promo.fechaInicio ? new Date(promo.fechaInicio) : null;
-  const end = promo.fechaFin ? new Date(promo.fechaFin) : null;
-  if (!start || !end) return false;
+  const start = new Date(promoAttrs.fechaInicio);
+  const end = new Date(promoAttrs.fechaFin);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return false;
   return start <= now && now <= end;
 };
 
-const notifySubscribers = async (promo) => {
+const notifySubscribers = async (promoAttrs) => {
   const emailService = strapi.plugins?.email?.services?.email;
-  if (!emailService) return;
+  if (!emailService) {
+    strapi.log?.warn?.('Promo lifecycle: email plugin no disponible');
+    return;
+  }
 
   const newsletters = await strapi.entityService.findMany(
     'api::newsletter.newsletter',
     {
       filters: { activo: true },
-      populate: ['users_permissions_user'],
+      publicationState: 'live',
     }
   );
 
-  if (!newsletters.length) return;
+  if (!newsletters?.length) {
+    strapi.log?.info?.(`Promo lifecycle: 0 newsletters activos para "${promoAttrs.nombre}"`);
+    return;
+  }
 
   for (const n of newsletters) {
-    const user = n.users_permissions_user;
-    if (!user?.email) continue;
-
-    await emailService.send({
-      to: user.email,
-      subject: `${promo.nombre} - Camisería Urbana`,
-      text: `La promo "${promo.nombre}" está activa hasta el ${promo.fechaFin}.`,
-    });
+    const email = n.email;
+    if (!email) continue;
+    try {
+      await emailService.send({
+        to: email,
+        subject: `${promoAttrs.nombre} - Camisería Urbana`,
+        text: `¡Ahora está activa la promo "${promoAttrs.nombre}"!`,
+      });
+    } catch (err) {
+      strapi.log?.error?.(`Promo lifecycle: error enviando mail a ${email}`, err);
+    }
   }
+  strapi.log?.info?.(`Promo lifecycle: enviados ${newsletters.length} mails para "${promoAttrs.nombre}"`);
 };
 
 module.exports = {
   async afterCreate(event) {
-    const promo = event.result;
-    if (isActive(promo)) {
-      await notifySubscribers(promo);
+    try {
+      const promoAttrs = getPromoAttrs(event.result);
+      if (promoAttrs && isActive(promoAttrs)) {
+        await notifySubscribers(promoAttrs);
+      }
+      await actualizarPromosActivas();
+    } catch (err) {
+      strapi.log?.error?.('Promo lifecycle afterCreate error:', err);
     }
   },
 
   async beforeUpdate(event) {
     const { where } = event.params || {};
-    if (!where?.id) return;
+    const id = where?.id ?? where?.documentId;
+    if (id == null) return;
 
-    const previous = await strapi.entityService.findOne(
-      'api::promo.promo',
-      where.id
-    );
+    try {
+      const previous = where?.documentId
+        ? (await strapi.entityService.findMany('api::promo.promo', /** @type {any} */ ({
+            filters: { documentId: where.documentId },
+            limit: 1,
+          })))[0]
+        : await strapi.entityService.findOne('api::promo.promo', id);
 
-    event.state = event.state || {};
-    event.state.wasActive = isActive(previous);
+      event.state = event.state || {};
+      event.state.wasActive = isActive(getPromoAttrs(previous));
+    } catch (err) {
+      strapi.log?.error?.('Promo lifecycle beforeUpdate error:', err);
+    }
   },
 
   async afterUpdate(event) {
-    const promo = event.result;
-    const wasActive = event.state?.wasActive;
-    const isNowActive = isActive(promo);
+    try {
+      const promoAttrs = getPromoAttrs(event.result);
+      const wasActive = event.state?.wasActive ?? false;
+      const isNowActive = isActive(promoAttrs);
 
-    if (isNowActive && !wasActive) {
-      await notifySubscribers(promo);
+      if (promoAttrs && isNowActive && !wasActive) {
+        await notifySubscribers(promoAttrs);
+      }
+      await actualizarPromosActivas();
+    } catch (err) {
+      strapi.log?.error?.('Promo lifecycle afterUpdate error:', err);
     }
   },
 };
