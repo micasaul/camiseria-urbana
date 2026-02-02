@@ -23,7 +23,8 @@ export default function Combo() {
         const items = data.items ?? []
         let combosAdaptados = items.map(combo => ({
           ...combo,
-          variaciones: [{ stock: 1 }] 
+          esCombo: true,
+          variaciones: combo.variaciones ?? [{ stock: 1 }]
         }))
         
         if (ordenarPor) {
