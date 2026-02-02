@@ -41,12 +41,10 @@ export function obtenerTallesEnStock(variaciones, colorSeleccionado = '') {
   return Array.from(talles.keys())
 }
 
-/** Orden canónico de talles: XS, S, M, L, XL, XXL, XXXL */
 const ORDER_TALLES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
 
 /**
- * Ordena un array de talles según ORDER_TALLES (los que no estén en la lista quedan al final).
- * @param {Array<string>} talles
+ * @param {Array<string>} 
  * @returns {Array<string>}
  */
 export function ordenarTalles(talles) {
@@ -100,7 +98,7 @@ export function encontrarVariacion(variaciones, color, talle) {
 }
 
 /**
- * @param {Array<{ variaciones?: Array<{ stock?: number }>; nombre?: string }>} items
+ * @param {Array<{ variaciones?: Array<{ stock?: number }>; nombre?: string }>} 
  * @returns {Array}
  */
 export function ordenarPorStock(items) {

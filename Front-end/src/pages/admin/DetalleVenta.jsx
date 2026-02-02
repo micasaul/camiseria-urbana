@@ -139,16 +139,24 @@ export default function DetalleVenta() {
                   : (variacionAttrs?.producto?.data?.attributes?.nombre ?? variacionAttrs?.producto?.attributes?.nombre ?? variacionAttrs?.producto?.nombre ?? 'Producto')
                 
                 const extraerUrlImagen = (imagenObj) => {
-                  if (!imagenObj) return null
+                  if (!imagenObj || typeof imagenObj === 'number') return null
+                  if (typeof imagenObj === 'string') return imagenObj
                   const data = imagenObj?.data ?? imagenObj
                   const attrs = data?.attributes ?? data ?? {}
-                  return attrs?.url ?? imagenObj?.url ?? data?.url ?? null
+                  const url =
+                    attrs?.url ??
+                    imagenObj?.url ??
+                    data?.url ??
+                    imagenObj?.formats?.thumbnail?.url ??
+                    imagenObj?.formats?.small?.url ??
+                    imagenObj?.formats?.medium?.url
+                  return url || null
                 }
-                let imgPath = null
-                if (esCombo) {
-                  imgPath = extraerUrlImagen(comboAttrs?.imagen)
-                } else {
-                  imgPath = extraerUrlImagen(variacionAttrs?.imagen)
+                const imagenVariacion = variacionAttrs?.imagen ?? variacion?.imagen ?? item?.variacion?.imagen
+                const imagenCombo = comboAttrs?.imagen ?? combo?.imagen ?? comboVariacion?.combo?.imagen
+                let imgPath = esCombo ? extraerUrlImagen(imagenCombo) : extraerUrlImagen(imagenVariacion)
+                if (imgPath && !imgPath.startsWith('http') && !imgPath.startsWith('/')) {
+                  imgPath = `/${imgPath}`
                 }
                 const imagenUrl = imgPath ? getImageUrl(imgPath) : null
                 

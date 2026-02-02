@@ -120,9 +120,9 @@ export default function WishlistButton({ isOpen, onClick, onClose }) {
               <div className="side-panel-cards">
                 {itemsWishlist.map((item) => {
                   const detailHref = item.comboDocumentId ?? item.comboId
-                    ? `/catalogo/combo/${item.comboDocumentId ?? item.comboId}`
+                    ? `/combo/${item.comboDocumentId ?? item.comboId}`
                     : item.productoDocumentId ?? item.productoId
-                      ? `/catalogo/producto/${item.productoDocumentId ?? item.productoId}`
+                      ? `/producto/${item.productoDocumentId ?? item.productoId}`
                       : null
                   return (
                     <WishlistCard
