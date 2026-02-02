@@ -138,27 +138,19 @@ export default function DetalleVenta() {
                   ? (comboAttrs?.nombre || 'Combo')
                   : (variacionAttrs?.producto?.data?.attributes?.nombre ?? variacionAttrs?.producto?.attributes?.nombre ?? variacionAttrs?.producto?.nombre ?? 'Producto')
                 
-                let imgPath = '/assets/fallback.jpg'
-                if (esCombo) {
-                  const img = comboAttrs?.imagen?.data ?? comboAttrs?.imagen ?? null
-                  if (img) {
-                    const imgAttrs = img?.attributes ?? img ?? {}
-                    const url = imgAttrs?.url ?? img?.url ?? null
-                    if (url) {
-                      imgPath = url
-                    }
-                  }
-                } else {
-                  const img = variacionAttrs?.imagen?.data ?? variacionAttrs?.imagen ?? null
-                  if (img) {
-                    const imgAttrs = img?.attributes ?? img ?? {}
-                    const url = imgAttrs?.url ?? img?.url ?? null
-                    if (url) {
-                      imgPath = url
-                    }
-                  }
+                const extraerUrlImagen = (imagenObj) => {
+                  if (!imagenObj) return null
+                  const data = imagenObj?.data ?? imagenObj
+                  const attrs = data?.attributes ?? data ?? {}
+                  return attrs?.url ?? imagenObj?.url ?? data?.url ?? null
                 }
-                const imagenUrl = getImageUrl(imgPath)
+                let imgPath = null
+                if (esCombo) {
+                  imgPath = extraerUrlImagen(comboAttrs?.imagen)
+                } else {
+                  imgPath = extraerUrlImagen(variacionAttrs?.imagen)
+                }
+                const imagenUrl = imgPath ? getImageUrl(imgPath) : null
                 
                 const descuento = Number(item?.descuento ?? 0)
                 const precioUnitario = Number(item?.precioUnitario ?? 0)
@@ -168,11 +160,15 @@ export default function DetalleVenta() {
                 
                 return (
                   <div key={detalleItem.id ?? index} className="admin-venta-product">
-                    <NgrokImage
-                      src={imagenUrl}
-                      alt={nombre}
-                      className="admin-venta-product-img"
-                    />
+                    {(imagenUrl && (
+                      <NgrokImage
+                        src={imagenUrl}
+                        alt={nombre}
+                        className="admin-venta-product-img"
+                      />
+                    )) || (
+                      <div className="admin-venta-product-img admin-venta-product-img-placeholder" aria-label={nombre} />
+                    )}
                     <div className="admin-venta-product-info">
                       <span className="admin-venta-product-name">{nombre}</span>
                       <span className="admin-venta-product-variant">

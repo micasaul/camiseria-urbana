@@ -8,6 +8,7 @@ import {
   calcularPromedioValoraciones,
   obtenerColoresEnStock, 
   obtenerTallesEnStock, 
+  ordenarTalles,
   talleDisponible, 
   obtenerStockDisponible,
   encontrarVariacion
@@ -305,7 +306,7 @@ export default function Producto() {
           <div className="producto-seleccion">
             <label className="producto-seleccion-label">Elegir talle</label>
             <div className="producto-talles">
-              {tallesEnStock.map(talle => {
+              {ordenarTalles(tallesEnStock).map(talle => {
                 const disponible = esTalleDisponible(talle)
                 return (
                   <button

@@ -148,6 +148,15 @@
   background: #e9e9e9;
 }
 
+.admin-venta-product-img-placeholder {
+  flex-shrink: 0;
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: #e9e9e9;
+}
+
 .admin-venta-product-info {
   display: flex;
   flex-direction: column;
@@ -642,6 +651,15 @@ button.white-btn.admin-white-action:hover {
   border-radius: 8px;
   background: #e9e9e9;
   display: inline-flex;
+}
+
+.admin-product-thumb-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+  flex-shrink: 0;
 }
 
 .admin-product-img {

@@ -9,12 +9,24 @@
   padding: 12px 40px 12px 12px;
 }
 
+.wishlist-card-image-link {
+  display: block;
+  flex-shrink: 0;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.wishlist-card-image-link:hover .wishlist-card-image {
+  opacity: 0.9;
+}
+
 .wishlist-card-image {
   width: 64px;
   height: 64px;
   object-fit: cover;
   border-radius: 10px;
   background: #f4f4f4;
+  transition: opacity 0.15s ease;
 }
 
 .wishlist-card-details {

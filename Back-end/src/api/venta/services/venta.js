@@ -601,8 +601,18 @@ module.exports = createCoreService(
           })
         );
 
-        return { venta: ventaActualizada, variacionesActualizadas };
+        return { venta: ventaActualizada, ventaDocumentId: venta.documentId, variacionesActualizadas };
       });
+
+      // Publicar la venta para que "En proceso" sea visible (draftAndPublish)
+      const ventaDocId = resultado.ventaDocumentId || resultado.venta?.documentId;
+      if (ventaDocId) {
+        await strapi.documents('api::venta.venta')
+          .publish({ documentId: ventaDocId })
+          .catch((error) => {
+            strapi.log.warn('Error al publicar venta después de confirmar pago:', error);
+          });
+      }
 
       if (resultado.variacionesActualizadas && resultado.variacionesActualizadas.length > 0) {
         Promise.all(

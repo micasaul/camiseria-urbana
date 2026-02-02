@@ -41,7 +41,10 @@ const MiCuenta = () => {
         }
 
         const ventasOrdenadas = await getVentasPorUsuario(userDocId)
-        setVentas(ventasOrdenadas)
+        const ventasSinPendientes = (ventasOrdenadas ?? []).filter(
+          (v) => (v.estado ?? v.attributes?.estado) !== "pendiente"
+        )
+        setVentas(ventasSinPendientes)
       } catch (error) {
         console.error("Error ventas:", error)
         setVentas([])

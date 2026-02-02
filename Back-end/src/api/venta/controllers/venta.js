@@ -79,7 +79,7 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
         detalle_ventas: {
           populate: {
             variacion: {
-              populate: { producto: true },
+              populate: { producto: true, imagen: true },
             },
             combo_variacion: {
               populate: {

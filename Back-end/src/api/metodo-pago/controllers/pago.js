@@ -170,11 +170,8 @@ export default {
               populate: {
                 variacion: {
                   populate: {
-                    producto: {
-                      populate: {
-                        imagen: true,
-                      },
-                    },
+                    producto: true,
+                    imagen: true,
                   },
                 },
                 combo_variacion: {
@@ -203,68 +200,57 @@ export default {
       const ventaEntity = /** @type {any} */ (venta);
       const pagoEstado = pago.status;
 
-      await strapi.entityService.update(
-        /** @type {any} */ ("api::venta.venta"),
-        venta.id,
-        {
-          data: {
-            payment_id: String(paymentId),
-          },
-        }
-      );
-
+      // Solo procesamos si la venta sigue en pendiente (creada al elegir MP en checkout)
       if (ventaEntity.estado === "pendiente") {
         if (pagoEstado === "approved") {
+          // Pago exitoso: venta pasa automáticamente a "En proceso", se descuenta stock
           await strapi.service("api::venta.venta").confirmarPago(ventaId);
-          
+          await strapi.entityService.update(
+            /** @type {any} */ ("api::venta.venta"),
+            venta.id,
+            { data: { payment_id: String(paymentId) } }
+          );
+
           const usuario = ventaEntity.users_permissions_user;
           if (usuario?.email) {
             try {
-              const backendUrl = strapi.config.get('server.url');
+              const baseUrl = String(strapi.config.get("server.url") || "http://localhost:1337").replace(/\/$/, "");
               const detalleVentas = /** @type {any[]} */ (ventaEntity.detalle_ventas || []);
-              
-              let productosHtml = '';
+
+              const urlImagenEmail = (imagen) => {
+                if (!imagen) return "";
+                let path = "";
+                if (typeof imagen === "string") path = imagen;
+                else if (imagen?.url) path = imagen.url;
+                else if (imagen?.data?.attributes?.url) path = imagen.data.attributes.url;
+                else if (imagen?.data?.url) path = imagen.data.url;
+                else if (imagen?.attributes?.url) path = imagen.attributes.url;
+                if (!path) return "";
+                return path.startsWith("http") ? path : `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+              };
+
+              let productosHtml = "";
               let subtotal = 0;
-              
+
               for (const detalle of detalleVentas) {
                 const cantidad = Number(detalle?.cantidad ?? 0);
                 const precioUnitario = Number(detalle?.precioUnitario ?? 0);
                 const subtotalItem = Number(detalle?.subtotal ?? 0);
                 subtotal += subtotalItem;
-                
-                let nombre = 'Producto';
-                let imagenUrl = '';
-                
+
+                let nombre = "Producto";
+                let imagenUrl = "";
+
                 if (detalle?.variacion?.producto) {
                   const producto = detalle.variacion.producto;
-                  nombre = producto.nombre || 'Producto';
-                  const imagen = producto.imagen;
-                  if (imagen) {
-                    if (typeof imagen === 'string') {
-                      imagenUrl = imagen.startsWith('http') ? imagen : `${backendUrl}${imagen}`;
-                    } else if (imagen?.url) {
-                      imagenUrl = imagen.url.startsWith('http') ? imagen.url : `${backendUrl}${imagen.url}`;
-                    } else if (imagen?.data?.attributes?.url) {
-                      const url = imagen.data.attributes.url;
-                      imagenUrl = url.startsWith('http') ? url : `${backendUrl}${url}`;
-                    }
-                  }
+                  nombre = producto.nombre || "Producto";
+                  imagenUrl = urlImagenEmail(detalle.variacion.imagen);
                 } else if (detalle?.combo_variacion?.combo) {
                   const combo = detalle.combo_variacion.combo;
-                  nombre = combo.nombre || 'Combo';
-                  const imagen = combo.imagen;
-                  if (imagen) {
-                    if (typeof imagen === 'string') {
-                      imagenUrl = imagen.startsWith('http') ? imagen : `${backendUrl}${imagen}`;
-                    } else if (imagen?.url) {
-                      imagenUrl = imagen.url.startsWith('http') ? imagen.url : `${backendUrl}${imagen.url}`;
-                    } else if (imagen?.data?.attributes?.url) {
-                      const url = imagen.data.attributes.url;
-                      imagenUrl = url.startsWith('http') ? url : `${backendUrl}${url}`;
-                    }
-                  }
+                  nombre = combo.nombre || "Combo";
+                  imagenUrl = urlImagenEmail(combo.imagen);
                 }
-                
+
                 productosHtml += `
                   <tr style="border-bottom: 1px solid #e5e7eb;">
                     <td style="padding: 12px; vertical-align: middle;">
@@ -281,8 +267,8 @@ export default {
               }
               
               const envio = Number(ventaEntity.envio ?? 0);
-              const total = Number(ventaEntity.total ?? 0);
-              
+              const total = subtotal + envio;
+
               await strapi.plugins.email.services.email.send({
                 to: usuario.email,
                 subject: "Confirmación de compra - Camisería Urbana",
@@ -326,8 +312,18 @@ export default {
               strapi.log.error(`Error enviando email de confirmación:`, emailError);
             }
           }
-        } else if (pagoEstado === "rejected" || pagoEstado === "cancelled" || pagoEstado === "refunded" || pagoEstado === "charged_back" || pagoEstado === "expired") {
-          await strapi.service("api::venta.venta").cancelarVenta(ventaId);
+        } else {
+          // Pago falló o quedó pendiente: borrar venta y detalles (no se descontó stock)
+          if (
+            pagoEstado === "rejected" ||
+            pagoEstado === "cancelled" ||
+            pagoEstado === "refunded" ||
+            pagoEstado === "charged_back" ||
+            pagoEstado === "expired" ||
+            pagoEstado === "pending"
+          ) {
+            await strapi.service("api::venta.venta").cancelarVenta(ventaId);
+          }
         }
       } else {
         strapi.log.info(`Venta ${ventaId} ya fue procesada, estado actual: ${ventaEntity.estado}`);

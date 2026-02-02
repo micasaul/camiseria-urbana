@@ -9,6 +9,7 @@ import BlueButton from '../../components/buttons/blue-btn/BlueButton.jsx'
 import ReviewCard from '../../components/cards/review-card/ReviewCard.jsx'
 import Destacados from '../../components/cards/Destacados.jsx'
 import { getImageUrl } from '../../utils/url.js'
+import { ordenarTalles } from '../../utils/producto.js'
 import NgrokImage from '../../components/NgrokImage.jsx'
 import './Producto.css'
 
@@ -240,7 +241,7 @@ export default function DetalleCombo() {
           <div className="producto-seleccion">
             <label className="producto-seleccion-label">Elegir talle</label>
             <div className="producto-talles">
-              {tallesEnStock.map(talle => {
+              {ordenarTalles(tallesEnStock).map(talle => {
                 const variacion = combo.variaciones.find(v => v.talle === talle)
                 const disponible = variacion && variacion.stock > 0
                 return (

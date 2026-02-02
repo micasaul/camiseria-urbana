@@ -118,18 +118,27 @@ export default function WishlistButton({ isOpen, onClick, onClose }) {
               </div>
             ) : (
               <div className="side-panel-cards">
-                {itemsWishlist.map((item) => (
-                  <WishlistCard
-                    key={item.id}
-                    imageSrc={item.imageSrc}
-                    name={item.name}
-                    price={item.price}
-                    priceOriginal={item.priceOriginal}
-                    priceFinal={item.priceFinal}
-                    hasDiscount={item.hasDiscount}
-                    onRemove={() => handleRemove(item.documentId ?? item.id)}
-                  />
-                ))}
+                {itemsWishlist.map((item) => {
+                  const detailHref = item.comboDocumentId ?? item.comboId
+                    ? `/catalogo/combo/${item.comboDocumentId ?? item.comboId}`
+                    : item.productoDocumentId ?? item.productoId
+                      ? `/catalogo/producto/${item.productoDocumentId ?? item.productoId}`
+                      : null
+                  return (
+                    <WishlistCard
+                      key={item.id}
+                      imageSrc={item.imageSrc}
+                      name={item.name}
+                      price={item.price}
+                      priceOriginal={item.priceOriginal}
+                      priceFinal={item.priceFinal}
+                      hasDiscount={item.hasDiscount}
+                      detailHref={detailHref}
+                      onDetailClick={onClose}
+                      onRemove={() => handleRemove(item.documentId ?? item.id)}
+                    />
+                  )
+                })}
               </div>
             )}
           </div>

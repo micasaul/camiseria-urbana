@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { getImageUrl } from '../../../utils/url.js'
 import NgrokImage from '../../NgrokImage.jsx'
 import './wishlist-card.css'
@@ -11,12 +12,26 @@ export default function WishlistCard({
   priceOriginal,
   priceFinal,
   hasDiscount = false,
+  detailHref,
+  onDetailClick,
   onRemove
 }) {
   const src = imageSrc || getImageUrl(FALLBACK_IMAGEN)
+  const imageNode = <NgrokImage className="wishlist-card-image" src={src} alt={name} />
   return (
     <div className="wishlist-card">
-      <NgrokImage className="wishlist-card-image" src={src} alt={name} />
+      {detailHref ? (
+        <Link
+          to={detailHref}
+          className="wishlist-card-image-link"
+          aria-label={`Ver detalle de ${name}`}
+          onClick={onDetailClick}
+        >
+          {imageNode}
+        </Link>
+      ) : (
+        imageNode
+      )}
       <div className="wishlist-card-details">
         <span className="wishlist-card-name">{name}</span>
         <span className="wishlist-card-price">

@@ -41,6 +41,23 @@ export function obtenerTallesEnStock(variaciones, colorSeleccionado = '') {
   return Array.from(talles.keys())
 }
 
+/** Orden canónico de talles: XS, S, M, L, XL, XXL, XXXL */
+const ORDER_TALLES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+
+/**
+ * Ordena un array de talles según ORDER_TALLES (los que no estén en la lista quedan al final).
+ * @param {Array<string>} talles
+ * @returns {Array<string>}
+ */
+export function ordenarTalles(talles) {
+  if (!Array.isArray(talles)) return []
+  return [...talles].sort((a, b) => {
+    const i = ORDER_TALLES.indexOf(String(a).toUpperCase())
+    const j = ORDER_TALLES.indexOf(String(b).toUpperCase())
+    return (i === -1 ? 999 : i) - (j === -1 ? 999 : j)
+  })
+}
+
 /**
  * @param {Array} 
  * @param {string} 

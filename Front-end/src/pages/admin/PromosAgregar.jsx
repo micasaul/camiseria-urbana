@@ -14,6 +14,8 @@ import {
 } from '../../api/promos.js'
 import { ordenarPorNombre, resetearFormularioPromo, toggleSeleccion, validarPorcentaje } from '../../utils/adminHelpers.js'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { getImageUrl } from '../../utils/url.js'
+import NgrokImage from '../../components/NgrokImage.jsx'
 import './admin.css'
 
 export default function PromosAgregar() {
@@ -286,14 +288,26 @@ export default function PromosAgregar() {
           <div className="admin-product-select">
             {productosOrdenados.map((producto) => {
               const productoDocumentId = producto.documentId ?? producto.id
+              const primeraVariacionConImagen = producto.variaciones?.find((v) => v?.imagen)
+              const imagenUrl = primeraVariacionConImagen?.imagen
+                ? getImageUrl(primeraVariacionConImagen.imagen)
+                : null
               return (
-                <label key={producto.id} className="admin-product-option">
+                <label key={producto.id ?? productoDocumentId} className="admin-product-option">
                   <input
                     type="checkbox"
                     checked={productosSeleccionados.includes(productoDocumentId)}
                     onChange={() => toggleProducto(productoDocumentId)}
                   />
-                  <span className="admin-product-thumb" />
+                  {imagenUrl ? (
+                    <NgrokImage
+                      src={imagenUrl}
+                      alt={producto.nombre || 'Producto'}
+                      className="admin-product-thumb admin-product-thumb-img"
+                    />
+                  ) : (
+                    <span className="admin-product-thumb" />
+                  )}
                   <span>{producto.nombre || 'Sin nombre'}</span>
                 </label>
               )
