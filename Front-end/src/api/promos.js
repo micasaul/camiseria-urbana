@@ -186,17 +186,17 @@ export async function obtenerDescuentosActivos() {
       }
       
       const productoAttrs = producto?.attributes ?? producto
-      const productoId = producto?.documentId ?? productoAttrs?.documentId ?? producto?.id ?? productoAttrs?.id
-      if (!productoId) {
+      const documentId = producto?.documentId ?? productoAttrs?.documentId ?? null
+      const id = producto?.id ?? productoAttrs?.id ?? null
+      const ids = [documentId, id].filter(Boolean).map((x) => String(x))
+      if (ids.length === 0) {
         console.warn('  - No se pudo obtener ID del producto')
         return
       }
-      
-      const key = String(productoId)
-      const descuentoActual = descuentosMap.get(key) ?? 0
+      const descuentoActual = ids.reduce((max, key) => Math.max(max, descuentosMap.get(key) ?? 0), 0)
       if (descuento > descuentoActual) {
-        descuentosMap.set(key, descuento)
-        console.log(`  ✓ Descuento ${descuento}% aplicado a producto ${key} (${productoAttrs?.nombre ?? 'sin nombre'})`)
+        ids.forEach((key) => descuentosMap.set(key, descuento))
+        console.log(`  ✓ Descuento ${descuento}% aplicado a producto (${productoAttrs?.nombre ?? 'sin nombre'})`)
       }
     })
     
