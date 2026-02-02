@@ -1,4 +1,5 @@
 import { getImageUrl } from '../utils/url.js';
+import { enriquecerVariacionesConImagenFallback } from '../utils/producto.js';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -64,7 +65,9 @@ const normalizarVariaciones = (variacionesRaw) => {
   const lista = Array.isArray(variacionesRaw)
     ? variacionesRaw
     : variacionesRaw?.data ?? [];
-  return lista.map(normalizarVariacion);
+  const variaciones = lista.map(normalizarVariacion);
+  enriquecerVariacionesConImagenFallback(variaciones);
+  return variaciones;
 };
 
 const normalizarResena = (resena) => {
@@ -229,10 +232,11 @@ const adjuntarVariaciones = async (items = []) => {
       const variacionesNuevas = variacionesPorProducto.get(key);
       const variacionesExistentes = producto?.variaciones ?? [];
       
-      const variacionesFinales = variacionesNuevas && variacionesNuevas.length > 0
+      let variacionesFinales = variacionesNuevas && variacionesNuevas.length > 0
         ? variacionesNuevas
         : variacionesExistentes;
-      
+      enriquecerVariacionesConImagenFallback(variacionesFinales);
+
       if (variacionesFinales.length > 0) {
         const conImagen = variacionesFinales.filter(v => v?.imagen);
         if (conImagen.length === 0) {

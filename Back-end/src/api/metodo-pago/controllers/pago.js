@@ -214,9 +214,10 @@ export default {
           const usuario = ventaEntity.users_permissions_user;
           if (usuario?.email) {
             try {
-              const baseUrl = String(strapi.config.get("server.url") || "http://localhost:1337").replace(/\/$/, "");
               const detalleVentas = /** @type {any[]} */ (ventaEntity.detalle_ventas || []);
+              await strapi.service("api::venta.venta").enriquecerDetalleVentasConImagenFallback(detalleVentas);
 
+              const baseUrl = String(strapi.config.get("server.url") || "http://localhost:1337").replace(/\/$/, "");
               const urlImagenEmail = (imagen) => {
                 if (!imagen) return "";
                 let path = "";

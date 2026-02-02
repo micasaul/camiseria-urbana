@@ -98,6 +98,25 @@ export function encontrarVariacion(variaciones, color, talle) {
 }
 
 /**
+ * Para variaciones sin imagen, asigna la imagen de otra variación del mismo color (mismo producto).
+ * @param {Array<{ color?: string; imagen?: string | null }>} variaciones
+ * @returns {void} Modifica el array in place.
+ */
+export function enriquecerVariacionesConImagenFallback(variaciones) {
+  if (!Array.isArray(variaciones) || variaciones.length === 0) return
+  for (const v of variaciones) {
+    if (v?.imagen && v.imagen !== '' && v.imagen !== null) continue
+    const color = v?.color ?? ''
+    const conMismoColorYImagen = variaciones.find(
+      (u) => u !== v && (u?.color ?? '') === color && u?.imagen && u.imagen !== '' && u.imagen !== null
+    )
+    if (conMismoColorYImagen?.imagen) {
+      v.imagen = conMismoColorYImagen.imagen
+    }
+  }
+}
+
+/**
  * @param {Array<{ variaciones?: Array<{ stock?: number }>; nombre?: string }>} 
  * @returns {Array}
  */

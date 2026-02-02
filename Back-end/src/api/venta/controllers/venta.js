@@ -96,6 +96,8 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
     if (!venta) {
       return ctx.notFound('Venta no encontrada');
     }
+
+    await strapi.service('api::venta.venta').enriquecerDetalleVentasConImagenFallback(venta.detalle_ventas);
     ctx.body = { data: venta };
   },
   async fromCarrito(ctx) {

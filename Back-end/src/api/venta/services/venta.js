@@ -684,5 +684,45 @@ module.exports = createCoreService(
 
       return resultado;
     },
+
+    tieneImagen(imagen) {
+      if (!imagen) return false;
+      if (typeof imagen === 'string' && imagen.trim()) return true;
+      const url = imagen?.url ?? imagen?.data?.attributes?.url ?? imagen?.attributes?.url;
+      return Boolean(url && String(url).trim());
+    },
+
+    async imagenFallbackMismoColor(productoId, color) {
+      if (!productoId || !color) return null;
+      const variaciones = await strapi.entityService.findMany(
+        /** @type {any} */ ('api::variacion.variacion'),
+        /** @type {any} */ ({
+          filters: {
+            producto: { documentId: String(productoId) },
+            color: String(color),
+          },
+          limit: 20,
+          populate: { imagen: true },
+        })
+      );
+      const conImagen = variaciones.find((v) => this.tieneImagen(v.imagen));
+      return conImagen?.imagen ?? null;
+    },
+
+    async enriquecerDetalleVentasConImagenFallback(detalleVentas) {
+      const list = Array.isArray(detalleVentas) ? detalleVentas : [];
+      for (const detalle of list) {
+        const variacion = detalle.variacion;
+        if (!variacion || detalle.combo_variacion) continue;
+        if (this.tieneImagen(variacion.imagen)) continue;
+        const producto = variacion.producto;
+        const productoId = producto?.documentId ?? producto?.id;
+        const color = variacion.color;
+        const imagenFallback = await this.imagenFallbackMismoColor(productoId, color);
+        if (imagenFallback) {
+          variacion.imagen = imagenFallback;
+        }
+      }
+    },
   })
 );
