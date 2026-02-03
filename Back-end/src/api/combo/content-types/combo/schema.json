@@ -45,6 +45,9 @@
       "relation": "oneToMany",
       "target": "api::combo-variacion.combo-variacion",
       "mappedBy": "combo"
+    },
+    "descripcion": {
+      "type": "text"
     }
   }
 }

@@ -20,6 +20,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function CombosAgregar() {
   const [nombre, setNombre] = useState('')
+  const [descripcion, setDescripcion] = useState('')
   const [talles, setTalles] = useState([])
   const [cargandoEnums, setCargandoEnums] = useState(false)
   const [precio, setPrecio] = useState('')
@@ -77,6 +78,7 @@ export default function CombosAgregar() {
   const resetearFormulario = () => {
     if (imagenPreview?.startsWith('blob:')) URL.revokeObjectURL(imagenPreview)
     setNombre('')
+    setDescripcion('')
     setPrecio('')
     setVariaciones([{ id: 1, talle: '', cantidad: '15', backendId: null, backendDocumentId: null }])
     setMensaje('')
@@ -116,6 +118,7 @@ export default function CombosAgregar() {
         setComboId(item?.id ?? attrs?.id ?? null)
         setComboDocumentId(item?.documentId ?? attrs?.documentId ?? null)
         setNombre(attrs?.nombre ?? '')
+        setDescripcion(attrs?.descripcion ?? '')
         setPrecio(String(attrs?.precio ?? ''))
 
         const img = attrs?.imagen?.data ?? attrs?.imagen ?? null
@@ -227,6 +230,7 @@ export default function CombosAgregar() {
     const payloadCombo = {
       data: {
         nombre: nombreNormalizado,
+        descripcion: (descripcion ?? '').trim(),
         precio: precioNumero,
         ...(imagenPayload !== undefined && { imagen: imagenPayload })
       }
@@ -309,6 +313,16 @@ export default function CombosAgregar() {
               placeholder="Nombre del combo"
               value={nombre}
               onChange={(event) => setNombre(event.target.value)}
+            />
+          </div>
+          <div className="admin-field">
+            <label>Descripción</label>
+            <textarea
+              className="admin-input"
+              placeholder="Descripción del combo"
+              value={descripcion}
+              onChange={(event) => setDescripcion(event.target.value)}
+              rows={3}
             />
           </div>
           <div className="admin-field">

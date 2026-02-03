@@ -44,6 +44,11 @@ export default function ProductCard({ producto, descuento = 0, to = null }) {
       </div>
       <div className="product-card-info">
         <h3 className="product-card-name">{producto.nombre}</h3>
+        {producto.descripcion ? (
+          <p className="product-card-descripcion" title={producto.descripcion}>
+            {producto.descripcion.length > 80 ? `${producto.descripcion.slice(0, 80)}…` : producto.descripcion}
+          </p>
+        ) : null}
         <div className="product-card-price-container">
           {tieneDescuento ? (
             <>

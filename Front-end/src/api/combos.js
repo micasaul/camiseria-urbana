@@ -122,6 +122,7 @@ export async function getCombos(page = 1, pageSize = 10) {
         id: item.id ?? attrs?.id,
         documentId: item.documentId ?? attrs?.documentId ?? null,
         nombre: attrs?.nombre ?? '',
+        descripcion: attrs?.descripcion ?? '',
         precio: attrs?.precio ?? 0,
         imagen: getImageUrl(attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url) || '/assets/fallback.jpg',
         createdAt: attrs?.createdAt ?? item?.createdAt ?? null,
@@ -180,6 +181,7 @@ export async function getComboPorId(id) {
       id: item.id ?? attrs?.id,
       documentId: comboDocumentId,
       nombre: attrs?.nombre ?? '',
+      descripcion: attrs?.descripcion ?? '',
       precio: attrs?.precio ?? 0,
       imagen: getImageUrl(attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url) || '/assets/fallback.jpg',
       variaciones: variaciones.map(v => {

@@ -38,6 +38,7 @@ export default function DetalleCombo() {
           id: item.id,
           documentId: item.documentId ?? null,
           nombre: item.nombre ?? '',
+          descripcion: item.descripcion ?? '',
           precio: item.precio ?? 0,
           imagen: item.imagen ?? '/assets/fallback.jpg',
           variaciones: item.variaciones ?? [],
@@ -221,6 +222,11 @@ export default function DetalleCombo() {
             </button>
           </div>
 
+          {combo.descripcion ? (
+            <div className="producto-descripcion">
+              <p>{combo.descripcion}</p>
+            </div>
+          ) : null}
           <div className="producto-resenas">
             <div className="producto-resenas-estrellas">
               {Array.from({ length: 5 }, (_, i) => (
