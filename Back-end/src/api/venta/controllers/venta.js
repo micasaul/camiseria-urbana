@@ -16,6 +16,40 @@ function dedupeByDocumentId(items) {
   });
 }
 
+function urlFromMedia(media) {
+  if (!media) return null;
+  if (typeof media === 'string' && media.trim()) return media;
+  if (typeof media !== 'object') return null;
+  const url =
+    media?.url ??
+    media?.attributes?.url ??
+    media?.data?.attributes?.url ??
+    media?.data?.url;
+  if (url && typeof url === 'string') return url.startsWith('/') ? url : `/${url}`;
+  if (media?.data) return urlFromMedia(media.data);
+  return null;
+}
+
+function enriquecerVentasConImagenUrl(ventas) {
+  const list = Array.isArray(ventas) ? ventas : [];
+  for (const venta of list) {
+    const detalles = venta?.detalle_ventas ?? [];
+    for (const detalle of detalles) {
+      const variacion = detalle?.variacion;
+      if (variacion) {
+        const path = urlFromMedia(variacion?.imagen);
+        if (path) variacion.imagenUrl = path;
+      }
+      const combo = detalle?.combo_variacion?.combo;
+      if (combo) {
+        const path = urlFromMedia(combo?.imagen);
+        if (path) combo.imagenUrl = path;
+      }
+    }
+  }
+  return ventas;
+}
+
 module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
   async find(ctx) {
     const page = Number(ctx.query?.pagination?.page) || 1;
@@ -47,7 +81,7 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
           detalle_ventas: {
             populate: {
               variacion: {
-                populate: { producto: true },
+                populate: { producto: true, imagen: true },
               },
               combo_variacion: {
                 populate: {
@@ -63,6 +97,7 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
     );
 
     const deduped = dedupeByDocumentId(results);
+    enriquecerVentasConImagenUrl(deduped);
     ctx.body = {
       data: deduped,
       meta: { pagination },

@@ -16,14 +16,21 @@ const obtenerCliente = (venta) => {
   };
 };
 
-const pathFromMedia = (media) => {
+function pathFromMedia(media) {
   if (!media) return null;
   if (typeof media === 'string' && media.trim()) return media.startsWith('/') ? media : `/${media}`;
-  const attrs = media?.attributes ?? media;
-  const url = attrs?.url ?? media?.url ?? media?.data?.attributes?.url ?? media?.data?.url;
+  if (typeof media !== 'object') return null;
+  const url =
+    media?.url ??
+    media?.attributes?.url ??
+    media?.data?.attributes?.url ??
+    media?.data?.url ??
+    (media?.data && pathFromMedia(media.data)) ??
+    null;
   if (!url || typeof url !== 'string') return null;
-  return url.startsWith('/') ? url : `/${url}`;
-};
+  const path = url.trim();
+  return path.startsWith('/') ? path : `/${path}`;
+}
 
 const obtenerProductoDesdeDetalle = (detalle) => {
   const attrs = normalizarEntidad(detalle);
@@ -33,8 +40,13 @@ const obtenerProductoDesdeDetalle = (detalle) => {
   const productoAttrs = normalizarEntidad(producto);
   const documentId = producto?.documentId ?? productoAttrs?.documentId ?? null;
   const id = producto?.id ?? productoAttrs?.id ?? null;
-  const imagenRaw = variacionAttrs?.imagen?.data ?? variacionAttrs?.imagen ?? null;
-  const imagen = pathFromMedia(imagenRaw);
+  const imagenUrl =
+    variacionAttrs?.imagenUrl ??
+    variacion?.imagenUrl ??
+    pathFromMedia(
+      variacionAttrs?.imagen?.data ?? variacionAttrs?.imagen ?? variacion?.imagen ?? null
+    );
+  const imagen = imagenUrl && (imagenUrl.startsWith('/') ? imagenUrl : `/${imagenUrl}`);
   return {
     documentId,
     id,
@@ -60,7 +72,7 @@ const obtenerItemDesdeDetalle = (detalle) => {
     const nombre = comboAttrs?.nombre ?? 'Combo';
     const docId = combo?.documentId ?? comboAttrs?.documentId ?? combo?.id ?? comboAttrs?.id;
     if (!docId) return null;
-    const imagenRaw = comboAttrs?.imagen?.data ?? comboAttrs?.imagen ?? null;
+    const imagenRaw = comboAttrs?.imagen?.data ?? comboAttrs?.imagen ?? combo?.imagen ?? null;
     const imagen = pathFromMedia(imagenRaw);
     return { key: `c-${docId}`, nombre, imagen: imagen || null };
   }
