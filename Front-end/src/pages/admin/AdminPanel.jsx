@@ -83,28 +83,19 @@ export default function AdminPanel() {
             </div>
             {cargando && (
               <div className="admin-stats-row">
-                <span className="admin-item-cell">
-                  <span className="admin-item-thumb" />
-                  Cargando...
-                </span>
+                <span className="admin-item-cell">Cargando...</span>
                 <span>—</span>
               </div>
             )}
             {!cargando && error && (
               <div className="admin-stats-row">
-                <span className="admin-item-cell">
-                  <span className="admin-item-thumb" />
-                  {error}
-                </span>
+                <span className="admin-item-cell">{error}</span>
                 <span>—</span>
               </div>
             )}
             {!cargando && !error && topProductos.length === 0 && (
               <div className="admin-stats-row">
-                <span className="admin-item-cell">
-                  <span className="admin-item-thumb" />
-                  Sin datos
-                </span>
+                <span className="admin-item-cell">Sin datos</span>
                 <span>—</span>
               </div>
             )}
@@ -112,10 +103,7 @@ export default function AdminPanel() {
               !error &&
               topProductos.slice(0, 3).map((producto, index) => (
                 <div key={`${producto.nombre}-${index}`} className="admin-stats-row">
-                  <span className="admin-item-cell">
-                    <span className="admin-item-thumb" />
-                    {producto.nombre}
-                  </span>
+                  <span className="admin-item-cell">{producto.nombre}</span>
                   <span>{producto.cantidad}</span>
                 </div>
               ))}

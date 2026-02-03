@@ -258,24 +258,6 @@
   gap: 8px;
 }
 
-.admin-item-thumb {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: #e9e9e9;
-  flex-shrink: 0;
-  overflow: hidden;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.admin-item-thumb-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .admin-form {
   max-width: 620px;
   display: flex;
