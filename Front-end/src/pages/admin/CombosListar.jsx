@@ -188,9 +188,7 @@ export default function CombosListar() {
           !error &&
           filasOrdenadas.map((combo) => {
             const sinStock = combo.cantidadTotal <= 0
-            const imagenUrl = combo.imagen?.startsWith('http')
-              ? combo.imagen
-              : `${BACKEND_URL}${combo.imagen || '/assets/fallback.jpg'}`
+            const imagenUrl = getImageUrl(combo.imagen || '/assets/fallback.jpg')
             return (
             <div
               key={combo.id}
