@@ -177,6 +177,8 @@ export async function getComboPorId(id) {
     const variaciones = Array.isArray(variacionesRaw) ? variacionesRaw : [];
     
     const comboDocumentId = item?.documentId ?? attrs?.documentId ?? item?.id ?? attrs?.id;
+    const imagenRaw = attrs?.imagen?.data ?? attrs?.imagen ?? null;
+    const imagenId = imagenRaw?.id ?? imagenRaw?.documentId ?? null;
     const items = [{
       id: item.id ?? attrs?.id,
       documentId: comboDocumentId,
@@ -184,6 +186,7 @@ export async function getComboPorId(id) {
       descripcion: attrs?.descripcion ?? '',
       precio: attrs?.precio ?? 0,
       imagen: getImageUrl(attrs?.imagen?.data?.attributes?.url || attrs?.imagen?.url) || '/assets/fallback.jpg',
+      imagenId,
       variaciones: variaciones.map(v => {
         const vAttrs = v?.attributes ?? v;
         return {

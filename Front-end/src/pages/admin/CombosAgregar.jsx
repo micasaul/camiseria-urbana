@@ -121,12 +121,15 @@ export default function CombosAgregar() {
         setDescripcion(attrs?.descripcion ?? '')
         setPrecio(String(attrs?.precio ?? ''))
 
-        const img = attrs?.imagen?.data ?? attrs?.imagen ?? null
-        const imgAttrs = img?.attributes ?? img ?? {}
-        const imgUrl = imgAttrs?.url ?? img?.url
-        if (imgUrl) {
-          setImagenPreview(getImageUrl(imgUrl))
-          setImagenId(img?.id ?? imgAttrs?.id ?? null)
+        const imagenUrl = typeof item?.imagen === 'string' ? item.imagen : (attrs?.imagen?.data?.attributes?.url ?? attrs?.imagen?.url)
+        if (imagenUrl) {
+          setImagenPreview(imagenUrl.startsWith('http') || imagenUrl.startsWith('blob') ? imagenUrl : getImageUrl(imagenUrl))
+        }
+        if (item?.imagenId != null) {
+          setImagenId(item.imagenId)
+        } else {
+          const img = attrs?.imagen?.data ?? attrs?.imagen ?? null
+          if (img?.id != null) setImagenId(img.id)
         }
 
         const variacionesRaw =

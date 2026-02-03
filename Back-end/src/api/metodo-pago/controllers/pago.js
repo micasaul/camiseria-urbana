@@ -200,10 +200,8 @@ export default {
       const ventaEntity = /** @type {any} */ (venta);
       const pagoEstado = pago.status;
 
-      // Solo procesamos si la venta sigue en pendiente (creada al elegir MP en checkout)
       if (ventaEntity.estado === "pendiente") {
         if (pagoEstado === "approved") {
-          // Pago exitoso: venta pasa automáticamente a "En proceso", se descuenta stock
           await strapi.service("api::venta.venta").confirmarPago(ventaId);
           await strapi.entityService.update(
             /** @type {any} */ ("api::venta.venta"),
@@ -217,7 +215,7 @@ export default {
               const detalleVentas = /** @type {any[]} */ (ventaEntity.detalle_ventas || []);
               await strapi.service("api::venta.venta").enriquecerDetalleVentasConImagenFallback(detalleVentas);
 
-              const baseUrl = String(strapi.config.get("server.url") || "http://localhost:1337").replace(/\/$/, "");
+              const baseUrl = String(strapi.config.get("server.url") || process.env.PUBLIC_URL || "http://localhost:1337").replace(/\/$/, "");
               const urlImagenEmail = (imagen) => {
                 if (!imagen) return "";
                 let path = "";
@@ -226,7 +224,11 @@ export default {
                 else if (imagen?.data?.attributes?.url) path = imagen.data.attributes.url;
                 else if (imagen?.data?.url) path = imagen.data.url;
                 else if (imagen?.attributes?.url) path = imagen.attributes.url;
-                if (!path) return "";
+                else if (imagen?.formats?.small?.url) path = imagen.formats.small.url;
+                else if (imagen?.formats?.thumbnail?.url) path = imagen.formats.thumbnail.url;
+                else if (imagen?.formats?.medium?.url) path = imagen.formats.medium.url;
+                if (!path || typeof path !== "string") return "";
+                path = path.trim();
                 return path.startsWith("http") ? path : `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
               };
 
