@@ -16,22 +16,6 @@ const obtenerCliente = (venta) => {
   };
 };
 
-function pathFromMedia(media) {
-  if (!media) return null;
-  if (typeof media === 'string' && media.trim()) return media.startsWith('/') ? media : `/${media}`;
-  if (typeof media !== 'object') return null;
-  const url =
-    media?.url ??
-    media?.attributes?.url ??
-    media?.data?.attributes?.url ??
-    media?.data?.url ??
-    (media?.data && pathFromMedia(media.data)) ??
-    null;
-  if (!url || typeof url !== 'string') return null;
-  const path = url.trim();
-  return path.startsWith('/') ? path : `/${path}`;
-}
-
 const obtenerProductoDesdeDetalle = (detalle) => {
   const attrs = normalizarEntidad(detalle);
   const variacion = attrs?.variacion?.data ?? attrs?.variacion ?? null;
@@ -40,18 +24,10 @@ const obtenerProductoDesdeDetalle = (detalle) => {
   const productoAttrs = normalizarEntidad(producto);
   const documentId = producto?.documentId ?? productoAttrs?.documentId ?? null;
   const id = producto?.id ?? productoAttrs?.id ?? null;
-  const imagenUrl =
-    variacionAttrs?.imagenUrl ??
-    variacion?.imagenUrl ??
-    pathFromMedia(
-      variacionAttrs?.imagen?.data ?? variacionAttrs?.imagen ?? variacion?.imagen ?? null
-    );
-  const imagen = imagenUrl && (imagenUrl.startsWith('/') ? imagenUrl : `/${imagenUrl}`);
   return {
     documentId,
     id,
     nombre: productoAttrs?.nombre ?? 'Producto',
-    imagen: imagen || null,
   };
 };
 
@@ -66,15 +42,13 @@ const obtenerItemDesdeDetalle = (detalle) => {
     const producto = obtenerProductoDesdeDetalle(detalle);
     const clave = producto.documentId ?? producto.id ?? producto.nombre;
     if (!clave) return null;
-    return { key: `p-${clave}`, nombre: producto.nombre, imagen: producto.imagen };
+    return { key: `p-${clave}`, nombre: producto.nombre };
   }
   if (combo && comboAttrs) {
     const nombre = comboAttrs?.nombre ?? 'Combo';
     const docId = combo?.documentId ?? comboAttrs?.documentId ?? combo?.id ?? comboAttrs?.id;
     if (!docId) return null;
-    const imagenRaw = comboAttrs?.imagen?.data ?? comboAttrs?.imagen ?? combo?.imagen ?? null;
-    const imagen = pathFromMedia(imagenRaw);
-    return { key: `c-${docId}`, nombre, imagen: imagen || null };
+    return { key: `c-${docId}`, nombre };
   }
   return null;
 };
@@ -95,11 +69,10 @@ export const calcularTopProductos = (ventas) => {
       const item = obtenerItemDesdeDetalle(detalle);
       if (!item) return;
 
-      const prev = acumulado.get(item.key) || { nombre: item.nombre, cantidad: 0, imagen: null };
+      const prev = acumulado.get(item.key) || { nombre: item.nombre, cantidad: 0 };
       acumulado.set(item.key, {
         nombre: prev.nombre,
         cantidad: prev.cantidad + cantidad,
-        imagen: prev.imagen || item.imagen,
       });
     });
   });

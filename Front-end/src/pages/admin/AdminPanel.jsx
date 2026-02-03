@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { getVentasDashboard } from '../../api/ventas.js'
 import { formatearPrecio } from '../../utils/adminHelpers.js'
 import { calcularTopClientes, calcularTopProductos } from '../../utils/ventasStats.js'
-import { getImageUrl } from '../../utils/url.js'
-import NgrokImage from '../../components/NgrokImage.jsx'
 import './admin.css'
 
 export default function AdminPanel() {
@@ -115,15 +113,7 @@ export default function AdminPanel() {
               topProductos.slice(0, 3).map((producto, index) => (
                 <div key={`${producto.nombre}-${index}`} className="admin-stats-row">
                   <span className="admin-item-cell">
-                    <span className="admin-item-thumb">
-                      {producto.imagen ? (
-                        <NgrokImage
-                          src={getImageUrl(producto.imagen)}
-                          alt=""
-                          className="admin-item-thumb-img"
-                        />
-                      ) : null}
-                    </span>
+                    <span className="admin-item-thumb" />
                     {producto.nombre}
                   </span>
                   <span>{producto.cantidad}</span>
