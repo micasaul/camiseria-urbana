@@ -219,6 +219,32 @@ module.exports = createCoreService(
           })
         );
 
+        if (cuponId && usuarioId) {
+          const cuponesUsuarios = await strapi.entityService.findMany(
+            /** @type {any} */ ('api::cupon-usuario.cupon-usuario'),
+            /** @type {any} */ ({
+              filters: {
+                cupon: { documentId: String(cuponId) },
+                users_permissions_user: { id: usuarioId },
+              },
+              limit: 1,
+              publicationState: 'preview',
+              transaction: trx,
+            })
+          );
+          if (cuponesUsuarios[0]) {
+            const cu = cuponesUsuarios[0];
+            await strapi.entityService.update(
+              /** @type {any} */ ('api::cupon-usuario.cupon-usuario'),
+              cu.id,
+              /** @type {any} */ ({
+                data: { usado: true },
+                transaction: trx,
+              })
+            );
+          }
+        }
+
         const items = await Promise.all(
           itemsValidos.map((item) => {
             const dataBase = {
