@@ -192,10 +192,10 @@
 
 .side-panel {
   position: fixed;
-  top: 75px;
+  top: calc(75px + var(--banner-height, 0px));
   left: 0;
   width: 320px;
-  height: calc(100vh - 75px);
+  height: calc(100vh - 75px - var(--banner-height, 0px));
   background: white;
   border-right: 1px solid #e2e2e2;
   box-shadow: 8px 0 20px rgba(0, 0, 0, 0.08);
