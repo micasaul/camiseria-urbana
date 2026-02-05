@@ -101,6 +101,12 @@
       "relation": "oneToMany",
       "target": "api::resena.resena",
       "mappedBy": "users_permissions_user"
+    },
+    "cupon_usuarios": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::cupon-usuario.cupon-usuario",
+      "mappedBy": "users_permissions_user"
     }
   }
 }

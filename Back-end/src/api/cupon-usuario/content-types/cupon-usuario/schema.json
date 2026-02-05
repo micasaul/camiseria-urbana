@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "cupones_usuarios",
+  "info": {
+    "singularName": "cupon-usuario",
+    "pluralName": "cupones-usuarios",
+    "displayName": "CuponUsuario"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "usado": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    },
+    "cupon": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::cupon.cupon",
+      "inversedBy": "cupon_usuarios"
+    },
+    "users_permissions_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "cupon_usuarios"
+    }
+  }
+}

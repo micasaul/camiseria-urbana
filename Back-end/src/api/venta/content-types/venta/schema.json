@@ -61,6 +61,12 @@
     },
     "envio": {
       "type": "integer"
+    },
+    "cupon": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::cupon.cupon",
+      "inversedBy": "ventas"
     }
   }
 }

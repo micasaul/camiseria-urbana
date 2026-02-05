@@ -1,0 +1,44 @@
+{
+  "kind": "collectionType",
+  "collectionName": "cupones",
+  "info": {
+    "singularName": "cupon",
+    "pluralName": "cupones",
+    "displayName": "Cupon"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nombre": {
+      "type": "string",
+      "required": true
+    },
+    "descuento": {
+      "type": "integer",
+      "required": true,
+      "unique": false
+    },
+    "fechaInicio": {
+      "type": "date",
+      "required": true
+    },
+    "fechaFin": {
+      "type": "date",
+      "required": true
+    },
+    "cupon_usuarios": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::cupon-usuario.cupon-usuario",
+      "mappedBy": "cupon"
+    },
+    "ventas": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::venta.venta",
+      "mappedBy": "cupon"
+    }
+  }
+}
