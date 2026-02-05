@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import MercadoPagoButton from "../../components/buttons/mp-btn/MercadoPagoButton.jsx";
 import { obtenerCarritoCompleto } from "../../api/carrito.js";
 import { obtenerDescuentosActivos } from "../../api/promos.js";
+import { obtenerCuponPorNombre } from "../../api/cupones.js";
 import { parsearPrecio, aplicarDescuentos, calcularSubtotal } from "../../utils/carrito.js";
 import { obtenerPrecioEnvio } from "../../utils/envio.js";
 import NgrokImage from "../../components/NgrokImage.jsx";
@@ -25,6 +26,10 @@ export default function Compra() {
     ciudad: "",
     calle: ""
   });
+  const [cuponInput, setCuponInput] = useState("");
+  const [cuponAplicado, setCuponAplicado] = useState(null);
+  const [cuponError, setCuponError] = useState("");
+  const [cuponLoading, setCuponLoading] = useState(false);
 
   useEffect(() => {
     async function fetchCarrito() {
@@ -124,6 +129,34 @@ export default function Compra() {
     setUsuario((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleAplicarCupon = async () => {
+    const codigo = cuponInput.trim();
+    setCuponError("");
+    setCuponAplicado(null);
+    if (!codigo) return;
+    setCuponLoading(true);
+    try {
+      const cupon = await obtenerCuponPorNombre(codigo);
+      if (cupon && cupon.descuento > 0) {
+        setCuponAplicado({ documentId: cupon.documentId, nombre: cupon.nombre, descuento: cupon.descuento });
+      } else {
+        setCuponError(cupon ? "El cupón no tiene descuento configurado." : "Cupón no encontrado.");
+      }
+    } catch (err) {
+      setCuponError(err?.message || "No se pudo validar el cupón.");
+    } finally {
+      setCuponLoading(false);
+    }
+  };
+
+  const subtotal = calcularSubtotal(productos);
+  const envio = obtenerPrecioEnvio(usuario.provincia);
+  const descuentoCupon =
+    cuponAplicado && cuponAplicado.descuento > 0
+      ? (subtotal * cuponAplicado.descuento) / 100
+      : 0;
+  const total = subtotal - descuentoCupon + envio;
+
   if (loading) return <p className="compra-loading">Cargando carrito...</p>;
   if (productos.length === 0) return <p className="compra-empty">No hay productos en el carrito.</p>;
 
@@ -157,6 +190,32 @@ export default function Compra() {
           </div>
 
           <div className="compra-form-group">
+            <label>Cupón</label>
+            <div className="compra-cupon-row">
+              <input
+                type="text"
+                value={cuponInput}
+                onChange={(e) => {
+                  setCuponInput(e.target.value);
+                  setCuponError("");
+                }}
+                placeholder="Código del cupón"
+                disabled={cuponLoading}
+              />
+              <button
+                type="button"
+                className="compra-cupon-btn"
+                onClick={handleAplicarCupon}
+                disabled={cuponLoading || !cuponInput.trim()}
+              >
+                {cuponLoading ? "..." : "Aplicar"}
+              </button>
+            </div>
+            {cuponError && <p className="compra-cupon-error" style={{ color: "#c00", marginTop: "4px", fontSize: "0.9rem" }}>{cuponError}</p>}
+            {cuponAplicado && <p className="compra-cupon-ok" style={{ color: "#0a0", marginTop: "4px", fontSize: "0.9rem" }}>Cupón "{cuponAplicado.nombre}" aplicado: {cuponAplicado.descuento}% de descuento</p>}
+          </div>
+
+          <div className="compra-form-group">
             <label>Dirección de envío</label>
             {cargandoDirecciones ? (
               <p>Cargando direcciones...</p>
@@ -185,8 +244,10 @@ export default function Compra() {
 
           <MercadoPagoButton
             productos={productos}
-            subtotal={calcularSubtotal(productos)}
-            envio={obtenerPrecioEnvio(usuario.provincia)}
+            subtotal={subtotal}
+            envio={envio}
+            descuentoCupon={descuentoCupon}
+            cuponId={cuponAplicado?.documentId ?? null}
             usuario={usuario}
             direccionId={direccionSeleccionadaId}
             disabled={!direccionSeleccionadaId || !usuario.nombre || !usuario.telefono || direcciones.length === 0}
@@ -221,15 +282,21 @@ export default function Compra() {
           <div className="compra-total">
             <p>
               <span>Subtotal:</span>
-              <span>${calcularSubtotal(productos).toFixed(2)}</span>
+              <span>${subtotal.toFixed(2)}</span>
             </p>
+            {descuentoCupon > 0 && (
+              <p>
+                <span>Descuento (cupón):</span>
+                <span>-${descuentoCupon.toFixed(2)}</span>
+              </p>
+            )}
             <p>
               <span>Envío:</span>
-              <span>${obtenerPrecioEnvio(usuario.provincia).toFixed(2)}</span>
+              <span>${envio.toFixed(2)}</span>
             </p>
             <p className="compra-total-final">
               <span>TOTAL:</span>
-              <span>${(calcularSubtotal(productos) + obtenerPrecioEnvio(usuario.provincia)).toFixed(2)}</span>
+              <span>${total.toFixed(2)}</span>
             </p>
           </div>
         </main>

@@ -68,6 +68,40 @@
   box-shadow: 0 0 0 2px rgba(27, 42, 65, 0.1);
 }
 
+.compra-cupon-row {
+  display: flex;
+  width: 100%;
+  gap: 0;
+}
+
+.compra-cupon-row input {
+  flex: 1;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.compra-cupon-btn {
+  flex-shrink: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0 10px 10px 0;
+  border: 1px solid #d0d0d0;
+  border-left: none;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: #f5f5f5;
+  color: #172a3a;
+  cursor: pointer;
+}
+
+.compra-cupon-btn:hover:not(:disabled) {
+  background: #ebebeb;
+}
+
+.compra-cupon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .compra-resumen {
   background-color: white;
   border-radius: 16px;

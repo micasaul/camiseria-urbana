@@ -17,6 +17,8 @@ module.exports = createCoreService(
       const subtotalFront = opts.subtotal != null ? aNumero(opts.subtotal) : null;
       const usuario = opts.usuario ?? {};
       const direccionId = opts.direccionId && String(opts.direccionId).trim() !== '' ? String(opts.direccionId).trim() : null;
+      const cuponId = opts.cuponId && String(opts.cuponId).trim() !== '' ? String(opts.cuponId).trim() : null;
+      const descuentoCupon = aNumero(opts.descuentoCupon ?? 0);
 
       const resultado = await strapi.db.transaction(async ({ trx }) => {
         const carritos = await strapi.entityService.findMany(
@@ -157,14 +159,31 @@ module.exports = createCoreService(
         const usuarioId = carritoEntity?.users_permissions_user?.id;
         const nroSeguimiento = generarNroSeguimiento(usuario?.provincia);
 
+        const totalFinal = Math.max(0, subtotalVenta - descuentoCupon + envio);
+
         const ventaData = {
           fecha: new Date(),
           estado: 'pendiente',
-          total: subtotalVenta,
+          total: totalFinal,
           envio,
+          descuento_cupon: descuentoCupon,
           nroSeguimiento,
           users_permissions_user: usuarioId || null,
         };
+
+        if (cuponId) {
+          const cupones = await strapi.entityService.findMany(
+            /** @type {any} */ ('api::cupon.cupon'),
+            /** @type {any} */ ({
+              filters: { documentId: String(cuponId) },
+              limit: 1,
+              transaction: trx,
+            })
+          );
+          if (cupones[0]) {
+            ventaData.cupon = cupones[0].id;
+          }
+        }
 
         strapi.log.info(`[createFromCarrito] direccionId recibido: ${direccionId}`);
         if (direccionId) {

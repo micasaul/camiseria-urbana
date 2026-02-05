@@ -62,6 +62,10 @@
     "envio": {
       "type": "integer"
     },
+    "descuento_cupon": {
+      "type": "decimal",
+      "default": 0
+    },
     "cupon": {
       "type": "relation",
       "relation": "manyToOne",

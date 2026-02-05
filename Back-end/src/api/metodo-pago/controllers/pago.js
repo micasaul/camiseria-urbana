@@ -89,6 +89,17 @@ export default {
           });
         }
 
+        // Agregar descuento cupón como item con precio negativo si existe
+        const descuentoCupon = aNumero(ventaEntity.descuento_cupon || 0);
+        if (descuentoCupon > 0) {
+          mpItems.push({
+            id: "descuento-cupon",
+            title: "Descuento cupón",
+            quantity: 1,
+            unit_price: -Number(descuentoCupon),
+          });
+        }
+
         const preference = new Preference(client);
 
         const response = await preference.create({

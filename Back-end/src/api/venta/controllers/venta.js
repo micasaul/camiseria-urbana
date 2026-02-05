@@ -101,7 +101,7 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
     ctx.body = { data: venta };
   },
   async fromCarrito(ctx) {
-    const { carritoId, envio, subtotal, usuario, direccionId } = ctx.request.body || {};
+    const { carritoId, envio, subtotal, usuario, direccionId, cuponId, descuentoCupon } = ctx.request.body || {};
 
     if (!carritoId) {
       return ctx.badRequest('carritoId requerido');
@@ -115,6 +115,8 @@ module.exports = createCoreController('api::venta.venta', ({ strapi }) => ({
           subtotal,
           usuario: usuario ?? {},
           direccionId: direccionId || null,
+          cuponId: cuponId || null,
+          descuentoCupon: descuentoCupon ?? 0,
         });
 
       ctx.body = result;
