@@ -341,9 +341,6 @@ export default function Producto() {
                   +
                 </button>
               </div>
-              {stockDisponible > 0 && (
-                <span className="producto-stock">Stock disponible: {stockDisponible}</span>
-              )}
             </div>
             <div className="producto-accion">
               <BlueButton
@@ -356,7 +353,7 @@ export default function Producto() {
                 {sinStockProducto ? 'Sin stock' : 'Agregar al carrito'}
               </BlueButton>
               {stockDisponible > 0 && stockDisponible < 5 && colorSeleccionado && talleSeleccionado && (
-                <span className="producto-ultimas-unidades">¡Ultimas unidades!</span>
+                <span className="producto-ultimas-unidades">Quedan {stockDisponible} unidades</span>
               )}
               {carritoError && (
                 <span className="producto-error">{carritoError}</span>
