@@ -21,6 +21,9 @@ export default function AdminButton({ items }) {
     if (activePath.startsWith('/admin/promos')) {
       return 'promos'
     }
+    if (activePath.startsWith('/admin/descuentos')) {
+      return 'descuentos'
+    }
     if (activePath.startsWith('/admin/ventas')) {
       return 'ventas'
     }
@@ -41,6 +44,10 @@ export default function AdminButton({ items }) {
     }
     if (activePath.startsWith('/admin/promos')) {
       setSelectedGroup('promos')
+      return
+    }
+    if (activePath.startsWith('/admin/descuentos')) {
+      setSelectedGroup('descuentos')
       return
     }
     if (activePath.startsWith('/admin/ventas')) {

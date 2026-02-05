@@ -40,6 +40,14 @@ export default function AdminHeader() {
         { id: 'promos-listar', label: 'Listar', to: '/admin/promos/listar' }
       ]
     },
+    {
+      id: 'descuentos',
+      label: 'Descuentos',
+      children: [
+        { id: 'descuentos-agregar', label: 'Agregar', to: '/admin/descuentos/agregar' },
+        { id: 'descuentos-listar', label: 'Listar', to: '/admin/descuentos/listar' }
+      ]
+    },
     { id: 'ventas', label: 'Ventas', to: '/admin/ventas' }
   ]), [])
 
