@@ -147,7 +147,8 @@ export default function Compra() {
   };
 
   const subtotal = calcularSubtotal(productos);
-  const envio = obtenerPrecioEnvio(usuario.provincia);
+  const envioBase = obtenerPrecioEnvio(usuario.provincia);
+  const envio = subtotal >= 600 ? 0 : envioBase;
   const descuentoCupon =
     cuponAplicado && cuponAplicado.descuento > 0
       ? (subtotal * cuponAplicado.descuento) / 100
