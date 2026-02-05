@@ -205,10 +205,11 @@
 
 .admin-side-panel {
   width: 270px;
+  padding-top: 6px;
 }
 
 .admin-side-panel .side-panel-header {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .admin-layout .admin-content {

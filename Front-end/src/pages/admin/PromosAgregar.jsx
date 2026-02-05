@@ -211,9 +211,11 @@ export default function PromosAgregar() {
         )
       )
 
-      setMensaje(id ? 'Actualización exitosa.' : 'Promo creada correctamente.')
-      if (!id) {
+      if (id) {
+        setMensaje('Actualización exitosa.')
+      } else {
         resetearFormulario()
+        setMensaje('Agregado con éxito.')
       }
     } catch (err) {
       setError(err?.message || (id ? 'Ocurrió un error, no se pudo actualizar.' : 'Error al guardar la promo.'))

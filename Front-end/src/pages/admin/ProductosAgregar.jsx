@@ -442,9 +442,11 @@ export default function ProductosAgregar() {
       }
 
       setError('')
-      setMensaje(id ? 'Actualización exitosa.' : 'Producto creado correctamente.')
-      if (!id) {
+      if (id) {
+        setMensaje('Actualización exitosa.')
+      } else {
         resetearFormulario()
+        setMensaje('Agregado con éxito.')
       }
     } catch (err) {
       setError(

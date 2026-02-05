@@ -9,10 +9,8 @@ export default function Error() {
       {/* Franja superior */}
       <div className="franja-decorativa" />
 
-      {/* Contenedor principal */}
+      {/* Contenedor principal (franja blanca) */}
       <div className="error-container">
-
-        {/* Texto a la izquierda */}
         <div className="error-text">
           <h2 className="error-title">Ups, hubo un error</h2>
           <p className="error-subtitle">Pero chill, no fue tu culpa, mejor...</p>
@@ -20,12 +18,9 @@ export default function Error() {
             <BlueButton>Volver a la página principal</BlueButton>
           </Link>
         </div>
-
-        {/* Imagen a la derecha */}
         <div className="error-image">
           <img src={ErrorImage} alt="Cerdo elegante" />
         </div>
-
       </div>
 
       {/* Franja inferior */}

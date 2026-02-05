@@ -108,7 +108,7 @@ export default function CuponesAgregar() {
           fechaInicio: inicio.toISOString(),
           fechaFin: fin.toISOString(),
         })
-        setMensaje('Cupón actualizado correctamente.')
+        setMensaje('Actualización exitosa.')
         setError('')
       } else {
         const resultado = await crearCuponConUsuarios({
@@ -118,7 +118,7 @@ export default function CuponesAgregar() {
           fechaFin: fin.toISOString(),
         })
         setMensaje(
-          `Cupón creado correctamente. Se asignó a ${resultado?.cuponesUsuariosCreados ?? 0} usuario(s).`
+          `Agregado con éxito. Se asignó a ${resultado?.cuponesUsuariosCreados ?? 0} usuario(s).`
         )
         setNombre('')
         setDescuento('')

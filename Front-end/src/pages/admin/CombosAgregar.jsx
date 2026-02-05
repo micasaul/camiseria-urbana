@@ -283,9 +283,11 @@ export default function CombosAgregar() {
       }
 
       setError('')
-      setMensaje(id ? 'Actualización exitosa.' : 'Combo creado correctamente.')
-      if (!id) {
+      if (id) {
+        setMensaje('Actualización exitosa.')
+      } else {
         resetearFormulario()
+        setMensaje('Agregado con éxito.')
       }
     } catch (err) {
       setError(

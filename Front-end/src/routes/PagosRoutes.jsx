@@ -1,5 +1,4 @@
 import { Route } from 'react-router-dom'
-import Checkout from '../pages/pagos/Checkout'
 import CheckoutTest from '../pages/pagos/CheckoutTest'
 import PaymentSuccess from '../pages/pagos/PaymentSuccess'
 import PaymentPending from '../pages/pagos/PaymentPending'
@@ -9,7 +8,6 @@ import Compra from '../pages/pagos/Compra'
 export default function PagosRoutes() {
   return (
     <>
-      <Route path="/checkout" element={<Checkout />} />
       <Route path="/checkout-test" element={<CheckoutTest />} />
       <Route path="/pago/success" element={<PaymentSuccess />} />
       <Route path="/pago/pending" element={<PaymentPending />} />
