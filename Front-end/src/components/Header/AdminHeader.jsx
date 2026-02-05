@@ -41,11 +41,11 @@ export default function AdminHeader() {
       ]
     },
     {
-      id: 'descuentos',
-      label: 'Descuentos',
+      id: 'cupones',
+      label: 'Cupones',
       children: [
-        { id: 'descuentos-agregar', label: 'Agregar', to: '/admin/descuentos/agregar' },
-        { id: 'descuentos-listar', label: 'Listar', to: '/admin/descuentos/listar' }
+        { id: 'cupones-agregar', label: 'Agregar', to: '/admin/cupones/agregar' },
+        { id: 'cupones-listar', label: 'Listar', to: '/admin/cupones/listar' }
       ]
     },
     { id: 'ventas', label: 'Ventas', to: '/admin/ventas' }

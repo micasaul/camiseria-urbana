@@ -6,8 +6,8 @@ import AdminCombosAgregar from '../pages/admin/CombosAgregar'
 import AdminCombosListar from '../pages/admin/CombosListar'
 import AdminPromosAgregar from '../pages/admin/PromosAgregar'
 import AdminPromosListar from '../pages/admin/PromosListar'
-import AdminDescuentosAgregar from '../pages/admin/DescuentosAgregar'
-import AdminDescuentosListar from '../pages/admin/DescuentosListar'
+import AdminCuponesAgregar from '../pages/admin/CuponesAgregar'
+import AdminCuponesListar from '../pages/admin/CuponesListar'
 import AdminVentas from '../pages/admin/Ventas'
 import AdminDetalleVenta from '../pages/admin/DetalleVenta'
 
@@ -24,8 +24,8 @@ export default function AdminRoutes() {
       <Route path="promos/agregar" element={<AdminPromosAgregar />} />
       <Route path="promos/editar/:id" element={<AdminPromosAgregar />} />
       <Route path="promos/listar" element={<AdminPromosListar />} />
-      <Route path="descuentos/agregar" element={<AdminDescuentosAgregar />} />
-      <Route path="descuentos/listar" element={<AdminDescuentosListar />} />
+      <Route path="cupones/agregar" element={<AdminCuponesAgregar />} />
+      <Route path="cupones/listar" element={<AdminCuponesListar />} />
       <Route path="ventas" element={<AdminVentas />} />
       <Route path="ventas/detalle/:id" element={<AdminDetalleVenta />} />
     </>

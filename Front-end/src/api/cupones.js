@@ -98,3 +98,30 @@ export async function validarCuponParaUsuario(nombre, userDocumentId) {
     descuento: cupon.descuento,
   };
 }
+
+/**
+ * @param {{ nombre: string, descuento: number, fechaInicio: string, fechaFin: string }} 
+ * @returns {Promise<{ cupon: object, cuponesUsuariosCreados: number }>}
+ */
+export async function crearCuponConUsuarios(data) {
+  const res = await fetch(`${BACKEND_URL}/api/cupones/crear-con-usuarios`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({
+      data: {
+        nombre: data.nombre?.trim() ?? '',
+        descuento: data.descuento,
+        fechaInicio: data.fechaInicio,
+        fechaFin: data.fechaFin,
+      },
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'No se pudo crear el cupón.');
+  }
+  return res.json();
+}

@@ -1,9 +1,9 @@
 import './admin.css'
 
-export default function DescuentosAgregar() {
+export default function CuponesListar() {
   return (
     <div className="admin-page">
-      <h1>Descuentos (cupones) – Agregar</h1>
+      <h1>Cupones – Listar</h1>
       <p>Contenido en desarrollo.</p>
     </div>
   )

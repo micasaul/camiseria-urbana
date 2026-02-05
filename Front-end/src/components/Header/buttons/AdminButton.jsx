@@ -21,8 +21,8 @@ export default function AdminButton({ items }) {
     if (activePath.startsWith('/admin/promos')) {
       return 'promos'
     }
-    if (activePath.startsWith('/admin/descuentos')) {
-      return 'descuentos'
+    if (activePath.startsWith('/admin/cupones')) {
+      return 'cupones'
     }
     if (activePath.startsWith('/admin/ventas')) {
       return 'ventas'
@@ -46,8 +46,8 @@ export default function AdminButton({ items }) {
       setSelectedGroup('promos')
       return
     }
-    if (activePath.startsWith('/admin/descuentos')) {
-      setSelectedGroup('descuentos')
+    if (activePath.startsWith('/admin/cupones')) {
+      setSelectedGroup('cupones')
       return
     }
     if (activePath.startsWith('/admin/ventas')) {
