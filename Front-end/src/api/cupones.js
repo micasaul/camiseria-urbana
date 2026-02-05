@@ -100,6 +100,94 @@ export async function validarCuponParaUsuario(nombre, userDocumentId) {
 }
 
 /**
+ * Obtiene un cupón por documentId o id.
+ * @param {string} id - documentId o id del cupón
+ * @returns {Promise<{ documentId, nombre, descuento, fechaInicio, fechaFin, ... }>}
+ */
+export async function getCuponPorId(id) {
+  const res = await fetch(`${BACKEND_URL}/api/cupones/${id}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    if (res.status === 403) throw new Error('No tenés permiso para ver este cupón.');
+    if (res.status === 404) throw new Error('Cupón no encontrado.');
+    throw new Error('No se pudo obtener el cupón.');
+  }
+  const data = await res.json();
+  const item = data?.data ?? data;
+  const attrs = item?.attributes ?? item;
+  return {
+    documentId: item?.documentId ?? attrs?.documentId ?? item?.id,
+    id: item?.id ?? attrs?.id,
+    nombre: attrs?.nombre ?? item?.nombre ?? '',
+    descuento: attrs?.descuento ?? item?.descuento ?? 0,
+    fechaInicio: attrs?.fechaInicio ?? item?.fechaInicio ?? '',
+    fechaFin: attrs?.fechaFin ?? item?.fechaFin ?? '',
+  };
+}
+
+/**
+ * Actualiza un cupón por documentId o id.
+ * @param {string} id - documentId o id del cupón
+ * @param {{ nombre: string, descuento: number, fechaInicio: string, fechaFin: string }} data
+ */
+export async function actualizarCupon(id, data) {
+  const res = await fetch(`${BACKEND_URL}/api/cupones/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({
+      data: {
+        nombre: data.nombre?.trim() ?? '',
+        descuento: data.descuento,
+        fechaInicio: data.fechaInicio,
+        fechaFin: data.fechaFin,
+      },
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'No se pudo actualizar el cupón.');
+  }
+  return res.json();
+}
+
+/**
+ * Lista cupones con paginación.
+ * @param {number} page
+ * @param {number} pageSize
+ * @returns {Promise<{ items: any[], pagination: { page, pageSize, pageCount, total } }>}
+ */
+export async function getCupones(page = 1, pageSize = 10) {
+  const res = await fetch(
+    `${BACKEND_URL}/api/cupones?pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    { headers: getAuthHeaders() }
+  );
+  if (!res.ok) throw new Error('No se pudieron obtener los cupones.');
+  const data = await res.json();
+  return {
+    items: data?.data ?? [],
+    pagination: data?.meta?.pagination ?? { page: 1, pageSize, pageCount: 1, total: 0 },
+  };
+}
+
+/**
+ * Elimina un cupón por documentId o id.
+ * @param {string} id - documentId o id del cupón
+ */
+export async function eliminarCupon(id) {
+  const res = await fetch(`${BACKEND_URL}/api/cupones/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('No se pudo eliminar el cupón.');
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+/**
  * @param {{ nombre: string, descuento: number, fechaInicio: string, fechaFin: string }} 
  * @returns {Promise<{ cupon: object, cuponesUsuariosCreados: number }>}
  */
