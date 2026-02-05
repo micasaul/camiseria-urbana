@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import MercadoPagoButton from "../../components/buttons/mp-btn/MercadoPagoButton.jsx";
 import { obtenerCarritoCompleto } from "../../api/carrito.js";
 import { obtenerDescuentosActivos } from "../../api/promos.js";
-import { obtenerCuponPorNombre } from "../../api/cupones.js";
+import { validarCuponParaUsuario } from "../../api/cupones.js";
 import { parsearPrecio, aplicarDescuentos, calcularSubtotal } from "../../utils/carrito.js";
 import { obtenerPrecioEnvio } from "../../utils/envio.js";
 import NgrokImage from "../../components/NgrokImage.jsx";
@@ -134,14 +134,11 @@ export default function Compra() {
     setCuponError("");
     setCuponAplicado(null);
     if (!codigo) return;
+    const userDocumentId = usuarioAuth?.documentId ?? usuarioAuth?.id;
     setCuponLoading(true);
     try {
-      const cupon = await obtenerCuponPorNombre(codigo);
-      if (cupon && cupon.descuento > 0) {
-        setCuponAplicado({ documentId: cupon.documentId, nombre: cupon.nombre, descuento: cupon.descuento });
-      } else {
-        setCuponError(cupon ? "El cupón no tiene descuento configurado." : "Cupón no encontrado.");
-      }
+      const cupon = await validarCuponParaUsuario(codigo, userDocumentId);
+      setCuponAplicado({ documentId: cupon.documentId, nombre: cupon.nombre, descuento: cupon.descuento });
     } catch (err) {
       setCuponError(err?.message || "No se pudo validar el cupón.");
     } finally {
