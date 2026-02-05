@@ -89,7 +89,7 @@ module.exports = createCoreService(
               );
 
               if (!variacionActual || aNumero(variacionActual.stock) < cantidad) {
-                throw new errors.ValidationError(`Stock insuficiente para la variación ${variacionId}`);
+                return null;
               }
 
               const precio = await pricingService.getPrecioFinal(variacionId);
@@ -114,7 +114,16 @@ module.exports = createCoreService(
               const comboVariacionId = comboVariacion?.id;
               const comboVariacionDocumentId = comboVariacion?.documentId;
 
-              if (!combo) {
+              if (!combo || !comboVariacionId) {
+                return null;
+              }
+
+              const comboVariacionActual = await strapi.entityService.findOne(
+                /** @type {any} */ ('api::combo-variacion.combo-variacion'),
+                comboVariacionId,
+                /** @type {any} */ ({ transaction: trx })
+              );
+              if (!comboVariacionActual || aNumero(comboVariacionActual.stock) < cantidad) {
                 return null;
               }
 
@@ -150,6 +159,9 @@ module.exports = createCoreService(
         );
 
         const itemsValidos = itemsVenta.filter(Boolean);
+        if (itemsValidos.length === 0) {
+          throw new errors.ValidationError('No hay ítems con stock disponible para comprar. Revisá tu carrito.');
+        }
         const subtotalBack = itemsValidos.reduce(
           (acc, item) => acc + item.subtotal,
           0

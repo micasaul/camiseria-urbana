@@ -68,7 +68,13 @@ const MercadoPagoButton = ({ productos, subtotal, envio, descuentoCupon, cuponId
       if (!ventaRes.ok) {
         const errorText = await ventaRes.text();
         console.error('Error creando venta:', errorText);
-        throw new Error('No se pudo crear la venta');
+        let mensaje = 'No se pudo crear la venta.';
+        try {
+          const errJson = JSON.parse(errorText);
+          const msg = errJson?.error?.message ?? errJson?.message;
+          if (msg) mensaje = msg;
+        } catch (_) {}
+        throw new Error(mensaje);
       }
 
       const ventaData = await ventaRes.json();
@@ -155,7 +161,8 @@ const MercadoPagoButton = ({ productos, subtotal, envio, descuentoCupon, cuponId
           console.error('Error revirtiendo venta:', revertError);
         }
       }
-      alert('Error al procesar el pago. Por favor, intenta nuevamente.');
+      const mensaje = error?.message || 'Error al procesar el pago. Por favor, intenta nuevamente.';
+      alert(mensaje);
     }
   };
 

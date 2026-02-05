@@ -97,3 +97,23 @@
 .cart-card-remove:hover {
   color: #f4acb7;
 }
+
+.cart-card--sin-stock {
+  opacity: 0.75;
+  background: #f8f8f8;
+}
+
+.cart-card--sin-stock .cart-card-image {
+  filter: grayscale(0.4);
+}
+
+.cart-card-sin-stock {
+  color: #c00;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.cart-card-cantidad-fija {
+  font-size: 13px;
+  color: #6b7280;
+}

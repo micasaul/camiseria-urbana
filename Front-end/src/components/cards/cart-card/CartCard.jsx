@@ -16,11 +16,13 @@ export default function CartCard({
   hasDiscount = false,
   quantity = 1,
   stock = Infinity,
+  sinStock = false,
   onQuantityChange,
   onRemove
 }) {
   const src = imageSrc || getImageUrl(FALLBACK_IMAGEN)
   const [count, setCount] = useState(quantity)
+  const inhabilitada = sinStock
 
   useEffect(() => {
     setCount(quantity)
@@ -34,21 +36,17 @@ export default function CartCard({
   }
 
   const handleDecrease = () => {
-    if (count <= 1) {
-      return
-    }
+    if (count <= 1 || inhabilitada) return
     updateCount(count - 1)
   }
 
   const handleIncrease = () => {
-    if (count + 1 > stock) {
-      return
-    }
+    if (inhabilitada || count + 1 > stock) return
     updateCount(count + 1)
   }
 
   return (
-    <div className="cart-card">
+    <div className={`cart-card${inhabilitada ? ' cart-card--sin-stock' : ''}`}>
       <NgrokImage className="cart-card-image" src={src} alt={name} />
       <div className="cart-card-details">
         <span className="cart-card-name">{name}</span>
@@ -68,15 +66,19 @@ export default function CartCard({
             )}
           </span>
           <div className="cart-card-actions">
-            <div className="cart-card-counter">
-              <button type="button" onClick={handleDecrease} aria-label="Restar">
-                -
-              </button>
-              <span>{count}</span>
-              <button type="button" onClick={handleIncrease} aria-label="Sumar">
-                +
-              </button>
-            </div>
+            {inhabilitada ? (
+              <span className="cart-card-cantidad-fija">{count} unidad{count !== 1 ? 'es' : ''}</span>
+            ) : (
+              <div className="cart-card-counter">
+                <button type="button" onClick={handleDecrease} aria-label="Restar">
+                  -
+                </button>
+                <span>{count}</span>
+                <button type="button" onClick={handleIncrease} aria-label="Sumar">
+                  +
+                </button>
+              </div>
+            )}
             <button
               type="button"
               className="cart-card-remove"

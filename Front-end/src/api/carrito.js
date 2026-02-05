@@ -175,6 +175,10 @@ export async function obtenerCarritoCompleto() {
       const esCombo = !!(combo ?? comboVariacion);
       const item = esCombo ? comboAttrs : productoAttrs;
       const isProductoInactivo = !esCombo && productoAttrs?.inactivo === true;
+      const comboVariacionAttrs = comboVariacion?.attributes ?? comboVariacion;
+      const stockCombo = (comboVariacionAttrs?.stock ?? comboVariacion?.stock ?? 0);
+      const stockVariacion = esCombo ? stockCombo : (variacionAttrs?.stock ?? 0);
+      const sinStock = stockVariacion === 0;
 
       let imagenUrl = '/assets/fallback.jpg'
       if (esCombo && item?.imagen) {
@@ -281,7 +285,8 @@ export async function obtenerCarritoCompleto() {
         priceValue: precioBase,
         price: `$${precioBase.toFixed(2)}`,
         quantity: detalleAttrs?.cantidad ?? 1,
-        stock: esCombo ? 999 : (variacionAttrs?.stock ?? 0),
+        stock: stockVariacion,
+        sinStock,
         isProductoInactivo
       };
     }));

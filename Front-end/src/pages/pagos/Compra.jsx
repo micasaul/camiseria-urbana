@@ -40,8 +40,8 @@ export default function Compra() {
         ]);
         
         const productosConDescuento = aplicarDescuentos(items, descuentosMap);
-        
-        setProductos(productosConDescuento);
+        const soloConStock = productosConDescuento.filter((p) => !p.sinStock);
+        setProductos(soloConStock);
       } catch (error) {
         console.error("Error cargando carrito:", error);
         setProductos([]);
@@ -248,7 +248,7 @@ export default function Compra() {
             cuponId={cuponAplicado?.documentId ?? null}
             usuario={usuario}
             direccionId={direccionSeleccionadaId}
-            disabled={!direccionSeleccionadaId || !usuario.nombre || !usuario.telefono || direcciones.length === 0}
+            disabled={productos.length === 0 || !direccionSeleccionadaId || !usuario.nombre || !usuario.telefono || direcciones.length === 0}
           />
         </aside>
 
@@ -256,6 +256,11 @@ export default function Compra() {
         <main className="compra-resumen">
           <h2>Resumen de Compra</h2>
 
+          {productos.length === 0 && !loading && (
+            <p className="compra-sin-stock-aviso" style={{ color: '#c00', marginBottom: '1rem', fontSize: '0.95rem' }}>
+              No hay productos con stock para comprar. Los ítems sin stock siguen en tu carrito.
+            </p>
+          )}
           {productos.map((producto) => {
             return (
               <div key={producto.id ?? producto.documentId} className="compra-producto">

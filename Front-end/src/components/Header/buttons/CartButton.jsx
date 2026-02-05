@@ -190,6 +190,7 @@ export default function CartButton({ isOpen, onClick, onClose }) {
                       color={item.color}
                       quantity={item.quantity}
                       stock={item.stock}
+                      sinStock={item.sinStock}
                       onQuantityChange={(cantidad) =>
                         actualizarCantidad(item.documentId ?? item.id, cantidad)
                       }
