@@ -335,10 +335,8 @@ export default function Catalogo() {
     const valor = e.target.value
     if (valor === '' || /^\d*\.?\d*$/.test(valor)) {
       setPrecioMinPendiente(valor)
-      const numValor = Number(valor)
-      if (valor !== '' && !isNaN(numValor) && precioMaxPendiente && numValor > Number(precioMaxPendiente)) {
-        setPrecioMaxPendiente(valor)
-      }
+      setErrorPrecioMin('')
+      setErrorPrecioMax('')
     }
   }
 
@@ -346,10 +344,8 @@ export default function Catalogo() {
     const valor = e.target.value
     if (valor === '' || /^\d*\.?\d*$/.test(valor)) {
       setPrecioMaxPendiente(valor)
-      const numValor = Number(valor)
-      if (valor !== '' && !isNaN(numValor) && precioMinPendiente && numValor < Number(precioMinPendiente)) {
-        setPrecioMinPendiente(valor)
-      }
+      setErrorPrecioMin('')
+      setErrorPrecioMax('')
     }
   }
 
@@ -358,18 +354,39 @@ export default function Catalogo() {
     setErrorPrecioMin('')
     setErrorPrecioMax('')
 
-    if (precioMinPendiente !== '') {
-      const numMin = Number(precioMinPendiente)
-      if (isNaN(numMin)) { setErrorPrecioMin('Inválido'); hayError = true; }
-      else if (numMin < precioMinReal) { setErrorPrecioMin(`Mínimo: $${precioMinReal}`); hayError = true; }
-      else if (numMin > precioMaxReal) { setErrorPrecioMin(`Máximo: $${precioMaxReal}`); hayError = true; }
+    const numMin = precioMinPendiente !== '' ? Number(precioMinPendiente) : null
+    const numMax = precioMaxPendiente !== '' ? Number(precioMaxPendiente) : null
+
+    if (numMin != null && precioMinPendiente !== '') {
+      if (isNaN(numMin)) {
+        setErrorPrecioMin('Valor inválido')
+        hayError = true
+      } else if (numMin < precioMinReal) {
+        setErrorPrecioMin(`El mínimo no puede ser menor a $${precioMinReal.toFixed(0)}`)
+        hayError = true
+      } else if (numMin > precioMaxReal) {
+        setErrorPrecioMin(`El mínimo no puede ser mayor a $${precioMaxReal.toFixed(0)}`)
+        hayError = true
+      }
     }
 
-    if (precioMaxPendiente !== '') {
-      const numMax = Number(precioMaxPendiente)
-      if (isNaN(numMax)) { setErrorPrecioMax('Inválido'); hayError = true; }
-      else if (numMax > precioMaxReal) { setErrorPrecioMax(`Máximo: $${precioMaxReal}`); hayError = true; }
-      else if (numMax < precioMinReal) { setErrorPrecioMax(`Mínimo: $${precioMinReal}`); hayError = true; }
+    if (numMax != null && precioMaxPendiente !== '') {
+      if (isNaN(numMax)) {
+        setErrorPrecioMax('Valor inválido')
+        hayError = true
+      } else if (numMax > precioMaxReal) {
+        setErrorPrecioMax(`El máximo no puede ser mayor a $${precioMaxReal.toFixed(0)}`)
+        hayError = true
+      } else if (numMax < precioMinReal) {
+        setErrorPrecioMax(`El máximo no puede ser menor a $${precioMinReal.toFixed(0)}`)
+        hayError = true
+      }
+    }
+
+    if (numMin != null && numMax != null && !isNaN(numMin) && !isNaN(numMax) && numMax < numMin) {
+      setErrorPrecioMax('El precio máximo debe ser mayor o igual al mínimo')
+      if (!hayError) setErrorPrecioMin('')
+      hayError = true
     }
 
     if (!hayError) {
@@ -431,10 +448,12 @@ export default function Catalogo() {
               <div className="catalogo-precio-inputs">
                 <div className="catalogo-precio-input-wrapper">
                   <input type="text" className={`catalogo-precio-input${errorPrecioMin ? ' error' : ''}`} placeholder="Mín" value={precioMinPendiente} onChange={handlePrecioMinChange} inputMode="numeric" />
+                  {errorPrecioMin && <p className="catalogo-precio-error">{errorPrecioMin}</p>}
                 </div>
                 <span className="catalogo-precio-separator">-</span>
                 <div className="catalogo-precio-input-wrapper">
                   <input type="text" className={`catalogo-precio-input${errorPrecioMax ? ' error' : ''}`} placeholder="Máx" value={precioMaxPendiente} onChange={handlePrecioMaxChange} inputMode="numeric" />
+                  {errorPrecioMax && <p className="catalogo-precio-error">{errorPrecioMax}</p>}
                 </div>
               </div>
               <p className="catalogo-precio-range-info">Rango: ${precioMinReal.toFixed(2)} - ${precioMaxReal.toFixed(2)}</p>
