@@ -286,6 +286,23 @@ export default function PromosAgregar() {
             Productos<span className="admin-required">*</span>
           </label>
           <div className="admin-product-select">
+            <div className="admin-product-select-actions">
+              <button
+                type="button"
+                className="admin-link-btn-inline"
+                onClick={() => setProductosSeleccionados(productosOrdenados.map((p) => p.documentId ?? p.id).filter(Boolean))}
+              >
+                Aplicar a todos
+              </button>
+              <span className="admin-product-select-sep">·</span>
+              <button
+                type="button"
+                className="admin-link-btn-inline"
+                onClick={() => setProductosSeleccionados([])}
+              >
+                Deseleccionar
+              </button>
+            </div>
             {productosOrdenados.map((producto) => {
               const productoDocumentId = producto.documentId ?? producto.id
               const primeraVariacionConImagen = producto.variaciones?.find((v) => v?.imagen)
