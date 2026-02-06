@@ -1,12 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getProductos, actualizarVariacion, actualizarProducto } from '../../api/productos.js'
+import { crearRazonEliminacion } from '../../api/razonEliminacion.js'
 import { COLOR_HEX_MAP } from '../../utils/colorMap.js'
 import { calcularCantidadTotal, formatearPrecio } from '../../utils/adminHelpers.js'
 import PageButton from '../../components/forms/page-button/page-button.jsx'
 import { getImageUrl } from '../../utils/url.js'
 import NgrokImage from '../../components/NgrokImage.jsx'
 import './admin.css'
+
+const RAZONES_ELIMINACION = [
+  'Producto discontinuado',
+  'Stock dañado o vencido',
+  'Devolución de mercadería',
+  'Ajuste de inventario',
+  'Otro'
+]
 
 export default function ProductosListar() {
   const navigate = useNavigate()
@@ -15,6 +24,9 @@ export default function ProductosListar() {
   const [error, setError] = useState('')
   const [pagina, setPagina] = useState(1)
   const [paginacion, setPaginacion] = useState({ page: 1, pageCount: 1 })
+  const [productoEliminarStock, setProductoEliminarStock] = useState(null)
+  const [razonEliminacionSeleccionada, setRazonEliminacionSeleccionada] = useState('')
+  const [guardandoRazon, setGuardandoRazon] = useState(false)
 
   useEffect(() => {
     let activo = true
@@ -121,8 +133,25 @@ export default function ProductosListar() {
     navigate(`/admin/productos/editar/${destino}`)
   }
 
-  const handleEliminarStock = async (producto) => {
+  const abrirModalEliminarStock = (producto) => {
+    setError('')
+    setRazonEliminacionSeleccionada('')
+    setProductoEliminarStock(producto)
+  }
+
+  const cerrarModalEliminarStock = () => {
+    setProductoEliminarStock(null)
+    setRazonEliminacionSeleccionada('')
+  }
+
+  const confirmarEliminarStock = async () => {
+    if (!productoEliminarStock || !razonEliminacionSeleccionada.trim()) return
+    const producto = productoEliminarStock
+    const productoDocId = producto.documentId ?? producto.id
     try {
+      setGuardandoRazon(true)
+      setError('')
+
       const variaciones = producto.variaciones ?? []
       await Promise.all(
         variaciones.map((variacion) => {
@@ -133,6 +162,12 @@ export default function ProductosListar() {
           })
         })
       )
+
+      await crearRazonEliminacion({
+        razon: razonEliminacionSeleccionada.trim(),
+        fecha: new Date().toISOString().slice(0, 10),
+        productoDocumentId: productoDocId
+      })
 
       setProductos((prev) =>
         prev.map((item) =>
@@ -147,8 +182,11 @@ export default function ProductosListar() {
             : item
         )
       )
+      cerrarModalEliminarStock()
     } catch {
-      setError('No se pudo eliminar el stock.')
+      setError('No se pudo eliminar el stock o guardar la razón.')
+    } finally {
+      setGuardandoRazon(false)
     }
   }
 
@@ -270,7 +308,7 @@ export default function ProductosListar() {
                 <button
                   className="admin-action-btn admin-action-delete"
                   type="button"
-                  onClick={() => handleEliminarStock(producto)}
+                  onClick={() => abrirModalEliminarStock(producto)}
                 >
                   Eliminar stock
                 </button>
@@ -290,6 +328,51 @@ export default function ProductosListar() {
         pageCount={paginacion.pageCount || 1}
         onPageChange={(nuevaPagina) => setPagina(nuevaPagina)}
       />
+
+      {productoEliminarStock && (
+        <div className="admin-modal-overlay" onClick={cerrarModalEliminarStock}>
+          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="admin-modal-title">Eliminar stock</h3>
+            <p className="admin-modal-subtitle">
+              Producto: <strong>{productoEliminarStock.nombre || 'Sin nombre'}</strong>. Elegí la razón:
+            </p>
+            <ul className="admin-modal-razones">
+              {RAZONES_ELIMINACION.map((razon) => (
+                <li key={razon}>
+                  <label className="admin-modal-razon-label">
+                    <input
+                      type="radio"
+                      name="razon-eliminacion"
+                      value={razon}
+                      checked={razonEliminacionSeleccionada === razon}
+                      onChange={() => setRazonEliminacionSeleccionada(razon)}
+                    />
+                    <span>{razon}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <div className="admin-modal-actions">
+              <button
+                type="button"
+                className="admin-action-btn"
+                onClick={confirmarEliminarStock}
+                disabled={!razonEliminacionSeleccionada.trim() || guardandoRazon}
+              >
+                {guardandoRazon ? 'Guardando...' : 'Guardar'}
+              </button>
+              <button
+                type="button"
+                className="admin-action-btn admin-action-delete"
+                onClick={cerrarModalEliminarStock}
+                disabled={guardandoRazon}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

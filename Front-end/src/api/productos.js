@@ -376,20 +376,27 @@ export async function crearProducto(payload) {
 }
 
 export async function crearVariacion(payload) {
-  const res = await fetch(`${BACKEND_URL}/api/variaciones`, {
+  const url = `${BACKEND_URL}/api/variaciones`
+  const body = JSON.stringify(payload)
+  console.log('[crearVariacion] POST', url, { payload, body })
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...getAuthHeaders()
     },
-    body: JSON.stringify(payload)
+    body
   });
 
   if (!res.ok) {
+    const text = await res.text()
+    console.error('[crearVariacion] Error', res.status, text)
     throw new Error('No se pudo crear una variación.');
   }
 
-  return res.json();
+  const data = await res.json()
+  console.log('[crearVariacion] OK', data)
+  return data
 }
 
 export async function getProductoPorId(id) {
@@ -466,7 +473,9 @@ export async function actualizarProducto(id, payload) {
 }
 
 export async function actualizarVariacion(id, payload) {
-  const res = await fetch(`${BACKEND_URL}/api/variaciones/${id}`, {
+  const url = `${BACKEND_URL}/api/variaciones/${id}`
+  console.log('[actualizarVariacion] PUT', url, payload)
+  const res = await fetch(url, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -476,10 +485,14 @@ export async function actualizarVariacion(id, payload) {
   });
 
   if (!res.ok) {
+    const text = await res.text()
+    console.error('[actualizarVariacion] Error', res.status, text)
     throw new Error('No se pudo actualizar una variación.');
   }
 
-  return res.json();
+  const data = await res.json()
+  console.log('[actualizarVariacion] OK', data)
+  return data
 }
 
 export async function getProductosConFiltros(filtros = {}, page = 1, pageSize = 9) {

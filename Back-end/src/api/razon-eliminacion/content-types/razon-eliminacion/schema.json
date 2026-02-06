@@ -1,0 +1,29 @@
+{
+  "kind": "collectionType",
+  "collectionName": "razon_eliminacions",
+  "info": {
+    "singularName": "razon-eliminacion",
+    "pluralName": "razon-eliminacions",
+    "displayName": "RazonEliminacion"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "fecha": {
+      "type": "date",
+      "required": true
+    },
+    "razon": {
+      "type": "string",
+      "required": true
+    },
+    "producto": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::producto.producto",
+      "inversedBy": "razon_eliminacions"
+    }
+  }
+}

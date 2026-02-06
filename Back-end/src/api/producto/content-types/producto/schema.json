@@ -66,6 +66,12 @@
     "inactivo": {
       "type": "boolean",
       "default": false
+    },
+    "razon_eliminacions": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::razon-eliminacion.razon-eliminacion",
+      "mappedBy": "producto"
     }
   }
 }

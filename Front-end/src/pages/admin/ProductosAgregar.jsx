@@ -8,7 +8,7 @@ import {
   existeProductoPorNombre,
   getProductoPorId,
   actualizarProducto,
-  actualizarVariacion,
+  actualizarVariacion as APIactualizarVariacion,
   subirImagen
 } from '../../api/productos.js'
 
@@ -318,11 +318,13 @@ export default function ProductosAgregar() {
     }
 
     const variacionesValidas = variaciones.filter(
-      (variacion) =>
-        variacion.talle &&
-        variacion.color &&
-        variacion.cantidad &&
-        Number(variacion.cantidad) >= 1
+      (variacion) => {
+        const tieneTalleYColor = variacion.talle && variacion.color
+        const cantidadNum = Number(variacion.cantidad)
+        const cantidadValida = !Number.isNaN(cantidadNum) && cantidadNum >= 1
+        const usaDefault = (variacion.cantidad === '' || variacion.cantidad === undefined) && !variacion.backendId && !variacion.backendDocumentId
+        return tieneTalleYColor && (cantidadValida || usaDefault)
+      }
     )
 
     if (!variacionesValidas.length) {
@@ -402,11 +404,9 @@ export default function ProductosAgregar() {
         throw new Error('No se pudo obtener el identificador del producto.')
       }
 
-      const relacionProducto = docId
-        ? { connect: [{ documentId: docId }] }
-        : prodId
-          ? prodId
-          : null
+      if (!docId && variacionesValidas.some((v) => !v.backendDocumentId && !v.backendId)) {
+        throw new Error('No se pudo obtener el documento del producto. Recargá e intentá de nuevo.')
+      }
 
       for (let i = 0; i < variacionesValidas.length; i++) {
         const variacion = variacionesValidas[i]
@@ -423,20 +423,58 @@ export default function ProductosAgregar() {
           imagenPayload = undefined
         }
         
-        const payloadVariacion = {
-          data: {
-            talle: variacion.talle,
-            color: variacion.color,
-            stock: Number(variacion.cantidad),
-            producto: relacionProducto,
-            ...(imagenPayload !== undefined ? { imagen: imagenPayload } : {})
-          }
-        }
+        const cantidadRaw = variacion.cantidad
+        const cantidadNum = Number(cantidadRaw)
+        const esNueva = !variacion.backendDocumentId && !variacion.backendId
+        const cantidadVacia = cantidadRaw === '' || cantidadRaw === undefined || cantidadRaw === null
+        const stockEnviar = cantidadVacia && esNueva
+          ? 15
+          : !Number.isNaN(cantidadNum) && cantidadNum >= 0
+            ? Math.max(0, Math.floor(cantidadNum))
+            : esNueva
+              ? 15
+              : 0
 
-        if (variacion.backendDocumentId || variacion.backendId) {
-          const variacionId = variacion.backendDocumentId ?? variacion.backendId
-          await actualizarVariacion(variacionId, payloadVariacion)
+        const esActualizacion = !!(variacion.backendDocumentId || variacion.backendId)
+
+        if (esActualizacion) {
+          const variacionDocumentId = variacion.backendDocumentId
+          if (!variacionDocumentId) {
+            throw new Error('Falta documentId de la variación para actualizar. Recargá la página e intentá de nuevo.')
+          }
+          const payloadUpdate = {
+            data: {
+              talle: variacion.talle,
+              color: variacion.color,
+              stock: stockEnviar,
+              ...(imagenPayload !== undefined ? { imagen: imagenPayload } : {})
+            }
+          }
+          console.log('[ProductosAgregar] PUT variación (actualizar):', {
+            documentId: variacionDocumentId,
+            payload: payloadUpdate,
+            stockEnviar,
+            tipoStock: typeof stockEnviar
+          })
+          await APIactualizarVariacion(variacionDocumentId, payloadUpdate)
         } else {
+          const payloadVariacion = {
+            data: {
+              talle: variacion.talle,
+              color: variacion.color,
+              stock: stockEnviar,
+              ...(docId ? { producto: docId } : {}),
+              ...(imagenPayload !== undefined ? { imagen: imagenPayload } : {})
+            }
+          }
+          if (!payloadVariacion.data.producto) {
+            throw new Error('Falta el producto para crear la variación. Guardá de nuevo.')
+          }
+          console.log('[ProductosAgregar] POST variación (crear):', {
+            payload: payloadVariacion,
+            stockEnviar,
+            tipoStock: typeof payloadVariacion.data.stock
+          })
           await crearVariacion(payloadVariacion)
         }
       }
@@ -597,9 +635,9 @@ export default function ProductosAgregar() {
                 <input
                   className="admin-input"
                   type="number"
-                  placeholder="Cantidad"
-                  min={1}
-                  value={variacion.cantidad}
+                  placeholder="15"
+                  min={0}
+                  value={variacion.cantidad ?? ''}
                   onChange={(event) =>
                     actualizarVariacion(index, { cantidad: event.target.value })
                   }
