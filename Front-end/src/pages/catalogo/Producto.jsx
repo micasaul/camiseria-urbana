@@ -152,13 +152,13 @@ export default function Producto() {
     : precioBase
 
   const handleAgregarCarrito = async () => {
+    if (rol === 'guest') {
+      setCarritoError('Necesitás iniciar sesión para agregar al carrito.')
+      return
+    }
     const error = obtenerErrorCarrito()
     if (error) {
       setCarritoError(error)
-      return
-    }
-    
-    if (rol === 'guest') {
       return
     }
 
@@ -184,9 +184,9 @@ export default function Producto() {
 
   const handleToggleWishlist = async () => {
     if (rol === 'guest') {
+      setCarritoError('Necesitás iniciar sesión para agregar a la wishlist.')
       return
     }
-
     if (!producto?.documentId) {
       return
     }
