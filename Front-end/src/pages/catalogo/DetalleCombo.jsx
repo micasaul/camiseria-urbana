@@ -177,9 +177,10 @@ export default function DetalleCombo() {
   }, [combo?.documentId, rol])
 
   useEffect(() => {
-    if (carritoError) {
-      setCarritoError(obtenerErrorCarrito())
-    }
+    if (!carritoError) return
+    const esIniciarSesion = carritoError === 'Necesitás iniciar sesión para agregar al carrito.' || carritoError === 'Necesitás iniciar sesión para agregar a la wishlist.'
+    if (esIniciarSesion) return
+    setCarritoError(obtenerErrorCarrito())
   }, [talleSeleccionado, carritoError])
 
   if (cargando) {

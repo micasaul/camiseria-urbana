@@ -212,13 +212,19 @@ export default function DetalleVenta() {
                 <span>Subtotal</span>
                 <span>{detalle?.total != null ? `$ ${Number(detalle.total).toLocaleString('es-AR')}` : '$ 0'}</span>
               </div>
+              {Number(detalle?.descuento_cupon ?? 0) > 0 && (
+                <div className="admin-venta-summary-row">
+                  <span>Cupón de descuento</span>
+                  <span>- $ {Number(detalle.descuento_cupon).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+              )}
               <div className="admin-venta-summary-row">
                 <span>Envío</span>
                 <span>{detalle?.envio != null ? `$ ${Number(detalle.envio).toLocaleString('es-AR')}` : '$ 0'}</span>
               </div>
               <div className="admin-venta-summary-row total">
                 <span className="admin-venta-total-label">Total</span>
-                <span>{`$ ${(Number(detalle?.total ?? 0) + Number(detalle?.envio ?? 0)).toLocaleString('es-AR')}`}</span>
+                <span>{`$ ${(Number(detalle?.total ?? 0) + Number(detalle?.envio ?? 0) - Number(detalle?.descuento_cupon ?? 0)).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>
               </div>
             </div>
           </div>

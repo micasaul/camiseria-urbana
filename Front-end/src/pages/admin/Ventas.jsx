@@ -91,12 +91,16 @@ export default function Ventas() {
           ventas.map((venta) => {
             const attrs = venta?.attributes ?? venta
             const ordenId = venta.documentId ?? attrs?.documentId ?? venta.id ?? attrs?.id
+            const subtotal = Number(attrs?.total ?? 0)
+            const envio = Number(attrs?.envio ?? 0)
+            const descuentoCupon = Number(attrs?.descuento_cupon ?? 0)
+            const total = Math.max(0, subtotal + envio - descuentoCupon)
             return (
               <div key={venta.id ?? attrs?.id} className="admin-table-row admin-table-ventas">
                 <span>{formatearFecha(attrs?.fecha)}</span>
                 <span className="admin-venta-orden">{ordenId ? `#${ordenId}` : '—'}</span>
                 <span className="admin-venta-cliente">{obtenerClienteVenta(venta)}</span>
-                <span>{attrs?.total ? `$ ${Number(attrs.total).toLocaleString('es-AR')}` : '$ 0'}</span>
+                <span>{`$ ${total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>
                 <span>{attrs?.estado ?? '—'}</span>
                 <Link
                   className="admin-detail-link"

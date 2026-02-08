@@ -14,7 +14,6 @@ module.exports = createCoreService(
         throw new errors.ValidationError('carritoId requerido');
       }
       const envio = aNumero(opts.envio ?? 0);
-      const subtotalFront = opts.subtotal != null ? aNumero(opts.subtotal) : null;
       const usuario = opts.usuario ?? {};
       const direccionId = opts.direccionId && String(opts.direccionId).trim() !== '' ? String(opts.direccionId).trim() : null;
       const cuponId = opts.cuponId && String(opts.cuponId).trim() !== '' ? String(opts.cuponId).trim() : null;
@@ -162,65 +161,30 @@ module.exports = createCoreService(
         if (itemsValidos.length === 0) {
           throw new errors.ValidationError('No hay ítems con stock disponible para comprar. Revisá tu carrito.');
         }
-        const subtotalBack = itemsValidos.reduce(
+        const subtotalVenta = itemsValidos.reduce(
           (acc, item) => acc + item.subtotal,
           0
         );
-        const subtotalVenta = subtotalFront != null ? subtotalFront : subtotalBack;
 
-        const usuarioId = carritoEntity?.users_permissions_user?.id;
+        const userRef = carritoEntity?.users_permissions_user;
+        const usuarioDocumentId = userRef != null
+          ? (typeof userRef === 'object' && userRef !== null ? userRef.documentId : String(userRef))
+          : null;
         const nroSeguimiento = generarNroSeguimiento(usuario?.provincia);
-
-        const totalFinal = Math.max(0, subtotalVenta - descuentoCupon + envio);
 
         const ventaData = {
           fecha: new Date(),
           estado: 'pendiente',
-          total: totalFinal,
+          total: subtotalVenta,
           envio,
           descuento_cupon: descuentoCupon,
           nroSeguimiento,
-          users_permissions_user: usuarioId || null,
+          users_permissions_user: usuarioDocumentId
+            ? { connect: [{ documentId: usuarioDocumentId }] }
+            : null,
+          cupon: cuponId ? { connect: [{ documentId: String(cuponId) }] } : undefined,
+          direccion: direccionId ? { connect: [{ documentId: String(direccionId) }] } : null,
         };
-
-        if (cuponId) {
-          const cupones = await strapi.entityService.findMany(
-            /** @type {any} */ ('api::cupon.cupon'),
-            /** @type {any} */ ({
-              filters: { documentId: String(cuponId) },
-              limit: 1,
-              transaction: trx,
-            })
-          );
-          if (cupones[0]) {
-            ventaData.cupon = cupones[0].id;
-          }
-        }
-
-        strapi.log.info(`[createFromCarrito] direccionId recibido: ${direccionId}`);
-        if (direccionId) {
-          const direcciones = await strapi.entityService.findMany(
-            /** @type {any} */ ('api::direccion.direccion'),
-            /** @type {any} */ ({
-              filters: { documentId: String(direccionId) },
-              limit: 1,
-              transaction: trx,
-            })
-          );
-          
-          strapi.log.info(`[createFromCarrito] Direcciones encontradas: ${direcciones.length}`);
-          
-          if (direcciones.length > 0) {
-            const direccionEncontrada = direcciones[0];
-            strapi.log.info(`[createFromCarrito] Dirección encontrada con id: ${direccionEncontrada.id}`);
-            ventaData.direccion = direccionEncontrada.id || null;
-            strapi.log.info(`[createFromCarrito] ventaData.direccion asignado: ${ventaData.direccion}`);
-          } else {
-            strapi.log.warn(`[createFromCarrito] No se encontró dirección con documentId: ${direccionId}`);
-          }
-        } else {
-          strapi.log.warn(`[createFromCarrito] No se proporcionó direccionId`);
-        }
 
         const venta = await strapi.entityService.create(
           /** @type {any} */ ('api::venta.venta'),
@@ -231,30 +195,37 @@ module.exports = createCoreService(
           })
         );
 
-        if (cuponId && usuarioId) {
+        if (cuponId && usuarioDocumentId) {
           const cuponesUsuarios = await strapi.entityService.findMany(
             /** @type {any} */ ('api::cupon-usuario.cupon-usuario'),
             /** @type {any} */ ({
               filters: {
                 cupon: { documentId: String(cuponId) },
-                users_permissions_user: { id: usuarioId },
+                users_permissions_user: { documentId: usuarioDocumentId },
               },
               limit: 1,
-              publicationState: 'preview',
               transaction: trx,
             })
           );
           if (cuponesUsuarios[0]) {
             const cu = cuponesUsuarios[0];
-            await strapi.entityService.update(
-              /** @type {any} */ ('api::cupon-usuario.cupon-usuario'),
-              cu.id,
-              /** @type {any} */ ({
-                data: { usado: true },
-                transaction: trx,
-              })
-            );
+            const cuId = cu.id;
+            if (cuId != null) {
+              await strapi.entityService.update(
+                /** @type {any} */ ('api::cupon-usuario.cupon-usuario'),
+                cuId,
+                /** @type {any} */ ({
+                  data: { usado: true },
+                  transaction: trx,
+                })
+              );
+              strapi.log.info(`[createFromCarrito] cupon-usuario marcado como usado: cupon ${cuponId}, usuario ${usuarioDocumentId}`);
+            }
+          } else {
+            strapi.log.warn(`[createFromCarrito] no se encontró cupon-usuario para marcar usado: cuponId=${cuponId}, usuarioDocumentId=${usuarioDocumentId}`);
           }
+        } else if (cuponId && !usuarioDocumentId) {
+          strapi.log.warn(`[createFromCarrito] hay cupón pero no usuario (carrito sin user): cuponId=${cuponId}`);
         }
 
         const items = await Promise.all(
@@ -322,7 +293,9 @@ module.exports = createCoreService(
           /** @type {any} */ ({
             data: {
               fecha: new Date(),
-              users_permissions_user: usuarioId || null,
+              users_permissions_user: usuarioDocumentId
+                ? { connect: [{ documentId: usuarioDocumentId }] }
+                : null,
             },
             transaction: trx,
           })
@@ -367,7 +340,10 @@ module.exports = createCoreService(
           ventaEntity.detalle_ventas || []
         );
 
-        const usuarioId = ventaEntity?.users_permissions_user?.id;
+        const userRefVenta = ventaEntity?.users_permissions_user;
+        const usuarioDocumentIdRevertir = userRefVenta != null
+          ? (typeof userRefVenta === 'object' && userRefVenta !== null ? userRefVenta.documentId : String(userRefVenta))
+          : null;
 
         const variacionesRestauradas = [];
         if (ventaEntity.estado === 'En proceso') {
@@ -409,11 +385,11 @@ module.exports = createCoreService(
         }
 
         let carrito = null;
-        if (usuarioId) {
+        if (usuarioDocumentIdRevertir) {
           const carritos = await strapi.entityService.findMany(
             /** @type {any} */ ('api::carrito.carrito'),
             /** @type {any} */ ({
-              filters: { users_permissions_user: { id: usuarioId } },
+              filters: { users_permissions_user: { documentId: usuarioDocumentIdRevertir } },
               limit: 1,
               populate: {
                 detalle_carritos: true,
@@ -430,7 +406,9 @@ module.exports = createCoreService(
             /** @type {any} */ ({
               data: {
                 fecha: new Date(),
-                users_permissions_user: usuarioId || null,
+                users_permissions_user: usuarioDocumentIdRevertir
+                  ? { connect: [{ documentId: usuarioDocumentIdRevertir }] }
+                  : null,
               },
               transaction: trx,
             })

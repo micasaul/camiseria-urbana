@@ -172,7 +172,10 @@ const MiCuenta = () => {
           <div className={`ventas-container ${ventas.length >= 2 ? 'ventas-scroll' : ''}`}>
             {ventas.map((venta) => {
               const fecha = venta.fecha
-              const total = venta.total
+              const subtotal = Number(venta.total ?? 0)
+              const envio = Number(venta.envio ?? 0)
+              const descuentoCupon = Number(venta.descuento_cupon ?? 0)
+              const total = Math.max(0, subtotal + envio - descuentoCupon)
               const estado = venta.estado
               const nroSeguimiento = venta.nroSeguimiento
 
@@ -192,7 +195,7 @@ const MiCuenta = () => {
                     <strong>Número de seguimiento:</strong> {nroSeguimiento ?? "—"}
                   </p>
                   <p>
-                    <strong>Total:</strong> ${total != null ? total : 0}
+                    <strong>Total:</strong> $ {total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                   <Link to={`/cuenta/detalle-compra/${venta.documentId ?? venta.attributes?.documentId ?? venta.id}`}>
                     <LinkButton>Más detalles</LinkButton>

@@ -242,7 +242,6 @@ export default function Compra() {
 
           <MercadoPagoButton
             productos={productos}
-            subtotal={subtotal}
             envio={envio}
             descuentoCupon={descuentoCupon}
             cuponId={cuponAplicado?.documentId ?? null}
