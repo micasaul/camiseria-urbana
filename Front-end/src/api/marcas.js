@@ -21,6 +21,20 @@ export async function getMarcas() {
     .filter((item) => item.id);
 }
 
+export async function getMarcaById(marcaId) {
+  if (!marcaId) return null;
+  const res = await fetch(`${BACKEND_URL}/api/marcas/${marcaId}`);
+  if (!res.ok) return null;
+  const data = await res.json();
+  const item = data?.data ?? data;
+  const attrs = item?.attributes ?? item;
+  return {
+    id: item?.id ?? attrs?.id ?? null,
+    documentId: item?.documentId ?? attrs?.documentId ?? null,
+    nombre: attrs?.nombre ?? item?.nombre ?? ''
+  };
+}
+
 export async function crearMarca(nombre) {
   const res = await fetch(`${BACKEND_URL}/api/marcas`, {
     method: 'POST',

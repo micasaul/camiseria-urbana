@@ -63,9 +63,7 @@ export default function Producto() {
         const productoId = item?.documentId ?? item?.id
         const descuentoProducto = descuentosMap.get(String(productoId)) ?? 0
         
-        const marca = attrs?.marca?.data ?? attrs?.marca
-        const marcaAttrs = marca?.attributes ?? marca
-        const marcaIdValue = marca?.documentId ?? marcaAttrs?.documentId ?? marca?.id ?? marcaAttrs?.id ?? null
+        const marcaIdValue = item?.marca?.documentId ?? item?.marca?.id ?? null
         
         setProducto({
           id: item.id ?? attrs?.id,

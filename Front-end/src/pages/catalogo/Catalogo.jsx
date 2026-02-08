@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { getProductosConFiltros } from '../../api/productos.js'
+import { getProductosConFiltros, normalizarMarca } from '../../api/productos.js'
 import { getProductoEnums } from '../../api/enums.js'
 import { obtenerDescuentosActivos } from '../../api/promos.js'
 import { calcularCantidadTotal } from '../../utils/adminHelpers.js'
@@ -52,6 +52,7 @@ export default function Catalogo() {
   const [coloresConStock, setColoresConStock] = useState(new Set())
   const [tallesConStock, setTallesConStock] = useState(new Set())
   const [marcasConStock, setMarcasConStock] = useState(new Set())
+  const [materialesConStock, setMaterialesConStock] = useState(new Set())
 
   useEffect(() => {
     let activo = true
@@ -77,7 +78,8 @@ export default function Catalogo() {
         const marcasList = (data.data || []).map(item => {
           const attrs = item?.attributes ?? item
           return {
-            id: item.documentId ?? attrs?.documentId ?? item.id ?? attrs?.id,
+            id: item.id ?? attrs?.id,
+            documentId: item.documentId ?? attrs?.documentId ?? String(item.id),
             nombre: attrs?.nombre ?? item?.nombre ?? ''
           }
         })
@@ -163,9 +165,9 @@ export default function Catalogo() {
             const todosData = await todosRes.json()
             const productosFiltrados = (todosData.data || []).filter(item => {
               const attrs = item?.attributes ?? item
-              const marca = attrs?.marca?.data ?? attrs?.marca
+              const marca = normalizarMarca(attrs)
               if (!marca) return false
-              const marcaDocId = marca?.documentId ?? marca?.attributes?.documentId ?? marca?.id ?? marca?.attributes?.id
+              const marcaDocId = marca?.documentId ?? marca?.id
               return String(marcaDocId) === String(marcaFiltro)
             })
             productosIds = productosFiltrados.map(item => item?.documentId ?? item?.attributes?.documentId).filter(Boolean)
@@ -209,29 +211,6 @@ export default function Catalogo() {
           return { ...producto, cantidadTotal, prioridad, nombre: producto.nombre || '', precioFinal }
         })
 
-        const coloresSet = new Set()
-        const tallesSet = new Set()
-        const marcasSet = new Set()
-        productosProcesados.forEach((p) => {
-          const vars = p?.variaciones ?? []
-          const tieneStock = vars.some((v) => Number(v?.stock ?? 0) > 0)
-          if (tieneStock && p.marca) {
-            const marcaId = p.marca?.documentId ?? p.marca?.id
-            if (marcaId != null) marcasSet.add(String(marcaId))
-          }
-          vars.forEach((v) => {
-            if (Number(v?.stock ?? 0) > 0) {
-              if (v?.color) coloresSet.add(v.color)
-              if (v?.talle) tallesSet.add(v.talle)
-            }
-          })
-        })
-        if (activo) {
-          setColoresConStock(coloresSet)
-          setTallesConStock(tallesSet)
-          setMarcasConStock(marcasSet)
-        }
-
         const precioMinFiltro = filtrosAplicados.precioMin ? Number(filtrosAplicados.precioMin) : null
         const precioMaxFiltro = filtrosAplicados.precioMax ? Number(filtrosAplicados.precioMax) : null
 
@@ -253,6 +232,35 @@ export default function Catalogo() {
             const vars = p?.variaciones ?? []
             return vars.some((v) => filtrosAplicados.talles.includes(v?.talle))
           })
+        }
+
+        const coloresSet = new Set()
+        const tallesSet = new Set()
+        const marcasSet = new Set()
+        const materialesSet = new Set()
+        console.log('DEBUG MARCAS:', filtrados.map(p => ({ nombre: p.nombre, marca: p.marca })))
+        filtrados.forEach((p) => {
+          const mat = p.material ?? p.attributes?.material
+          if (mat) {
+            materialesSet.add(mat)
+          }
+          if (p.marca) {
+            const key = p.marca.documentId ?? p.marca.id
+            if (key) marcasSet.add(String(key))
+          }
+          const vars = p?.variaciones ?? []
+          vars.forEach((v) => {
+            if (Number(v?.stock ?? 0) > 0) {
+              if (v?.color) coloresSet.add(v.color)
+              if (v?.talle) tallesSet.add(v.talle)
+            }
+          })
+        })
+        if (activo) {
+          setColoresConStock(coloresSet)
+          setTallesConStock(tallesSet)
+          setMarcasConStock(marcasSet)
+          setMaterialesConStock(materialesSet)
         }
 
         const preciosFinales = productosProcesados.map((p) => p.precioFinal ?? 0).filter((n) => n > 0)
@@ -316,6 +324,7 @@ export default function Catalogo() {
           setColoresConStock(new Set())
           setTallesConStock(new Set())
           setMarcasConStock(new Set())
+          setMaterialesConStock(new Set())
         }
       })
       .finally(() => {
@@ -431,7 +440,10 @@ export default function Catalogo() {
           <div className="catalogo-filter-group">
             <label className="catalogo-filter-label">Material</label>
             <div className="catalogo-materiales">
-              {materiales.map((mat) => {
+              {(materialesConStock.size > 0
+                ? materiales.filter(m => materialesConStock.has(m) || materialPendiente === m)
+                : materiales
+              ).map((mat) => {
                 const isSelected = materialPendiente === mat
                 return (
                   <button key={mat} type="button" className={`catalogo-material-btn${isSelected ? ' selected' : ''}`} onClick={() => setMaterialPendiente(isSelected ? '' : mat)}>
@@ -483,8 +495,14 @@ export default function Catalogo() {
             <label className="catalogo-filter-label">Marca</label>
             <select className="catalogo-filter-select" value={marcaPendiente} onChange={(e) => setMarcaPendiente(e.target.value)}>
               <option value="">Todas las marcas</option>
-              {(marcasConStock.size > 0 ? marcas.filter((m) => marcasConStock.has(String(m.id)) || marcaPendiente === String(m.id)) : marcas).map((marca) => (
-                <option key={marca.id} value={marca.id}>{marca.nombre}</option>
+              {(marcasConStock.size > 0
+                ? marcas.filter(m => {
+                  const mId = String(m.documentId ?? m.id)
+                  return marcasConStock.has(mId) || String(marcaPendiente) === mId
+                })
+                : marcas
+              ).map((marca) => (
+                <option key={marca.documentId ?? marca.id} value={marca.documentId ?? marca.id}>{marca.nombre}</option>
               ))}
             </select>
           </div>

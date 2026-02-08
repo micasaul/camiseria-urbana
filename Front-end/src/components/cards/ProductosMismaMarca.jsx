@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { getProductosConFiltros } from "../../api/productos.js"
+import { getProductosConFiltros, normalizarMarca } from "../../api/productos.js"
 import { obtenerDescuentosActivos } from "../../api/promos.js"
 import { ordenarPorStock } from "../../utils/producto.js"
 import { calcularCantidadTotal } from "../../utils/adminHelpers.js"
@@ -59,9 +59,9 @@ export default function ProductosMismaMarca({ marcaId, productoActualId }) {
         if (marcaData.esFallback) {
           const productosFiltrados = (marcaData.data?.data || []).filter(item => {
             const attrs = item?.attributes ?? item
-            const marca = attrs?.marca?.data ?? attrs?.marca
+            const marca = normalizarMarca(attrs)
             if (!marca) return false
-            const marcaDocId = marca?.documentId ?? marca?.attributes?.documentId ?? marca?.id ?? marca?.attributes?.id
+            const marcaDocId = marca?.documentId ?? marca?.id
             return String(marcaDocId) === String(marcaId)
           })
           productosIds = productosFiltrados.map(item => item?.documentId ?? item?.attributes?.documentId).filter(Boolean)
