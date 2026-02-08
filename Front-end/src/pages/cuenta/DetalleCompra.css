@@ -105,6 +105,13 @@
   font-size: 1rem;
 }
 
+.detalle-producto-variacion {
+  display: block;
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
 /* Totales */
 .detalle-totales {
   margin-top: 2rem;
@@ -120,6 +127,10 @@
   justify-content: space-between;
   font-size: 1rem;
   color: #172A3A;
+}
+
+.detalle-total-descuento {
+  color: #059669;
 }
 
 .detalle-total-final {

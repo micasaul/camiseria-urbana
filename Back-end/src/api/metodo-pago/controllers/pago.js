@@ -180,19 +180,10 @@ export default {
             detalle_ventas: {
               populate: {
                 variacion: {
-                  populate: {
-                    producto: true,
-                    imagen: true,
-                  },
+                  populate: { producto: true },
                 },
                 combo_variacion: {
-                  populate: {
-                    combo: {
-                      populate: {
-                        imagen: true,
-                      },
-                    },
-                  },
+                  populate: { combo: true },
                 },
               },
             },
@@ -224,24 +215,6 @@ export default {
           if (usuario?.email) {
             try {
               const detalleVentas = /** @type {any[]} */ (ventaEntity.detalle_ventas || []);
-              await strapi.service("api::venta.venta").enriquecerDetalleVentasConImagenFallback(detalleVentas);
-
-              const baseUrl = String(strapi.config.get("server.url") || process.env.PUBLIC_URL || "http://localhost:1337").replace(/\/$/, "");
-              const urlImagenEmail = (imagen) => {
-                if (!imagen) return "";
-                let path = "";
-                if (typeof imagen === "string") path = imagen;
-                else if (imagen?.url) path = imagen.url;
-                else if (imagen?.data?.attributes?.url) path = imagen.data.attributes.url;
-                else if (imagen?.data?.url) path = imagen.data.url;
-                else if (imagen?.attributes?.url) path = imagen.attributes.url;
-                else if (imagen?.formats?.small?.url) path = imagen.formats.small.url;
-                else if (imagen?.formats?.thumbnail?.url) path = imagen.formats.thumbnail.url;
-                else if (imagen?.formats?.medium?.url) path = imagen.formats.medium.url;
-                if (!path || typeof path !== "string") return "";
-                path = path.trim();
-                return path.startsWith("http") ? path : `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
-              };
 
               let productosHtml = "";
               let subtotal = 0;
@@ -253,25 +226,29 @@ export default {
                 subtotal += subtotalItem;
 
                 let nombre = "Producto";
-                let imagenUrl = "";
+                let variacionTexto = "";
 
                 if (detalle?.variacion?.producto) {
                   const producto = detalle.variacion.producto;
+                  const color = detalle.variacion.color ?? detalle.variacion.attributes?.color ?? "";
+                  const talle = detalle.variacion.talle ?? detalle.variacion.attributes?.talle ?? "";
                   nombre = producto.nombre || "Producto";
-                  imagenUrl = urlImagenEmail(detalle.variacion.imagen);
+                  if (color || talle) {
+                    variacionTexto = [color, talle].filter(Boolean).join(" / ");
+                  }
                 } else if (detalle?.combo_variacion?.combo) {
                   const combo = detalle.combo_variacion.combo;
+                  const talleCombo = detalle.combo_variacion?.talle ?? detalle.combo_variacion?.attributes?.talle ?? "";
                   nombre = combo.nombre || "Combo";
-                  imagenUrl = urlImagenEmail(combo.imagen);
+                  if (talleCombo) variacionTexto = String(talleCombo);
                 }
+
+                const productoYVariacion = variacionTexto ? `${nombre} (${variacionTexto})` : nombre;
 
                 productosHtml += `
                   <tr style="border-bottom: 1px solid #e5e7eb;">
                     <td style="padding: 12px; vertical-align: middle;">
-                      ${imagenUrl ? `<img src="${imagenUrl}" alt="${nombre}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;" />` : ''}
-                    </td>
-                    <td style="padding: 12px; vertical-align: middle;">
-                      <strong>${nombre}</strong>
+                      <strong>${productoYVariacion}</strong>
                     </td>
                     <td style="padding: 12px; vertical-align: middle; text-align: center;">
                       ${cantidad}
@@ -301,8 +278,7 @@ export default {
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                       <thead>
                         <tr style="background-color: #f5f5f5; border-bottom: 2px solid #e5e7eb;">
-                          <th style="padding: 12px; text-align: left;">Imagen</th>
-                          <th style="padding: 12px; text-align: left;">Producto</th>
+                          <th style="padding: 12px; text-align: left;">Producto (color / talle)</th>
                           <th style="padding: 12px; text-align: center;">Cantidad</th>
                         </tr>
                       </thead>

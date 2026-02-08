@@ -79,6 +79,10 @@ export default function DetalleCompra() {
       ? precioUnitario / (1 - descuento / 100) 
       : precioUnitario
     
+    const color = variacion?.color ?? variacion?.attributes?.color ?? "";
+    const talle = variacion?.talle ?? variacion?.attributes?.talle ?? "";
+    const talleCombo = comboVariacionAttrs?.talle ?? comboVariacionData?.talle ?? "";
+
     return {
       id: item?.id ?? itemAttrs?.id,
       cantidad: itemAttrs?.cantidad ?? item?.cantidad ?? 0,
@@ -87,6 +91,9 @@ export default function DetalleCompra() {
       descuento,
       subtotal: itemAttrs?.subtotal ?? item?.subtotal ?? 0,
       esCombo,
+      color,
+      talle,
+      talleCombo,
       variacion: esCombo ? null : {
         producto: {
           id: producto?.id ?? productoData?.id,
@@ -107,7 +114,8 @@ export default function DetalleCompra() {
   }, 0)
   
   const envio = attrs?.envio != null ? Number(attrs.envio) : 0
-  const total = subtotal + envio
+  const descuentoCupon = attrs?.descuento_cupon != null ? Number(attrs.descuento_cupon) : 0
+  const total = Math.max(0, subtotal + envio - descuentoCupon)
 
   return (
     <div className="detalle-compra-page">
@@ -115,7 +123,7 @@ export default function DetalleCompra() {
         {/* Columna izquierda */}
         <div className="detalle-columna-izq">
           <div className="detalle-orden-heading">
-            <h1 className="detalle-orden">ORDEN #{venta.documentIdid ?? attrs.documentId}</h1>
+            <h1 className="detalle-orden">ORDEN #{venta.documentId ?? attrs.documentId}</h1>
             <p className="detalle-fecha">
               {attrs?.fecha ? attrs.fecha.split('T')[0] : "—"}
             </p>
@@ -153,16 +161,24 @@ export default function DetalleCompra() {
                   <span>Acción</span>
                 </div>
                 {detalleVentas.map(item => {
-                  const nombre = item.esCombo 
-                    ? (item.combo?.talle ? `${item.combo?.nombre ?? 'Combo'} - Talle ${item.combo.talle}` : (item.combo?.nombre ?? 'Combo'))
+                  const nombre = item.esCombo
+                    ? (item.combo?.nombre ?? 'Combo')
                     : (item.variacion?.producto?.nombre ?? 'Producto')
+                  const variacionTexto = item.esCombo
+                    ? (item.talleCombo ? `Talle ${item.talleCombo}` : '')
+                    : [item.color, item.talle].filter(Boolean).join(' / ')
                   const itemId = item.esCombo
                     ? (item.combo?.documentId ?? item.combo?.id)
                     : (item.variacion?.producto?.documentId ?? item.variacion?.producto?.id)
                   
                   return (
                     <div key={item.id} className="detalle-producto-row">
-                      <span>{nombre}</span>
+                      <span>
+                        <span>{nombre}</span>
+                        {variacionTexto ? (
+                          <span className="detalle-producto-variacion">{variacionTexto}</span>
+                        ) : null}
+                      </span>
                       <span>{item.cantidad}</span>
                       <span>
                         {item.descuento > 0 ? (
@@ -201,6 +217,12 @@ export default function DetalleCompra() {
                   <span>Envío:</span>
                   <span>${envio.toFixed(2)}</span>
                 </div>
+                {descuentoCupon > 0 && (
+                  <div className="detalle-total-row detalle-total-descuento">
+                    <span>Descuento cupón:</span>
+                    <span>-${descuentoCupon.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="detalle-total-row detalle-total-final">
                   <span>TOTAL:</span>
                   <span>${total.toFixed(2)}</span>
