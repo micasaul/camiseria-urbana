@@ -51,6 +51,7 @@ module.exports = createCoreController('api::producto.producto', ({ strapi }) => 
         variacions: { populate: ['imagen'] },
         promo_productos: { populate: ['promo'] },
         wishlists: true,
+        resenas: { populate: ['users_permissions_user'] },
       },
     };
     let producto;

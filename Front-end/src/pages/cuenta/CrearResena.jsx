@@ -39,7 +39,7 @@ const CrearResena = () => {
 
         if (res.ok) {
           const data = await res.json()
-          const productos = data?.data ?? []
+          const productos = Array.isArray(data) ? data : (data?.data ?? [])
           if (productos.length > 0) {
             const prod = productos[0]
             const attrs = prod?.attributes ?? prod
@@ -68,8 +68,8 @@ const CrearResena = () => {
 
         if (!res.ok) throw new Error("No se pudo obtener el item")
 
-        const data = await res.json()
-        const combos = data?.data ?? []
+        const dataCombo = await res.json()
+        const combos = Array.isArray(dataCombo) ? dataCombo : (dataCombo?.data ?? [])
         if (combos.length > 0) {
           const combo = combos[0]
           const attrs = combo?.attributes ?? combo
